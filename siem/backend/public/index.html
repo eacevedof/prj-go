@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light dark">
+    <title>siem</title>
+    <link rel="stylesheet" href="/css/siem.css">
+    <script type="module" src="/js/main.js"></script>
+</head>
+<body>
+<div class="app">
+
+    <aside class="sidebar">
+        <a class="brand" href="#/">siem<span class="brand-sub">consola</span></a>
+        <!-- menu: solo con sesion (NavigationView.show) -->
+        <nav id="nav-screens" class="nav hidden" aria-label="Pantallas">
+            <a href="#/" data-screen="dashboard"><span class="nav-number">1</span>Proyectos</a>
+            <a href="#/events" data-screen="events"><span class="nav-number">2</span>Eventos</a>
+            <a href="#/downloads" data-screen="downloads"><span class="nav-number">3</span>Descargas</a>
+        </nav>
+        <div class="sidebar-foot">
+            <span id="span-refresh-info" class="refresh-info"></span>
+            <span id="div-session" class="hidden">
+                <button id="button-log-out" type="button" class="button button-small">Salir</button>
+            </span>
+        </div>
+    </aside>
+
+    <main class="content">
+
+        <!-- visible hasta que cargan los modulos (main.js lo oculta): la primera vez, sin cache, son ~130 ficheros -->
+        <p id="p-app-loading" class="app-loading">Cargando el panel…</p>
+
+        <!-- entrada: token del dashboard (AuthView) -->
+        <section id="section-auth" class="auth hidden">
+            <h1>1 - acceso</h1>
+            <p class="muted">Token del dashboard: <code>APP_DASHBOARD_TOKEN</code> del <code>.env</code> del backend.</p>
+            <p id="p-auth-message" class="notice hidden"></p>
+            <form id="form-log-in" class="form-row">
+                <label for="input-dashboard-token" class="sr-only">Token</label>
+                <input id="input-dashboard-token" type="password" autocomplete="off" placeholder="token">
+                <button type="submit" class="button button-primary">Entrar</button>
+            </form>
+            <p id="p-auth-errors" class="error hidden"></p>
+        </section>
+
+        <!-- portada: servidor + proyectos (DashboardView) + alta de proyecto (ProjectFormView) -->
+        <section id="section-dashboard" data-screen="dashboard" class="screen hidden">
+            <p id="p-dashboard-errors" class="error hidden"></p>
+            <h1>1 - servidor</h1>
+            <div id="div-dashboard-server"></div>
+
+            <h1>2 - proyectos</h1>
+            <div id="div-dashboard-projects"></div>
+
+            <h1>3 - nuevo proyecto</h1>
+            <form id="form-project" class="panel form-grid">
+                <div class="field">
+                    <label for="input-project-name">Nombre</label>
+                    <input id="input-project-name" type="text" maxlength="100" autocomplete="off" placeholder="Track Alert">
+                </div>
+                <div class="field field-wide">
+                    <label for="input-project-description">Descripción <span class="muted">(opcional)</span></label>
+                    <input id="input-project-description" type="text" maxlength="255" autocomplete="off" placeholder="producción">
+                </div>
+                <div class="field field-actions">
+                    <button id="button-project-submit" type="submit" class="button button-primary">Crear proyecto</button>
+                </div>
+                <p id="p-project-form-errors" class="error field-full hidden"></p>
+                <p id="p-project-form-message" class="notice field-full hidden"></p>
+            </form>
+        </section>
+
+        <!-- detalle de un proyecto: cabecera y agentes (ProjectDetailView), alta de agente (AgentFormView),
+             monitores (MonitorsView) y borrar proyecto (ProjectDangerView) -->
+        <section id="section-project" data-screen="projects" class="screen hidden">
+            <p><a href="#/">← proyectos</a></p>
+            <p id="p-project-errors" class="error hidden"></p>
+            <div id="div-project-body">
+                <div id="div-project-header"></div>
+
+                <h1>2 - agentes</h1>
+                <p id="p-agents-errors" class="error hidden"></p>
+                <div id="div-project-agents"></div>
+
+                <h1>3 - nuevo agente</h1>
+                <form id="form-agent" class="panel form-grid">
+                    <div class="field">
+                        <label for="input-agent-name">Nombre <span class="muted">(letras, dígitos, . _ -)</span></label>
+                        <input id="input-agent-name" type="text" maxlength="100" autocomplete="off" placeholder="web-01">
+                    </div>
+                    <div class="field">
+                        <label for="input-agent-heartbeat">Latido cada (s)</label>
+                        <input id="input-agent-heartbeat" type="number" min="5" max="3600" step="1" value="30">
+                    </div>
+                    <div class="field field-actions">
+                        <button id="button-agent-submit" type="submit" class="button button-primary">Crear agente</button>
+                    </div>
+                    <p id="p-agent-form-errors" class="error field-full hidden"></p>
+                </form>
+                <div id="div-agent-token" class="panel panel-once hidden">
+                    <div id="div-agent-token-content"></div>
+                    <button id="button-agent-token-hide" type="button" class="button button-small">Ya lo he copiado: ocultar</button>
+                </div>
+
+                <h1>4 - monitores <span class="muted">(recursos a vigilar)</span></h1>
+                <p class="muted">Lo que se crea aquí lo descargan solos los agentes del proyecto en menos de un minuto: no hay que tocar los servidores.</p>
+                <p id="p-monitors-errors" class="error hidden"></p>
+                <div id="div-monitors-table"></div>
+
+                <h1 id="h2-monitor-form">5 - Nuevo monitor</h1>
+                <form id="form-monitor" class="panel form-grid">
+                    <input id="hidden-monitor-uuid" type="hidden" value="">
+                    <div class="field">
+                        <label for="select-monitor-type">Tipo</label>
+                        <select id="select-monitor-type"></select>
+                    </div>
+                    <div class="field">
+                        <label for="input-monitor-name">Nombre <span class="muted">(letras, dígitos, . _ -)</span></label>
+                        <input id="input-monitor-name" type="text" maxlength="100" autocomplete="off" placeholder="disco-raiz">
+                    </div>
+                    <div class="field">
+                        <label for="select-monitor-agent">Ámbito</label>
+                        <select id="select-monitor-agent"></select>
+                    </div>
+                    <div class="field field-check">
+                        <label><input id="checkbox-monitor-enabled" type="checkbox" checked> Activo</label>
+                    </div>
+
+                    <div id="div-monitor-metric-fields" class="field-full form-grid">
+                        <div class="field">
+                            <label for="input-monitor-interval">Medir cada (s)</label>
+                            <input id="input-monitor-interval" type="number" min="10" max="86400" step="1" value="60">
+                        </div>
+                        <div class="field">
+                            <label for="input-monitor-warning">Umbral warning (<span id="span-monitor-threshold-unit">%</span>)</label>
+                            <input id="input-monitor-warning" type="text" inputmode="decimal" autocomplete="off" placeholder="vacío = sin umbral">
+                        </div>
+                        <div class="field">
+                            <label for="input-monitor-critical">Umbral critical</label>
+                            <input id="input-monitor-critical" type="text" inputmode="decimal" autocomplete="off" placeholder="vacío = sin umbral">
+                        </div>
+                    </div>
+
+                    <div id="div-monitor-field-path" class="field field-wide">
+                        <label for="input-monitor-path">Ruta <span class="muted">(en el servidor del agente)</span></label>
+                        <input id="input-monitor-path" type="text" autocomplete="off" placeholder="/">
+                    </div>
+                    <div id="div-monitor-field-interface" class="field">
+                        <label for="input-monitor-interface">Interfaz <span class="muted">(vacío = todas menos lo)</span></label>
+                        <input id="input-monitor-interface" type="text" autocomplete="off" placeholder="eth0">
+                    </div>
+                    <div id="div-monitor-field-pattern" class="field-full form-grid">
+                        <div class="field">
+                            <label for="input-monitor-pattern">Ficheros <span class="muted">(glob del nombre)</span></label>
+                            <input id="input-monitor-pattern" type="text" autocomplete="off" placeholder="*.log">
+                        </div>
+                        <div class="field field-check">
+                            <label><input id="checkbox-monitor-recursive" type="checkbox"> Incluir subcarpetas</label>
+                        </div>
+                    </div>
+                    <div id="div-monitor-field-match" class="field-full form-grid">
+                        <div class="field field-wide">
+                            <label for="input-monitor-match">Líneas que casan con <span class="muted">(expresión regular)</span></label>
+                            <input id="input-monitor-match" type="text" autocomplete="off" placeholder="failed password|invalid user">
+                        </div>
+                        <div class="field">
+                            <label for="select-monitor-severity">Gravedad de esas líneas</label>
+                            <select id="select-monitor-severity"></select>
+                        </div>
+                    </div>
+
+                    <div class="field field-actions field-full">
+                        <button id="button-monitor-submit" type="submit" class="button button-primary">Crear monitor</button>
+                        <button id="button-monitor-cancel" type="button" class="button hidden">Cancelar edición</button>
+                    </div>
+                    <p id="p-monitor-form-errors" class="error field-full hidden"></p>
+                    <p id="p-monitor-form-message" class="notice field-full hidden"></p>
+                </form>
+
+                <h1>6 - borrar proyecto</h1>
+                <form id="form-project-delete" class="panel panel-danger form-grid">
+                    <p class="field-full">Se borran el proyecto, sus agentes, sus monitores y todos sus eventos. No se puede deshacer.
+                        Para confirmar, escribe su nombre: <strong id="span-project-delete-name"></strong></p>
+                    <div class="field field-wide">
+                        <label for="input-project-delete-name" class="sr-only">Nombre del proyecto</label>
+                        <input id="input-project-delete-name" type="text" autocomplete="off" placeholder="nombre del proyecto">
+                    </div>
+                    <div class="field field-actions">
+                        <button id="button-project-delete" type="submit" class="button button-danger" disabled>Borrar proyecto</button>
+                    </div>
+                    <p id="p-project-delete-errors" class="error field-full hidden"></p>
+                </form>
+            </div>
+        </section>
+
+        <!-- visor de eventos tipo Discover (EventsView) -->
+        <section id="section-events" data-screen="events" class="screen hidden">
+            <h1>1 - consulta</h1>
+            <div class="toolbar">
+                <form id="form-events-query" class="toolbar-query">
+                    <label for="input-events-search" class="sr-only">Texto en el mensaje</label>
+                    <input id="input-events-search" type="search" autocomplete="off" placeholder="Texto en el mensaje (Enter para buscar)">
+                    <button type="submit" class="button button-primary">Buscar</button>
+                </form>
+                <label for="select-events-range" class="sr-only">Rango de tiempo</label>
+                <select id="select-events-range"></select>
+                <label for="select-events-refresh" class="sr-only">Auto-refresco</label>
+                <select id="select-events-refresh"></select>
+            </div>
+            <form id="form-events-custom-range" class="toolbar toolbar-range hidden">
+                <label for="input-events-from">Desde (UTC)</label>
+                <input id="input-events-from" type="text" class="mono" autocomplete="off" placeholder="YYYY-MM-DD HH:MM:SS">
+                <label for="input-events-to">Hasta (UTC)</label>
+                <input id="input-events-to" type="text" class="mono" autocomplete="off" placeholder="YYYY-MM-DD HH:MM:SS">
+                <button type="submit" class="button">Aplicar rango</button>
+                <p id="p-events-range-errors" class="error hidden"></p>
+            </form>
+            <p class="range-info mono"><span id="span-events-range-info"></span></p>
+            <div id="div-events-pills" class="pills"></div>
+
+            <div class="histogram panel">
+                <div id="div-events-histogram"></div>
+                <p id="p-events-histogram-info" class="histogram-info mono"></p>
+            </div>
+
+            <div class="discover">
+                <aside class="discover-fields">
+                    <h1>2 - campos</h1>
+                    <div id="div-events-facets"></div>
+                </aside>
+                <div class="discover-results">
+                    <h1>3 - eventos</h1>
+                    <p id="p-events-errors" class="error hidden"></p>
+                    <div id="div-events-table"></div>
+                    <div class="pager">
+                        <button id="button-events-previous" type="button" class="button" disabled>← anteriores</button>
+                        <span id="span-events-page" class="muted"></span>
+                        <button id="button-events-next" type="button" class="button" disabled>siguientes →</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- binarios del agente e instrucciones (DownloadsView) -->
+        <section id="section-downloads" data-screen="downloads" class="screen hidden">
+            <h1>1 - binarios del agente</h1>
+            <p class="muted">Un solo ejecutable por sistema. Ya no hace falta <code>siem-client.json</code>: en el servidor solo van el binario
+                y un <code>.env</code> con el endpoint y el token; lo que se vigila se crea en el panel (monitores de cada proyecto) y el
+                agente lo descarga solo. El token sale <strong>una sola vez</strong> al crear el agente en su proyecto.</p>
+            <div class="panel form-grid">
+                <div class="field field-wide">
+                    <label for="input-downloads-token">Token del agente <span class="muted">(opcional: para que los comandos salgan completos; no se guarda ni se envía)</span></label>
+                    <input id="input-downloads-token" type="password" autocomplete="off" placeholder="&lt;API_TOKEN&gt;">
+                </div>
+            </div>
+            <p id="p-downloads-errors" class="error hidden"></p>
+            <div id="div-downloads-list"></div>
+        </section>
+
+    </main>
+</div>
+</body>
+</html>

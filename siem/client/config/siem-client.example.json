@@ -1,0 +1,54 @@
+{
+    "collect_interval_seconds": 5,
+    "send_interval_seconds": 10,
+    "heartbeat_interval_seconds": 30,
+    "max_events_per_batch": 500,
+    "max_spool_batches": 5000,
+    "watchers": [
+        {
+            "name": "nginx-logs",
+            "path": "/var/log/nginx",
+            "pattern": "*.log",
+            "is_recursive": false,
+            "start_at": "end"
+        },
+        {
+            "name": "app-logs",
+            "path": "/var/www/app/storage/logs",
+            "pattern": "*.log",
+            "is_recursive": true,
+            "start_at": "end"
+        }
+    ],
+    "commands": [
+        {
+            "name": "disk-usage",
+            "command": "df -h /",
+            "interval_seconds": 300,
+            "timeout_seconds": 10
+        },
+        {
+            "name": "failed-ssh-logins",
+            "command": "journalctl -u ssh --since '-5 min' --no-pager | grep -i 'failed password' || true",
+            "interval_seconds": 300,
+            "timeout_seconds": 20
+        },
+        {
+            "name": "docker-unhealthy",
+            "command": "docker ps --filter health=unhealthy --format '{{.Names}}'",
+            "interval_seconds": 60,
+            "timeout_seconds": 10
+        }
+    ],
+    "docker": {
+        "is_enabled": false,
+        "socket_path": "/var/run/docker.sock",
+        "is_stats_enabled": true,
+        "stats_interval_seconds": 60,
+        "is_events_enabled": true,
+        "is_logs_enabled": true,
+        "logs_max_lines_per_container": 200,
+        "logs_include": ["*"],
+        "logs_exclude": []
+    }
+}

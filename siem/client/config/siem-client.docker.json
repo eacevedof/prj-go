@@ -1,0 +1,49 @@
+{
+    "collect_interval_seconds": 3,
+    "send_interval_seconds": 5,
+    "heartbeat_interval_seconds": 20,
+    "watchers": [
+        {
+            "name": "demo-logs",
+            "path": "/app/storage/demo-logs",
+            "pattern": "*.log",
+            "is_recursive": true,
+            "start_at": "beginning"
+        },
+        {
+            "name": "host-folder",
+            "path": "/watch/host",
+            "pattern": "*",
+            "is_recursive": true,
+            "start_at": "beginning"
+        }
+    ],
+    "commands": [
+        {
+            "name": "disk-usage",
+            "command": "df -h /",
+            "interval_seconds": 60,
+            "timeout_seconds": 10
+        },
+        {
+            "name": "uptime",
+            "command": "uptime",
+            "interval_seconds": 30,
+            "timeout_seconds": 5
+        },
+        {
+            "name": "always-fails",
+            "command": "ls /does-not-exist",
+            "interval_seconds": 120,
+            "timeout_seconds": 5
+        }
+    ],
+    "docker": {
+        "is_enabled": true,
+        "socket_path": "/var/run/docker.sock",
+        "stats_interval_seconds": 60,
+        "logs_max_lines_per_container": 200,
+        "logs_include": ["*"],
+        "logs_exclude": []
+    }
+}

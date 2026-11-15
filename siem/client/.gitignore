@@ -1,0 +1,20 @@
+.vscode
+.idea
+
+.env
+.env.local
+
+# binarios (go build -o build/...)
+build/*
+!build/.gitkeep
+
+# storage: logs, spool (eventos sin enviar) y state (offsets) se generan; se conserva el esqueleto
+storage/**/*
+!storage/**/
+!storage/**/.gitkeep
+
+# config real del host (la de ejemplo y la de docker si van versionadas)
+config/siem-client.json
+# lineas de prueba que escribe make demo-log
+storage/demo-logs/*
+docker/.env

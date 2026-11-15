@@ -1,0 +1,37 @@
+# docker/docker-compose.yml -- el siem-client en un contenedor, para probarlo en local contra el backend de
+# ../backend (misma red siem-net: arrancar antes el backend con su make up). Vigila storage/demo-logs y lanza los
+# comandos de config/siem-client.docker.json. Tambien vigila /watch/host: una carpeta de Windows (SIEM_WATCH_HOST_PATH). Lanzar desde siem/client/ con el makefile (make up).
+# El token del agente va en docker/.env (APP_SIEM_API_TOKEN), nunca en el compose.
+name: siem-client
+
+services:
+  siem-client-app:
+    container_name: cont-siem-client-app
+    build:
+      context: app
+    environment:
+      TZ: ${TIME_ZONE:-UTC}
+      APP_ENV: local
+      APP_SIEM_ENDPOINT_URL: http://cont-siem-backend-app:8080/api/v1/ingest-batches
+      APP_SIEM_API_TOKEN: ${APP_SIEM_API_TOKEN:-}
+      APP_CONFIG_PATH: /app/config/siem-client.docker.json
+    volumes:
+      - ../:/app
+      # carpeta real del host para las pruebas en local (solo lectura); SIEM_WATCH_HOST_PATH en docker/.env
+      - ${SIEM_WATCH_HOST_PATH:-../storage/demo-logs}:/watch/host:ro
+      # API de Docker para el modulo docker (estados, recursos, logs, eventos). El agente solo hace GET, pero el socket
+      # da control total del daemon: en produccion, mejor un docker-socket-proxy que solo deje leer (ver siem-tech-debt)
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - siem-client-gomod:/go/pkg/mod
+      - siem-client-gocache:/root/.cache/go-build
+    networks:
+      - siem-net
+
+volumes:
+  siem-client-gomod:
+  siem-client-gocache:
+
+networks:
+  siem-net:
+    name: siem-net
+    external: true

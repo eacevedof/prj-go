@@ -1,0 +1,30 @@
+# docker/docker-compose.yml -- stack local minimo: la API en Go (alpine). Sin contenedor de BD (SQLite) ni nginx
+# (la propia API sirve public/). Lanzar desde siem/backend/ con el makefile (make up).
+# Variables opcionales en docker/.env (ver .env.example).
+name: siem-backend
+
+services:
+  siem-backend-app:
+    container_name: cont-siem-backend-app
+    build:
+      context: app
+    environment:
+      TZ: ${TIME_ZONE:-UTC}
+    ports:
+      - ${HTTP_PORT:-9400}:8080
+    volumes:
+      - ../:/app
+      # cache de modulos y de compilacion: el build de cada arranque no vuelve a descargar ni a compilar todo
+      - siem-backend-gomod:/go/pkg/mod
+      - siem-backend-gocache:/root/.cache/go-build
+    networks:
+      - siem-net
+
+volumes:
+  siem-backend-gomod:
+  siem-backend-gocache:
+
+networks:
+  # red con nombre fijo: un siem-client en otro contenedor puede unirse a ella para las pruebas en local
+  siem-net:
+    name: siem-net
