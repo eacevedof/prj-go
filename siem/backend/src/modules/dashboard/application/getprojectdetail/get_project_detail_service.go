@@ -146,6 +146,7 @@ func (s *GetProjectDetailService) getAgent(agentEntity *agentsentities.AgentEnti
         agentsenums.AgentsKeyEnum.HOST_OS:                    agentEntity.GetHostOs(),
         agentsenums.AgentsKeyEnum.HOST_IP:                    agentEntity.GetHostIp(),
         agentsenums.AgentsKeyEnum.CLIENT_VERSION:             agentEntity.GetClientVersion(),
+        agentsenums.AgentsKeyEnum.CLIENT_PATH:                agentEntity.GetClientPath(),
         agentsenums.AgentsKeyEnum.LAST_SEEN_AT:               agentEntity.GetLastSeenAt(),
         enums.DashboardKeyEnum.EVENTS_24H:                    s.eventsStatsCounter.GetTotal(eventsCountBySeverity),
         enums.DashboardKeyEnum.WARNINGS_24H:                  eventsCountBySeverity[eventsenums.EventSeverityEnum.WARNING],

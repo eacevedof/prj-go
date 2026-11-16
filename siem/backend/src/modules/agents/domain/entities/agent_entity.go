@@ -20,6 +20,7 @@ type AgentPrimitives struct {
     HostOs                   string `json:"host_os"`
     HostIp                   string `json:"host_ip"`
     ClientVersion            string `json:"client_version"`
+    ClientPath               string `json:"client_path"`
     LastSeenAt               string `json:"last_seen_at"`
     CreatedAt                string `json:"created_at"`
     UpdatedAt                string `json:"updated_at"`
@@ -43,6 +44,7 @@ type AgentEntity struct {
     hostOs                   string
     hostIp                   string
     clientVersion            string
+    clientPath               string
     lastSeenAt               string
     createdAt                string
     updatedAt                string
@@ -63,6 +65,7 @@ func AgentEntityFromPrimitives(primitives map[string]any) *AgentEntity {
         hostOs:                   application.GetTrimmedString(primitives, enums.AgentsKeyEnum.HOST_OS),
         hostIp:                   application.GetTrimmedString(primitives, enums.AgentsKeyEnum.HOST_IP),
         clientVersion:            application.GetTrimmedString(primitives, enums.AgentsKeyEnum.CLIENT_VERSION),
+        clientPath:               application.GetTrimmedString(primitives, enums.AgentsKeyEnum.CLIENT_PATH),
         lastSeenAt:               application.GetTrimmedString(primitives, enums.AgentsKeyEnum.LAST_SEEN_AT),
         createdAt:                application.GetTrimmedString(primitives, enums.AgentsKeyEnum.CREATED_AT),
         updatedAt:                application.GetTrimmedString(primitives, enums.AgentsKeyEnum.UPDATED_AT),
@@ -79,6 +82,7 @@ func (e *AgentEntity) ToPrimitives() AgentPrimitives {
         HostOs:                   e.hostOs,
         HostIp:                   e.hostIp,
         ClientVersion:            e.clientVersion,
+        ClientPath:               e.clientPath,
         LastSeenAt:               e.lastSeenAt,
         CreatedAt:                e.createdAt,
         UpdatedAt:                e.updatedAt,
@@ -147,4 +151,9 @@ func (e *AgentEntity) GetCreatedAt() string {
 
 func (e *AgentEntity) GetUpdatedAt() string {
     return e.updatedAt
+}
+
+// GetClientPath ruta del ejecutable del siem-client en su host ("" si aun no ha enviado nada o es un cliente < 0.4.0).
+func (e *AgentEntity) GetClientPath() string {
+    return e.clientPath
 }

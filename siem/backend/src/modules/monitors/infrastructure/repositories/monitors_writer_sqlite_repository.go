@@ -19,7 +19,7 @@ func MonitorsWriterSqliteRepositoryGetInstance() *MonitorsWriterSqliteRepository
 func (r *MonitorsWriterSqliteRepository) InsertMonitor(monitorEntity *entities.MonitorEntity) (int, error) {
     sql := fmt.Sprintf(`
         -- insertMonitor
-        INSERT INTO `+"`monitors`"+`
+        INSERT INTO `+"`app_monitors`"+`
             (monitor_uuid, project_id, agent_id, monitor_type, monitor_name, is_enabled, interval_seconds, config,
              warning_threshold, critical_threshold, created_at, updated_at)
         VALUES
@@ -46,7 +46,7 @@ func (r *MonitorsWriterSqliteRepository) InsertMonitor(monitorEntity *entities.M
 func (r *MonitorsWriterSqliteRepository) UpdateMonitorById(monitorEntity *entities.MonitorEntity) (int, error) {
     sql := fmt.Sprintf(`
         -- updateMonitorById
-        UPDATE `+"`monitors`"+`
+        UPDATE `+"`app_monitors`"+`
         SET agent_id = ?, monitor_name = ?, is_enabled = %d, interval_seconds = %d, config = ?,
             warning_threshold = ?, critical_threshold = ?, updated_at = ?
         WHERE 1=1
@@ -65,7 +65,7 @@ func (r *MonitorsWriterSqliteRepository) UpdateMonitorById(monitorEntity *entiti
 func (r *MonitorsWriterSqliteRepository) DeleteMonitorById(monitorId int) (int, error) {
     sql := fmt.Sprintf(`
         -- deleteMonitorById
-        DELETE FROM `+"`monitors`"+`
+        DELETE FROM `+"`app_monitors`"+`
         WHERE 1=1
         AND id = %d
         `, monitorId)

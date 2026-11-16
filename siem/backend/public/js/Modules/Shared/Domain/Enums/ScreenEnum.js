@@ -1,6 +1,7 @@
 /**
- * Pantallas de la SPA: el valor es el primer tramo del hash (#/, #/projects/<uuid>, #/events?..., #/downloads) y el
- * data-screen de su section.
+ * Pantallas de la SPA: el valor es el data-screen de su section. El hash elige la pantalla por su primer tramo:
+ * #/events?... (visor, la de entrada), #/projects (lista de proyectos = DASHBOARD), #/projects/<uuid> (detalle =
+ * PROJECT_DETAIL), #/downloads. "#/" o un tramo desconocido = DEFAULT.
  */
 export const ScreenEnum = Object.freeze({
     DASHBOARD: "dashboard",
@@ -8,5 +9,5 @@ export const ScreenEnum = Object.freeze({
     EVENTS: "events",
     DOWNLOADS: "downloads",
 
-    DEFAULT: "dashboard",
+    DEFAULT: "events",
 });

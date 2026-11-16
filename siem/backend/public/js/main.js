@@ -17,11 +17,11 @@ import { DashboardView } from "/js/Modules/Dashboard/Infrastructure/Views/Dashbo
 import { ProjectDetailView } from "/js/Modules/Dashboard/Infrastructure/Views/ProjectDetailView.js";
 
 import { CreateProjectController } from "/js/Modules/Projects/Infrastructure/Controllers/CreateProjectController.js";
-import { DeleteListedProjectController } from "/js/Modules/Projects/Infrastructure/Controllers/DeleteListedProjectController.js";
 import { DeleteProjectController } from "/js/Modules/Projects/Infrastructure/Controllers/DeleteProjectController.js";
 import { FilterProjectsController } from "/js/Modules/Projects/Infrastructure/Controllers/FilterProjectsController.js";
 import { UpdateProjectController } from "/js/Modules/Projects/Infrastructure/Controllers/UpdateProjectController.js";
-import { ProjectDangerView } from "/js/Modules/Projects/Infrastructure/Views/ProjectDangerView.js";
+import { ProjectDeleteDialogView } from "/js/Modules/Projects/Infrastructure/Views/ProjectDeleteDialogView.js";
+import { ProjectDeletedView } from "/js/Modules/Projects/Infrastructure/Views/ProjectDeletedView.js";
 import { ProjectFormView } from "/js/Modules/Projects/Infrastructure/Views/ProjectFormView.js";
 import { ProjectsTableView } from "/js/Modules/Projects/Infrastructure/Views/ProjectsTableView.js";
 
@@ -54,14 +54,14 @@ const start = async function () {
     document.getElementById("p-app-loading")?.classList.add("hidden");
     [
         NavigationView, CopyView, AuthView, SessionView,
-        DashboardView, ProjectDetailView, ProjectsTableView, ProjectFormView, ProjectDangerView, AgentsTableView, AgentFormView, MonitorsView,
+        DashboardView, ProjectDetailView, ProjectsTableView, ProjectFormView, ProjectDeleteDialogView, ProjectDeletedView, AgentsTableView, AgentFormView, MonitorsView,
         EventsView, DownloadsView,
     ].forEach((view) => view.getInstance().init());
     [
         RefreshScreenController,
         LogInController, StartSessionController, LogOutController,
         GetDashboardController, GetProjectDetailController,
-        FilterProjectsController, CreateProjectController, UpdateProjectController, DeleteProjectController, DeleteListedProjectController,
+        FilterProjectsController, CreateProjectController, UpdateProjectController, DeleteProjectController,
         FilterAgentsController, CreateAgentController, UpdateAgentController, DeleteAgentController,
         ListMonitorsController, CreateMonitorController, UpdateMonitorController, DeleteMonitorController,
         SearchEventsController,

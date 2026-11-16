@@ -20,6 +20,7 @@ export const AgentsTextEnum = Object.freeze({
     SHOW_DETAIL: "Ver detalle",
     HIDE_DETAIL: "Ocultar detalle",
     EDIT: "Editar",
+    CREATE_MONITOR: "Crear monitor",
     DELETE: "Borrar",
     EVENTS: "eventos",
     CONFIRM_DELETE: "¿Borrar con sus fuentes y eventos? Su token deja de valer.",

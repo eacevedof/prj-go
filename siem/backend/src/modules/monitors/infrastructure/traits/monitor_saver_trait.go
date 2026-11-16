@@ -22,6 +22,7 @@ type MonitorSaverTrait struct {
     MonitorsReaderSqliteRepository *repositories.MonitorsReaderSqliteRepository
     MonitorsWriterSqliteRepository *repositories.MonitorsWriterSqliteRepository
     agentsReaderSqliteRepository   *agentsrepositories.AgentsReaderSqliteRepository
+    monitorResourceKeyer           *services.MonitorResourceKeyer
 }
 
 func NewMonitorSaverTrait() MonitorSaverTrait {
@@ -30,6 +31,7 @@ func NewMonitorSaverTrait() MonitorSaverTrait {
         MonitorsReaderSqliteRepository: repositories.MonitorsReaderSqliteRepositoryGetInstance(),
         MonitorsWriterSqliteRepository: repositories.MonitorsWriterSqliteRepositoryGetInstance(),
         agentsReaderSqliteRepository:   agentsrepositories.AgentsReaderSqliteRepositoryGetInstance(),
+        monitorResourceKeyer:           services.MonitorResourceKeyerGetInstance(),
     }
 }
 
@@ -74,6 +76,35 @@ func (t MonitorSaverTrait) FailIfMonitorNameExists(projectId int, monitorName st
     }
     if doesMonitorNameExist {
         return exceptions.ConflictCustom(config.Tr(enums.MonitorsMessageEnum.MONITOR_NAME_X_ALREADY_EXISTS, monitorName))
+    }
+    return nil
+}
+
+// FailIfMonitorResourceExists *MonitorsException (409) si otro monitor ya vigila el mismo recurso (ver
+// MonitorResourceKeyer) en un agente que tambien aplicaria este. agentId 0 = de todos los agentes: choca con cualquier
+// monitor del proyecto; uno de un agente choca con los de ese agente y con los de todos. excludedMonitorId: el propio
+// monitor al editar (0 en el alta).
+func (t MonitorSaverTrait) FailIfMonitorResourceExists(projectId int, agentId int, monitorType string, normalizedConfig map[string]any, excludedMonitorId int) error {
+    monitorEntities, err := t.MonitorsReaderSqliteRepository.GetMonitorsByProjectId(projectId)
+    if err != nil {
+        return err
+    }
+    resourceKey := t.monitorResourceKeyer.GetResourceKey(monitorType, normalizedConfig)
+    for _, monitorEntity := range monitorEntities {
+        if monitorEntity.GetId() == excludedMonitorId || monitorEntity.GetMonitorType() != monitorType {
+            continue
+        }
+        isSameScope := agentId == 0 || monitorEntity.GetAgentId() == 0 || monitorEntity.GetAgentId() == agentId
+        if !isSameScope || t.monitorResourceKeyer.GetResourceKey(monitorType, monitorEntity.GetConfig()) != resourceKey {
+            continue
+        }
+        scopeName := monitorEntity.GetAgentName()
+        if monitorEntity.GetAgentId() == 0 {
+            scopeName = enums.MonitorsMessageEnum.ALL_AGENTS
+        }
+        return exceptions.ConflictCustom(config.Tr(
+            enums.MonitorsMessageEnum.MONITOR_X_ALREADY_WATCHES_IT, monitorEntity.GetMonitorName(), monitorType, scopeName,
+        ))
     }
     return nil
 }

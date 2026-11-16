@@ -97,6 +97,8 @@ var MonitorsMessageEnum = struct {
     PROJECT_X_NOT_FOUND                 string
     AGENT_X_NOT_FOUND_IN_PROJECT        string
     MONITOR_NAME_X_ALREADY_EXISTS       string
+    MONITOR_X_ALREADY_WATCHES_IT        string
+    ALL_AGENTS                          string
     MONITOR_NAME_IS_NOT_VALID           string
     MONITOR_TYPE_IS_NOT_VALID           string
     INTERVAL_SECONDS_MUST_BE_10_TO_86400 string
@@ -114,6 +116,8 @@ var MonitorsMessageEnum = struct {
     PROJECT_X_NOT_FOUND:                  "Project {0} not found",
     AGENT_X_NOT_FOUND_IN_PROJECT:         "agent_uuid: agent {0} not found in this project",
     MONITOR_NAME_X_ALREADY_EXISTS:        "monitor_name: {0} already exists in this project",
+    MONITOR_X_ALREADY_WATCHES_IT:         "config: monitor {0} already watches the same {1} on {2}",
+    ALL_AGENTS:                           "all agents",
     MONITOR_NAME_IS_NOT_VALID:            "monitor_name: required, 1-100 chars of letters, digits and . _ -",
     MONITOR_TYPE_IS_NOT_VALID:            "monitor_type: must be one of cpu, memory, disk, gpu, network, folder, log_pattern",
     INTERVAL_SECONDS_MUST_BE_10_TO_86400: "interval_seconds: must be between 10 and 86400",

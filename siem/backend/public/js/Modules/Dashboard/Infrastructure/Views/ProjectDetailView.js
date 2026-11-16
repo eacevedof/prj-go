@@ -3,7 +3,8 @@ import { Htmler } from "/js/Modules/Shared/Infrastructure/Components/Htmler.js";
 const CSS_HIDDEN = "hidden";
 
 /**
- * Detalle de un proyecto: su cabecera (nombre, descripcion, uuid y enlace a sus eventos). Los agentes los pinta el
+ * Detalle de un proyecto: su cabecera (nombre, descripcion y enlace a sus eventos; el boton rojo "Borrar proyecto" de
+ * al lado es de Projects, ProjectDeleteDialogView). Los agentes los pinta el
  * modulo Agents (su tabla escucha PROJECT_DETAIL_RENDERED) y los monitores, Monitors.
  * Una sola instancia: guarda las referencias al DOM.
  */
@@ -31,6 +32,7 @@ export class ProjectDetailView {
             pProjectErrors: document.getElementById("p-project-errors"),
             divProjectBody: document.getElementById("div-project-body"),
             divProjectHeader: document.getElementById("div-project-header"),
+            aProjectEvents: document.getElementById("a-project-events"),
         };
     }
 
@@ -41,6 +43,7 @@ export class ProjectDetailView {
         this.renderErrors([]);
         this.#elements.divProjectBody.classList.remove(CSS_HIDDEN);
         this.#elements.divProjectHeader.innerHTML = this.#getHeaderHtml(project);
+        this.#elements.aProjectEvents.href = `#/events?project_uuid=${encodeURIComponent(project.project_uuid ?? "")}`;
     }
 
     /**
@@ -57,11 +60,8 @@ export class ProjectDetailView {
 
     #getHeaderHtml(project) {
         const h = this.#htmler;
-        const projectUuid = project.project_uuid ?? "";
         return `
             <h1>1 - ${h.getEscaped(project.project_name)}</h1>
-            <p class="muted">${h.getEscaped(project.project_description)}</p>
-            <p>${h.getCopyableValue(projectUuid)}
-                <a class="link-action" href="#/events?project_uuid=${encodeURIComponent(projectUuid)}">ver sus eventos</a></p>`;
+            <p class="muted">${h.getEscaped(project.project_description)}</p>`;
     }
 }

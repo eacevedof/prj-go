@@ -8,7 +8,7 @@ client (por host)                          backend (uno)
   watchers ─┐                                POST /api/v1/ingest-batches ──► ingest_queue (202 enseguida)
   commands ─┴─► spool/ ──► events-send ──────►                                   │ worker cada 2 s
               (aguanta si el backend cae)                                        ▼
-                                             projects · agents · sources · events ◄── dashboard (/)
+                                             app_projects · app_agents · app_sources · app_events ◄── dashboard (/)
 ```
 
 ## 1 - backend
@@ -23,8 +23,10 @@ client (por host)                          backend (uno)
    1. **Proyecto** (portada → "nuevo proyecto").
    2. **Agente** (detalle del proyecto → "nuevo agente"): enseña su `api_token` **una sola vez**, con el `.env` listo
       para copiar.
-   3. **Monitores** (detalle del proyecto → "monitores"): lo que vigilan los agentes de ese proyecto (cpu, memoria,
-      disco, gpu, red, carpetas, patrones de log), con sus umbrales. Los agentes los descargan solos en < 1 min.
+   3. **Monitores**: lo que vigilan los agentes (cpu, memoria, disco, gpu, red, carpetas, patrones de log), con sus
+      umbrales. Los de un agente, con "Crear monitor" en su fila; los de todos los agentes del proyecto, en el
+      apartado "monitores". No se admiten repetidos (mismo recurso en el mismo agente). Los agentes los descargan
+      solos en < 1 min.
    4. **Descargas**: los binarios del agente con las instrucciones de instalación (antes, `cd client && make dist`).
 4. Lo mismo por consola: `make console c='project-create --project_name="Mi app"'` y
    `make console c='agent-create --project_uuid=<uuid> --agent_name=web-01'`.
@@ -45,21 +47,22 @@ client (por host)                          backend (uno)
 | 1 | `POST /api/v1/ingest-batches` | agente | el cliente envía un lote (202); `events: []` = latido |
 | 2 | `GET /api/v1/agent-config` | agente | los monitores que tiene que vigilar ese agente: `{config_hash, monitors}` |
 | 3 | `GET /api/v1/dashboard` | dashboard | servidor + semáforo por proyecto (con `project_id`, `project_uuid` y los contadores de 24 h) |
-| 4 | `POST /api/v1/projects` · `PUT` · `DELETE /api/v1/projects/:project_uuid` | dashboard | alta y edición (`{project_name, project_description}`; nombre único) y baja (en cascada) |
+| 4 | `POST /api/v1/projects` · `PUT` · `DELETE /api/v1/projects/:project_uuid` | dashboard | alta y edición (`{project_name, project_description}`; nombre único) y baja (en cascada; devuelve sus agentes con host y `client_path` para desinstalarlos) |
 | 5 | `GET /api/v1/projects/:project_uuid` | dashboard | agentes y fuentes de un proyecto |
 | 6 | `POST /api/v1/projects/:project_uuid/agents` · `PUT` · `DELETE /api/v1/agents/:agent_uuid` | dashboard | alta (`{agent_name, heartbeat_interval_seconds}` → `api_token`, **una vez**), edición (`+ is_enabled`: desactivado, su token da 401) y baja |
 | 7 | `GET` · `POST /api/v1/projects/:project_uuid/monitors` | dashboard | monitores del proyecto (con su último valor por agente) y alta |
 | 8 | `PUT` · `DELETE /api/v1/monitors/:monitor_uuid` | dashboard | edición (todo menos el tipo) y baja |
 | 9 | `GET /api/v1/events` | dashboard | visor: `{events, page, page_size, has_more}` |
 | 10 | `GET /api/v1/events/histogram` · `GET /api/v1/events/facets` | dashboard | barras por tramo y gravedad · top de valores por campo |
-| 11 | `GET /api/v1/downloads` | dashboard | binarios del agente (`public/downloads/`, tamaño y sha256) y la url de ingesta |
-| 12 | `GET /downloads/<fichero>` · `GET /health` | — | descarga de un binario · vivo |
+| 11 | `GET /api/v1/events/filter-options` | dashboard | catálogo de los filtros Proyecto / Agente / Monitor del visor: `{projects, agents, monitors}` (uuid, nombre y de quién cuelga) |
+| 12 | `GET /api/v1/downloads` | dashboard | binarios del agente (`public/downloads/`, tamaño y sha256) y la url de ingesta |
+| 13 | `GET /downloads/<fichero>` · `GET /health` | — | descarga de un binario · vivo |
 
 Auth = `Authorization: Bearer <token>`: "agente" = su `api_token`; "dashboard" = `APP_DASHBOARD_TOKEN` (lee y escribe).
 
 **Filtros** de `events`, `histogram` y `facets` (los mismos en las tres): `from`, `to` (UTC `YYYY-MM-DD HH:MM:SS` sobre
 `occurred_at`; sin rango, `histogram` y `facets` miran las últimas 24 h), `search` (texto en el mensaje) y, por campo
-(`project_uuid`, `agent_uuid`, `severity`, `event_type`, `source_type`, `source_name`), `campo=a,b` para incluir y
+(`project_uuid`, `agent_uuid`, `monitor_uuid`, `severity`, `event_type`, `source_type`, `source_name`), `campo=a,b` para incluir y
 `not_campo=a,b` para excluir. `events` añade `page` y `page_size` (máx. 200).
 
 **Monitor** (`monitor_type` → `config` · valor y unidad de sus umbrales `warning_threshold` / `critical_threshold`):
@@ -73,7 +76,7 @@ Cuerpo de un lote:
 ```json
 {
     "batch_uuid": "b-6af9d1f5bd83a",
-    "agent": {"host_name": "web-01", "host_os": "linux", "client_version": "0.1.0"},
+    "agent": {"host_name": "web-01", "host_os": "linux", "client_version": "0.4.0", "client_path": "/opt/siem-client/siem-client"},
     "events": [
         {"event_type": "log_line", "source_name": "nginx-logs", "file_path": "/var/log/nginx/error.log",
          "message": "... connect() failed ...", "occurred_at": "2026-11-15 10:00:00"},

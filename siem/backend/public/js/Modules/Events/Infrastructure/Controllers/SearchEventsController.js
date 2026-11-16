@@ -14,6 +14,8 @@ import { EventsQueryParser } from "/js/Modules/Events/Domain/Services/EventsQuer
 import { TimeRangeResolver } from "/js/Modules/Events/Domain/Services/TimeRangeResolver.js";
 import { GetEventsFacetsDto } from "/js/Modules/Events/Application/GetEventsFacets/GetEventsFacetsDto.js";
 import { GetEventsFacetsService } from "/js/Modules/Events/Application/GetEventsFacets/GetEventsFacetsService.js";
+import { GetEventsFilterOptionsDto } from "/js/Modules/Events/Application/GetEventsFilterOptions/GetEventsFilterOptionsDto.js";
+import { GetEventsFilterOptionsService } from "/js/Modules/Events/Application/GetEventsFilterOptions/GetEventsFilterOptionsService.js";
 import { GetEventsHistogramDto } from "/js/Modules/Events/Application/GetEventsHistogram/GetEventsHistogramDto.js";
 import { GetEventsHistogramService } from "/js/Modules/Events/Application/GetEventsHistogram/GetEventsHistogramService.js";
 import { SearchEventsDto } from "/js/Modules/Events/Application/SearchEvents/SearchEventsDto.js";
@@ -79,6 +81,8 @@ export class SearchEventsController {
             include: state.include,
             exclude: state.exclude,
         };
+        // el catalogo de los desplegables no espera a las consultas de eventos (las facetas pueden tardar segundos)
+        this.#renderFilterOptions(requestNumber, filters.dashboardToken);
         const [eventsResult, histogramResult, facetsResult] = await Promise.allSettled([
             SearchEventsService.getInstance().invoke(SearchEventsDto.fromPrimitives({ ...filters, page: state.page })),
             GetEventsHistogramService.getInstance().invoke(GetEventsHistogramDto.fromPrimitives(filters)),
@@ -125,6 +129,26 @@ export class SearchEventsController {
             isAutoRefreshed: state.refresh !== EventsRefreshEnum.OFF && state.page === EventsPaginationEnum.FIRST_PAGE && state.range !== "",
             intervalSeconds: Number(state.refresh),
         });
+    }
+
+    /**
+     * Catalogo de los desplegables Proyecto / Agente / Monitor. Si falla, se quedan con lo ultimo que hubo: los filtros
+     * siguen funcionando por el hash (y un 401 lo cazan las otras tres peticiones).
+     * @param {number} requestNumber
+     * @param {string} dashboardToken
+     */
+    async #renderFilterOptions(requestNumber, dashboardToken) {
+        try {
+            const getEventsFilterOptionsResultDto = await GetEventsFilterOptionsService.getInstance().invoke(
+                GetEventsFilterOptionsDto.fromPrimitives({ dashboardToken })
+            );
+            if (requestNumber !== this.#lastRequestNumber) return;
+            this.#eventsView.renderFilterOptions(getEventsFilterOptionsResultDto.getFilterOptions());
+        }
+        catch (error) {
+            if (error instanceof EventsException) return;
+            console.error("SearchEventsController.invoke filter-options", error);
+        }
     }
 
     #isUnauthorized(result) {

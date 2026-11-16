@@ -95,6 +95,7 @@ func (s *EnqueueIngestBatchService) updateAgentHeartbeat(lastSeenAt string) erro
             agentsenums.AgentsKeyEnum.HOST_OS:        s.getTruncated(s.enqueueIngestBatchDto.GetHostOs(), 50),
             agentsenums.AgentsKeyEnum.HOST_IP:        s.getTruncated(s.enqueueIngestBatchDto.GetUserIpAddress(), 45),
             agentsenums.AgentsKeyEnum.CLIENT_VERSION: s.getTruncated(s.enqueueIngestBatchDto.GetClientVersion(), 20),
+            agentsenums.AgentsKeyEnum.CLIENT_PATH:    s.getTruncated(s.enqueueIngestBatchDto.GetClientPath(), 500),
             agentsenums.AgentsKeyEnum.LAST_SEEN_AT:   lastSeenAt,
         }),
     )

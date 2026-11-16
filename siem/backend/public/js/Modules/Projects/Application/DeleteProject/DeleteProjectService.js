@@ -4,7 +4,8 @@ import { DeleteProjectResultDto } from "/js/Modules/Projects/Application/DeleteP
 import { ProjectsWriterHttpRepository } from "/js/Modules/Projects/Infrastructure/Repositories/ProjectsWriterHttpRepository.js";
 
 /**
- * Baja de un proyecto: la API borra tambien sus agentes, monitores y eventos. No se puede deshacer.
+ * Baja de un proyecto: la API borra tambien sus agentes, monitores y eventos (no se puede deshacer) y devuelve los
+ * agentes que tenia, para avisar de donde hay que desinstalar sus siem-client.
  */
 export class DeleteProjectService {
 
@@ -37,6 +38,11 @@ export class DeleteProjectService {
         if (!apiResponse.status) {
             ProjectsException.fromApiResponse(apiResponse);
         }
-        return DeleteProjectResultDto.fromPrimitives({ projectUuid: deleteProjectDto.getProjectUuid() });
+        const deletedProject = apiResponse.data ?? {};
+        return DeleteProjectResultDto.fromPrimitives({
+            projectUuid: deletedProject.project_uuid ?? deleteProjectDto.getProjectUuid(),
+            projectName: deletedProject.project_name ?? "",
+            agents: deletedProject.agents ?? [],
+        });
     }
 }

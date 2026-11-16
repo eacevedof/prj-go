@@ -1,18 +1,23 @@
 import { DateTimer } from "/js/Modules/Shared/Infrastructure/Components/DateTimer.js";
 import { Htmler } from "/js/Modules/Shared/Infrastructure/Components/Htmler.js";
 import { NumberFormatter } from "/js/Modules/Shared/Infrastructure/Components/NumberFormatter.js";
+import { TextFormatter } from "/js/Modules/Shared/Infrastructure/Components/TextFormatter.js";
 
 import {
     EVENT_FACETS, EVENT_FILTER_FIELD_LABELS, EVENT_FILTER_FIELDS, EventFilterFieldEnum,
 } from "/js/Modules/Events/Domain/Enums/EventFilterFieldEnum.js";
+import { EventsFilterOptionKeyEnum } from "/js/Modules/Events/Domain/Enums/EventsFilterOptionKeyEnum.js";
 import { EventsPaginationEnum } from "/js/Modules/Events/Domain/Enums/EventsPaginationEnum.js";
 import { EVENTS_REFRESH_LABELS, EVENTS_REFRESH_VALUES } from "/js/Modules/Events/Domain/Enums/EventsRefreshEnum.js";
+import { EventsTextEnum } from "/js/Modules/Events/Domain/Enums/EventsTextEnum.js";
 import { TIME_RANGE_LABELS, TIME_RANGE_SECONDS, TimeRangeEnum } from "/js/Modules/Events/Domain/Enums/TimeRangeEnum.js";
+import { EventsFilterOptionsFilterer } from "/js/Modules/Events/Domain/Services/EventsFilterOptionsFilterer.js";
 import { EventsQueryParser } from "/js/Modules/Events/Domain/Services/EventsQueryParser.js";
 import { HistogramScaler } from "/js/Modules/Events/Domain/Services/HistogramScaler.js";
 import { TimeRangeResolver } from "/js/Modules/Events/Domain/Services/TimeRangeResolver.js";
 
 const CSS_HIDDEN = "hidden";
+const CSS_IS_FILTERING = "is-filtering";
 const ACTION_FILTER = "filter";
 const ACTION_PILL_INVERT = "pill-invert";
 const ACTION_PILL_REMOVE = "pill-remove";
@@ -24,6 +29,8 @@ const HISTOGRAM_BOX = Object.freeze({ width: 960, height: 170, left: 40, right: 
 const HISTOGRAM_HINT = "Pasa por una barra para ver su tramo; haz clic para acotar el rango a ese tramo.";
 const TABLE_COLUMNS = 6;
 const RANGE_ERROR = "from / to: formato YYYY-MM-DD HH:MM:SS (UTC), con from anterior o igual a to";
+// contenedor de las casillas de un filtro multiple (dentro de su <details>)
+const CSS_MULTI_SELECT_OPTIONS = "multi-select-options";
 
 /**
  * Visor de eventos tipo Discover: barra de texto, rango de tiempo (atajos o a medida), auto-refresco, pastillas de
@@ -40,6 +47,8 @@ export class EventsView {
     #dateTimer;
     #htmler;
     #numberFormatter;
+    #textFormatter;
+    #eventsFilterOptionsFilterer;
     #eventsQueryParser;
     #histogramScaler;
     #timeRangeResolver;
@@ -49,13 +58,19 @@ export class EventsView {
     #facets = null;
     #bucketSeconds = 0;
     #expandedEventIds = new Set();
-    // uuid -> nombre de proyectos y agentes vistos (en eventos y facetas): las pastillas enseñan el nombre
+    // uuid -> nombre de proyectos, agentes y monitores (catalogo, eventos y facetas): las pastillas enseñan el nombre
     #namesByUuid = new Map();
+    // catalogo de los desplegables Proyecto / Agente / Monitor (GET /events/filter-options)
+    #filterOptions = { projects: [], agents: [], monitors: [] };
+    // html de cada desplegable ya pintado: un refresco con lo mismo no lo repinta (cerraria el desplegable abierto)
+    #filterSelectHtmlById = new Map();
 
     constructor() {
         this.#dateTimer = DateTimer.getInstance();
         this.#htmler = Htmler.getInstance();
         this.#numberFormatter = NumberFormatter.getInstance();
+        this.#textFormatter = TextFormatter.getInstance();
+        this.#eventsFilterOptionsFilterer = EventsFilterOptionsFilterer.getInstance();
         this.#eventsQueryParser = EventsQueryParser.getInstance();
         this.#histogramScaler = HistogramScaler.getInstance();
         this.#timeRangeResolver = TimeRangeResolver.getInstance();
@@ -81,6 +96,9 @@ export class EventsView {
             inputEventsTo: document.getElementById("input-events-to"),
             pEventsRangeErrors: document.getElementById("p-events-range-errors"),
             selectEventsRefresh: document.getElementById("select-events-refresh"),
+            detailsEventsProject: document.getElementById("details-events-project"),
+            detailsEventsAgent: document.getElementById("details-events-agent"),
+            detailsEventsMonitor: document.getElementById("details-events-monitor"),
             spanEventsRangeInfo: document.getElementById("span-events-range-info"),
             divEventsPills: document.getElementById("div-events-pills"),
             divEventsHistogram: document.getElementById("div-events-histogram"),
@@ -99,6 +117,10 @@ export class EventsView {
         this.#elements.selectEventsRefresh.addEventListener("change", () => this.#goToState(
             this.#eventsQueryParser.getStateWith(this.#state, { refresh: this.#elements.selectEventsRefresh.value })
         ));
+        this.#elements.detailsEventsProject.addEventListener("change", () => this.#onProjectsChange());
+        this.#elements.detailsEventsAgent.addEventListener("change", () => this.#onAgentsChange());
+        this.#elements.detailsEventsMonitor.addEventListener("change", () => this.#onMonitorsChange());
+        document.addEventListener("click", (event) => this.#onDocumentClick(event));
         this.#elements.buttonEventsPrevious.addEventListener("click", () => this.#goToPage(this.#state.page - 1));
         this.#elements.buttonEventsNext.addEventListener("click", () => this.#goToPage(this.#state.page + 1));
         this.#elements.sectionEvents.addEventListener("click", (event) => this.#onClick(event));
@@ -131,6 +153,20 @@ export class EventsView {
         }
         this.#renderRangeErrors("");
         this.#elements.spanEventsRangeInfo.textContent = `${fromTo.from} → ${fromTo.to} UTC`;
+        this.#renderFilterSelects();
+        this.#renderPills();
+    }
+
+    /**
+     * El catalogo de los desplegables Proyecto / Agente / Monitor. Tambien da nombre a los uuid de las pastillas.
+     * @param {{projects: Object[], agents: Object[], monitors: Object[]}} filterOptions
+     */
+    renderFilterOptions(filterOptions) {
+        this.#filterOptions = filterOptions;
+        filterOptions.projects.forEach((project) => this.#namesByUuid.set(project[EventsFilterOptionKeyEnum.PROJECT_UUID], project[EventsFilterOptionKeyEnum.PROJECT_NAME]));
+        filterOptions.agents.forEach((agent) => this.#namesByUuid.set(agent[EventsFilterOptionKeyEnum.AGENT_UUID], agent[EventsFilterOptionKeyEnum.AGENT_NAME]));
+        filterOptions.monitors.forEach((monitor) => this.#namesByUuid.set(monitor[EventsFilterOptionKeyEnum.MONITOR_UUID], monitor[EventsFilterOptionKeyEnum.MONITOR_NAME]));
+        this.#renderFilterSelects();
         this.#renderPills();
     }
 
@@ -240,10 +276,151 @@ export class EventsView {
         }).join("") + `<button type="button" class="button button-small button-ghost" data-action="${ACTION_PILLS_CLEAR}">Quitar todos</button>`;
     }
 
-    // un uuid de proyecto o agente se enseña con su nombre si ya se ha visto
+    // un uuid de proyecto, agente o monitor se enseña con su nombre si ya se ha visto
     #getDisplayValue(field, value) {
-        const isUuidField = field === EventFilterFieldEnum.PROJECT_UUID || field === EventFilterFieldEnum.AGENT_UUID;
+        const isUuidField = field === EventFilterFieldEnum.PROJECT_UUID || field === EventFilterFieldEnum.AGENT_UUID
+            || field === EventFilterFieldEnum.MONITOR_UUID;
         return (isUuidField && this.#namesByUuid.get(value)) || value;
+    }
+
+    // ---- filtros multiples Proyecto -> Agente -> Monitor ----
+
+    #renderFilterSelects() {
+        const projectUuids = this.#getSelectedValues(EventFilterFieldEnum.PROJECT_UUID);
+        const agentUuids = this.#getSelectedValues(EventFilterFieldEnum.AGENT_UUID);
+        this.#renderMultiSelect(
+            this.#elements.detailsEventsProject, EventFilterFieldEnum.PROJECT_UUID, EventsTextEnum.ALL_PROJECTS, EventsTextEnum.N_PROJECTS,
+            this.#filterOptions.projects.map((project) => ({
+                value: project[EventsFilterOptionKeyEnum.PROJECT_UUID],
+                label: project[EventsFilterOptionKeyEnum.PROJECT_NAME],
+            })),
+        );
+        this.#renderMultiSelect(
+            this.#elements.detailsEventsAgent, EventFilterFieldEnum.AGENT_UUID, EventsTextEnum.ALL_AGENTS, EventsTextEnum.N_AGENTS,
+            this.#eventsFilterOptionsFilterer.getAgentsOfProjects(this.#filterOptions.agents, projectUuids).map((agent) => ({
+                value: agent[EventsFilterOptionKeyEnum.AGENT_UUID],
+                label: agent[EventsFilterOptionKeyEnum.AGENT_NAME],
+            })),
+        );
+        this.#renderMultiSelect(
+            this.#elements.detailsEventsMonitor, EventFilterFieldEnum.MONITOR_UUID, EventsTextEnum.ALL_MONITORS, EventsTextEnum.N_MONITORS,
+            this.#eventsFilterOptionsFilterer.getMonitorsOfProjectsAndAgents(
+                this.#filterOptions.monitors, projectUuids, agentUuids, this.#filterOptions.agents
+            ).map((monitor) => ({
+                value: monitor[EventsFilterOptionKeyEnum.MONITOR_UUID],
+                label: this.#getMonitorOptionLabel(monitor),
+            })),
+        );
+    }
+
+    /**
+     * Un filtro multiple (<details> con casillas): el resumen dice que filtra ("Todos", el nombre o "3 agentes") y la
+     * lista se repinta solo si cambia (un refresco con lo mismo no mueve lo que se esta marcando).
+     * @param {HTMLDetailsElement} details
+     * @param {string} field EventFilterFieldEnum
+     * @param {string} allText sin nada marcado
+     * @param {string} countText varios marcados ("{0} agentes")
+     * @param {{value: string, label: string}[]} options
+     */
+    #renderMultiSelect(details, field, allText, countText, options) {
+        const h = this.#htmler;
+        const selectedValues = this.#getSelectedValues(field);
+        // lo marcado sigue en la lista aunque ya no exista (borrado) o lo de arriba no lo ofrezca: se ve que filtra
+        const missingOptions = selectedValues
+            .filter((value) => !options.some((option) => option.value === value))
+            .map((value) => ({ value, label: this.#namesByUuid.get(value) ?? value }));
+        const listedOptions = [...options, ...missingOptions];
+        const html = listedOptions.length === 0
+            ? `<p class="muted">${h.getEscaped(EventsTextEnum.NO_OPTIONS)}</p>`
+            : listedOptions.map((option) => `<label class="multi-select-option">
+                <input type="checkbox" value="${h.getEscaped(option.value)}"${selectedValues.includes(option.value) ? " checked" : ""}>
+                <span>${h.getEscaped(option.label)}</span></label>`).join("");
+        const divOptions = details.querySelector(`.${CSS_MULTI_SELECT_OPTIONS}`);
+        if (this.#filterSelectHtmlById.get(details.id) !== html) {
+            this.#filterSelectHtmlById.set(details.id, html);
+            divOptions.innerHTML = html;
+        }
+        divOptions.querySelectorAll("input[type=checkbox]").forEach((checkbox) => {
+            checkbox.checked = selectedValues.includes(checkbox.value);
+        });
+        details.querySelector("summary").textContent = this.#getMultiSelectSummary(selectedValues, allText, countText);
+        details.classList.toggle(CSS_IS_FILTERING, selectedValues.length > 0);
+    }
+
+    #getMultiSelectSummary(selectedValues, allText, countText) {
+        if (selectedValues.length === 0) return allText;
+        if (selectedValues.length === 1) return this.#namesByUuid.get(selectedValues[0]) ?? selectedValues[0];
+        return this.#textFormatter.getFormatted(countText, selectedValues.length);
+    }
+
+    #getMonitorOptionLabel(monitor) {
+        const textTemplate = monitor[EventsFilterOptionKeyEnum.AGENT_UUID] ? EventsTextEnum.MONITOR_OPTION : EventsTextEnum.MONITOR_OPTION_ALL_AGENTS;
+        return this.#textFormatter.getFormatted(textTemplate, monitor[EventsFilterOptionKeyEnum.MONITOR_NAME], monitor[EventsFilterOptionKeyEnum.MONITOR_TYPE]);
+    }
+
+    /**
+     * @param {string} field
+     * @returns {string[]} los valores incluidos de ese campo
+     */
+    #getSelectedValues(field) {
+        return this.#state.include[field] ?? [];
+    }
+
+    /**
+     * @param {HTMLDetailsElement} details
+     * @returns {string[]} las casillas marcadas ahora mismo
+     */
+    #getCheckedValues(details) {
+        return [...details.querySelectorAll("input[type=checkbox]:checked")].map((checkbox) => checkbox.value);
+    }
+
+    // al cambiar los proyectos se desmarcan los agentes y monitores que ya no son de ninguno de ellos
+    #onProjectsChange() {
+        const projectUuids = this.#getCheckedValues(this.#elements.detailsEventsProject);
+        const agentUuids = this.#eventsFilterOptionsFilterer.getUuidsInOptions(
+            this.#getSelectedValues(EventFilterFieldEnum.AGENT_UUID),
+            this.#eventsFilterOptionsFilterer.getAgentsOfProjects(this.#filterOptions.agents, projectUuids),
+            EventsFilterOptionKeyEnum.AGENT_UUID,
+        );
+        this.#goToState(this.#eventsQueryParser.getStateWithSelectedValues(this.#state, {
+            [EventFilterFieldEnum.PROJECT_UUID]: projectUuids,
+            [EventFilterFieldEnum.AGENT_UUID]: agentUuids,
+            [EventFilterFieldEnum.MONITOR_UUID]: this.#getMonitorUuidsStillOffered(projectUuids, agentUuids),
+        }));
+    }
+
+    // al cambiar los agentes se desmarcan los monitores que no aplican a ninguno
+    #onAgentsChange() {
+        const agentUuids = this.#getCheckedValues(this.#elements.detailsEventsAgent);
+        this.#goToState(this.#eventsQueryParser.getStateWithSelectedValues(this.#state, {
+            [EventFilterFieldEnum.AGENT_UUID]: agentUuids,
+            [EventFilterFieldEnum.MONITOR_UUID]: this.#getMonitorUuidsStillOffered(
+                this.#getSelectedValues(EventFilterFieldEnum.PROJECT_UUID), agentUuids
+            ),
+        }));
+    }
+
+    #onMonitorsChange() {
+        this.#goToState(this.#eventsQueryParser.getStateWithSelectedValues(this.#state, {
+            [EventFilterFieldEnum.MONITOR_UUID]: this.#getCheckedValues(this.#elements.detailsEventsMonitor),
+        }));
+    }
+
+    #getMonitorUuidsStillOffered(projectUuids, agentUuids) {
+        return this.#eventsFilterOptionsFilterer.getUuidsInOptions(
+            this.#getSelectedValues(EventFilterFieldEnum.MONITOR_UUID),
+            this.#eventsFilterOptionsFilterer.getMonitorsOfProjectsAndAgents(
+                this.#filterOptions.monitors, projectUuids, agentUuids, this.#filterOptions.agents
+            ),
+            EventsFilterOptionKeyEnum.MONITOR_UUID,
+        );
+    }
+
+    // un filtro multiple abierto se cierra al hacer clic fuera (o al abrir otro)
+    #onDocumentClick(event) {
+        [this.#elements.detailsEventsProject, this.#elements.detailsEventsAgent, this.#elements.detailsEventsMonitor]
+            .filter((details) => details.open && !details.contains(event.target))
+            .forEach((details) => details.removeAttribute("open"));
     }
 
     // ---- histograma ----

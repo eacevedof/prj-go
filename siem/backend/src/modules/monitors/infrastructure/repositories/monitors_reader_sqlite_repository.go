@@ -12,9 +12,9 @@ const monitorColumnsSql = `
             m.id, m.monitor_uuid, m.project_id, m.agent_id, m.monitor_type, m.monitor_name, m.is_enabled,
             m.interval_seconds, m.config, m.warning_threshold, m.critical_threshold, m.created_at, m.updated_at,
             p.project_uuid, COALESCE(a.agent_uuid, '') AS agent_uuid, COALESCE(a.agent_name, '') AS agent_name
-        FROM ` + "`monitors`" + ` m
-        INNER JOIN ` + "`projects`" + ` p ON p.id = m.project_id
-        LEFT JOIN ` + "`agents`" + ` a ON a.id = m.agent_id`
+        FROM ` + "`app_monitors`" + ` m
+        INNER JOIN ` + "`app_projects`" + ` p ON p.id = m.project_id
+        LEFT JOIN ` + "`app_agents`" + ` a ON a.id = m.agent_id`
 
 type MonitorsReaderSqliteRepository struct {
     sharedrepositories.AbstractSqliteRepository
@@ -78,7 +78,7 @@ func (r *MonitorsReaderSqliteRepository) DoesMonitorNameExistInProject(projectId
         -- doesMonitorNameExistInProject
         SELECT
             COUNT(*) AS n_rows
-        FROM `+"`monitors`"+`
+        FROM `+"`app_monitors`"+`
         WHERE 1=1
         AND project_id = %d
         AND id <> %d
@@ -98,9 +98,9 @@ func (r *MonitorsReaderSqliteRepository) GetMonitorStatesByProjectId(projectId i
         -- getMonitorStatesByProjectId
         SELECT
             s.source_name, a.agent_uuid, a.agent_name, s.last_event_at, s.last_severity, s.last_message
-        FROM `+"`sources`"+` s
-        INNER JOIN `+"`agents`"+` a ON a.id = s.agent_id
-        INNER JOIN `+"`monitors`"+` m ON m.project_id = a.project_id AND m.monitor_name = s.source_name COLLATE NOCASE
+        FROM `+"`app_sources`"+` s
+        INNER JOIN `+"`app_agents`"+` a ON a.id = s.agent_id
+        INNER JOIN `+"`app_monitors`"+` m ON m.project_id = a.project_id AND m.monitor_name = s.source_name COLLATE NOCASE
         WHERE 1=1
         AND a.project_id = %d
         AND s.source_type IN ('metric', 'file')

@@ -21,8 +21,8 @@ func (r *IngestQueueReaderSqliteRepository) GetPendingBatches(limit int) ([]map[
         -- getPendingBatches
         SELECT
             q.id, q.agent_id, a.project_id, q.batch_uuid, q.payload, q.attempts, q.received_at
-        FROM `+"`ingest_queue`"+` q
-        INNER JOIN `+"`agents`"+` a ON a.id = q.agent_id
+        FROM `+"`app_ingest_queue`"+` q
+        INNER JOIN `+"`app_agents`"+` a ON a.id = q.agent_id
         WHERE 1=1
         AND q.queue_status = ?
         ORDER BY q.id ASC

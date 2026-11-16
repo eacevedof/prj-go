@@ -12,10 +12,10 @@ import (
 
 // tablas que usan los filtros y las facetas: events + su proyecto, su agente y su source
 const eventsFromSql = `
-        FROM ` + "`events`" + ` e
-        INNER JOIN ` + "`projects`" + ` p ON p.id = e.project_id
-        INNER JOIN ` + "`agents`" + ` a ON a.id = e.agent_id
-        INNER JOIN ` + "`sources`" + ` s ON s.id = e.source_id`
+        FROM ` + "`app_events`" + ` e
+        INNER JOIN ` + "`app_projects`" + ` p ON p.id = e.project_id
+        INNER JOIN ` + "`app_agents`" + ` a ON a.id = e.agent_id
+        INNER JOIN ` + "`app_sources`" + ` s ON s.id = e.source_id`
 
 // columna de cada campo filtrable (EventsFilterFieldEnum) y de cada faceta (EventsFacetFieldEnum). Los nombres de
 // columna salen SOLO de estos mapas, nunca de la peticion.
@@ -27,6 +27,12 @@ var (
         "event_type":   "e.event_type",
         "source_type":  "s.source_type",
         "source_name":  "s.source_name",
+        "monitor_uuid": "e.monitor_uuid",
+    }
+    // columnas que pueden ir a NULL (los eventos que no son de un monitor): al excluir hay que conservarlos, porque
+    // NULL NOT IN (...) no es verdadero y "excluir el monitor X" los quitaria todos
+    nullableFilterColumns = map[string]bool{
+        "e.monitor_uuid": true,
     }
     // faceta -> columna que se muestra y columna por la que se filtra (agente y proyecto: se ven por nombre, se filtran por uuid)
     columnsByFacetField = map[string][2]string{
@@ -147,7 +153,10 @@ func (r *EventsReaderSqliteRepository) getFilterSqlAndParams(eventsFilterEntity 
             conditions = append(conditions, fmt.Sprintf("AND %s IN (%s)", column, r.getPlaceholders(len(includedValues))))
             params = append(params, r.getParams(includedValues)...)
         }
-        if excludedValues := eventsFilterEntity.GetExcludedValues(field); len(excludedValues) > 0 {
+        if excludedValues := eventsFilterEntity.GetExcludedValues(field); len(excludedValues) > 0 && nullableFilterColumns[column] {
+            conditions = append(conditions, fmt.Sprintf("AND (%s IS NULL OR %s NOT IN (%s))", column, column, r.getPlaceholders(len(excludedValues))))
+            params = append(params, r.getParams(excludedValues)...)
+        } else if len(excludedValues) > 0 {
             conditions = append(conditions, fmt.Sprintf("AND %s NOT IN (%s)", column, r.getPlaceholders(len(excludedValues))))
             params = append(params, r.getParams(excludedValues)...)
         }

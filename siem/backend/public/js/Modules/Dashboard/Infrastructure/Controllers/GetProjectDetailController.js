@@ -1,5 +1,6 @@
 import { BreadcrumbsTextEnum } from "/js/Modules/Shared/Domain/Enums/BreadcrumbsTextEnum.js";
 import { HttpCodeEnum } from "/js/Modules/Shared/Domain/Enums/HttpCodeEnum.js";
+import { RouteHashEnum } from "/js/Modules/Shared/Domain/Enums/RouteHashEnum.js";
 import { ScreenEnum } from "/js/Modules/Shared/Domain/Enums/ScreenEnum.js";
 import { SharedEventEnum } from "/js/Modules/Shared/Domain/Enums/SharedEventEnum.js";
 import { Dispatcher } from "/js/Modules/Shared/Infrastructure/Components/Dispatcher.js";
@@ -16,7 +17,6 @@ import { GetProjectDetailService } from "/js/Modules/Dashboard/Application/GetPr
 import { ProjectDetailView } from "/js/Modules/Dashboard/Infrastructure/Views/ProjectDetailView.js";
 import { DashboardException } from "/js/Modules/Dashboard/Domain/Exceptions/DashboardException.js";
 
-const DASHBOARD_HASH = "#/";
 
 /**
  * Detalle de un proyecto (#/projects/<project_uuid>): su cabecera y las migas con su nombre; los agentes (con sus
@@ -66,7 +66,7 @@ export class GetProjectDetailController {
             const project = getProjectDetailResultDto.getProject();
             this.#projectDetailView.renderProject(project);
             this.#navigationView.renderBreadcrumbs([
-                { label: BreadcrumbsTextEnum.PROJECTS, hash: DASHBOARD_HASH },
+                { label: BreadcrumbsTextEnum.PROJECTS, hash: RouteHashEnum.PROJECTS },
                 { label: String(project.project_name ?? "") },
             ]);
             this.#dispatcher.dispatch(DashboardEventEnum.PROJECT_DETAIL_RENDERED, {

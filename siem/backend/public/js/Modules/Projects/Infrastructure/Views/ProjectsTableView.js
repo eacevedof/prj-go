@@ -10,9 +10,7 @@ import { ProjectsTextEnum } from "/js/Modules/Projects/Domain/Enums/ProjectsText
 
 const CSS_HIDDEN = "hidden";
 const ACTION_EDIT = "edit";
-const ACTION_ASK_DELETE = "ask-delete";
-const ACTION_CONFIRM_DELETE = "confirm-delete";
-const ACTION_CANCEL_DELETE = "cancel-delete";
+const ACTION_DELETE = "delete";
 // el buscador no repinta en cada tecla
 const TEXT_FILTER_DEBOUNCE_MS = 300;
 // en la tabla, un trozo de la descripcion; la entera en el tooltip
@@ -27,9 +25,9 @@ const COUNT_CSS_ZERO = "count-zero";
 /**
  * Tabla de proyectos de la portada (patron task-js): filtros (texto y salud), una fila por proyecto con id, uuid,
  * nombre (y su descripcion debajo), warnings, errores y criticos de las ultimas 24 h, y acciones (editar, borrar).
- * Borrar se confirma en la propia fila ("Sí, borrar"): se lleva agentes, monitores y eventos.
- * La tabla se repinta con cada auto-refresco; filtros y confirmacion pendiente sobreviven (son estado de la vista).
- * Una sola instancia: guarda las referencias al DOM, los proyectos pintados y el que espera confirmacion.
+ * Borrar abre el modal que pide el nombre del proyecto (ProjectDeleteDialogView): se lleva agentes, monitores y eventos.
+ * La tabla se repinta con cada auto-refresco; los filtros sobreviven (son estado de la vista).
+ * Una sola instancia: guarda las referencias al DOM y los proyectos pintados.
  */
 export class ProjectsTableView {
 
@@ -41,8 +39,6 @@ export class ProjectsTableView {
     #textFormatter;
     #elements = {};
     #projectsByUuid = new Map();
-    // project_uuid de la fila que pregunta "¿Borrar?"; "" = ninguna
-    #askingDeleteProjectUuid = "";
     #textFilterTimeoutId = null;
 
     constructor() {
@@ -98,7 +94,6 @@ export class ProjectsTableView {
      */
     renderProjects(filteredProjects, projectsTotal, hasFilters) {
         this.#projectsByUuid = new Map(filteredProjects.map((project) => [project[ProjectsKeyEnum.PROJECT_UUID], project]));
-        if (!this.#projectsByUuid.has(this.#askingDeleteProjectUuid)) this.#askingDeleteProjectUuid = "";
 
         this.#elements.spanProjectsCount.textContent = this.#getCountText(filteredProjects.length, projectsTotal);
         this.#elements.pProjectsEmpty.textContent = hasFilters ? ProjectsTextEnum.LIST_NO_MATCHES : ProjectsTextEnum.LIST_EMPTY;
@@ -108,7 +103,7 @@ export class ProjectsTableView {
     }
 
     /**
-     * Aviso del camino feliz (creado, guardado, borrado). Vacio lo oculta.
+     * Aviso del camino feliz (creado, guardado). Vacio lo oculta; el de borrado es ProjectDeletedView.
      * @param {string} message
      */
     renderMessage(message) {
@@ -166,21 +161,10 @@ export class ProjectsTableView {
                 this.renderMessage("");
                 this.#dispatcher.dispatch(ProjectsEventEnum.EDIT_PROJECT_REQUESTED, { project });
                 return;
-            case ACTION_ASK_DELETE:
-                this.#askingDeleteProjectUuid = actionButton.dataset.projectUuid ?? "";
-                this.#renderProjectsTable();
-                return;
-            case ACTION_CANCEL_DELETE:
-                this.#askingDeleteProjectUuid = "";
-                this.#renderProjectsTable();
-                return;
-            case ACTION_CONFIRM_DELETE:
+            case ACTION_DELETE:
                 if (!project) return;
-                this.#askingDeleteProjectUuid = "";
-                actionButton.disabled = true;
-                this.renderMessage("");
                 this.renderErrors([]);
-                this.#dispatcher.dispatch(ProjectsEventEnum.DELETE_LISTED_PROJECT_REQUESTED, {
+                this.#dispatcher.dispatch(ProjectsEventEnum.DELETE_PROJECT_DIALOG_REQUESTED, {
                     projectUuid: project[ProjectsKeyEnum.PROJECT_UUID],
                     projectName: project[ProjectsKeyEnum.PROJECT_NAME],
                 });
@@ -253,12 +237,7 @@ export class ProjectsTableView {
     #getHtmlRowActions(projectUuid) {
         const h = this.#htmler;
         const escapedProjectUuid = h.getEscaped(projectUuid);
-        if (projectUuid === this.#askingDeleteProjectUuid) {
-            return `<span class="confirm">${h.getEscaped(ProjectsTextEnum.CONFIRM_DELETE)}
-                <button type="button" class="button button-small button-danger" data-action="${ACTION_CONFIRM_DELETE}" data-project-uuid="${escapedProjectUuid}">${h.getEscaped(ProjectsTextEnum.CONFIRM_DELETE_YES)}</button>
-                <button type="button" class="button button-small" data-action="${ACTION_CANCEL_DELETE}">${h.getEscaped(ProjectsTextEnum.CONFIRM_DELETE_NO)}</button></span>`;
-        }
         return `<button type="button" class="button button-small" data-action="${ACTION_EDIT}" data-project-uuid="${escapedProjectUuid}">${h.getEscaped(ProjectsTextEnum.EDIT)}</button>
-            <button type="button" class="button button-small button-ghost" data-action="${ACTION_ASK_DELETE}" data-project-uuid="${escapedProjectUuid}">${h.getEscaped(ProjectsTextEnum.DELETE)}</button>`;
+            <button type="button" class="button button-small button-danger" data-action="${ACTION_DELETE}" data-project-uuid="${escapedProjectUuid}">${h.getEscaped(ProjectsTextEnum.DELETE)}</button>`;
     }
 }

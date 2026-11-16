@@ -3,6 +3,7 @@ import { Htmler } from "/js/Modules/Shared/Infrastructure/Components/Htmler.js";
 import { NumberFormatter } from "/js/Modules/Shared/Infrastructure/Components/NumberFormatter.js";
 
 import { DownloadsEventEnum } from "/js/Modules/Downloads/Domain/Enums/DownloadsEventEnum.js";
+import { DownloadsTextEnum } from "/js/Modules/Downloads/Domain/Enums/DownloadsTextEnum.js";
 import { InstallInstructionsBuilder } from "/js/Modules/Downloads/Domain/Services/InstallInstructionsBuilder.js";
 
 const CSS_HIDDEN = "hidden";
@@ -11,6 +12,8 @@ const AGENT_MODE_NEW = "new";
 const AGENT_MODE_EXISTING = "existing";
 const OS_LINUX = "linux";
 const OS_WINDOWS = "windows";
+const OS_MACOS = "macos";
+const MACOS_SHELL = "zsh";
 const OS_LABELS = Object.freeze({ linux: "Linux", windows: "Windows", macos: "macOS" });
 // lo que hace el instalador asistido, para que se sepa antes de lanzarlo
 const INSTALLER_DOES = Object.freeze([
@@ -310,6 +313,21 @@ export class DownloadsView {
                     <p class="muted">${h.getEscaped(step.description)}</p>
                     ${h.getCodeBlock(step.code, step.language)}
                 </li>`).join("")}</ol>
-            </details>`;
+            </details>
+            ${download.os === OS_MACOS ? this.#getHtmlMacosTroubleshooting() : ""}`;
+    }
+
+    // macOS: binario compilado sin Mac, sin firmar ni probar en uno: los fallos esperables, a la vista
+    #getHtmlMacosTroubleshooting() {
+        const h = this.#htmler;
+        return `<section class="panel troubleshooting">
+            <h3>3.4 ${h.getEscaped(DownloadsTextEnum.MACOS_TROUBLESHOOTING_TITLE)}</h3>
+            <p class="muted">${h.getEscaped(DownloadsTextEnum.MACOS_TROUBLESHOOTING_INTRO)}</p>
+            <ol class="steps">${DownloadsTextEnum.MACOS_TROUBLESHOOTING.map((item, index) => `<li>
+                <h3>3.4.${index + 1} ${h.getEscaped(item.problem)}</h3>
+                <p>${h.getEscaped(item.fix)}</p>
+                ${item.code ? h.getCodeBlock(item.code, MACOS_SHELL) : ""}
+            </li>`).join("")}</ol>
+        </section>`;
     }
 }

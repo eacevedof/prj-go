@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="color-scheme" content="light dark">
-    <title>siem</title>
+    <title>GoSiem</title>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml">
     <link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48">
     <link rel="stylesheet" href="/css/siem.css">
@@ -15,11 +15,15 @@
 
     <!-- cabecera: marca a la izquierda, menu en pastilla al centro, sesion a la derecha (estilo Ventriloc) -->
     <header class="topbar">
-        <a class="brand" href="#/">siem<span class="brand-dot" aria-hidden="true"></span><span class="brand-sub">consola</span></a>
-        <!-- menu: solo con sesion (NavigationView.show) -->
+        <!-- marca GoSiem: el logo es el favicon (public/favicon.svg) en linea -->
+        <a class="brand" href="#/events" aria-label="GoSiem: eventos">
+            <svg class="brand-logo" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="7" fill="#202020"/><path d="M4.5 18.5h5l2.5-6 4 11 3.5-13.5 2.5 8.5h2" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="25.5" cy="18.5" r="2.6" fill="#ff682c"/></svg>
+            <span class="brand-name">GoSiem</span>
+        </a>
+        <!-- menu: solo con sesion (NavigationView.show). Eventos primero: es lo del dia a dia (y la pantalla de entrada) -->
         <nav id="nav-screens" class="nav hidden" aria-label="Pantallas">
-            <a href="#/" data-screen="dashboard"><span class="nav-number">1</span>Proyectos</a>
-            <a href="#/events" data-screen="events"><span class="nav-number">2</span>Eventos</a>
+            <a href="#/events" data-screen="events"><span class="nav-number">1</span>Eventos</a>
+            <a href="#/projects" data-screen="dashboard"><span class="nav-number">2</span>Proyectos</a>
             <a href="#/downloads" data-screen="downloads"><span class="nav-number">3</span>Descargas</a>
         </nav>
         <div class="topbar-session">
@@ -40,7 +44,10 @@
 
         <!-- entrada: token del dashboard (AuthView) -->
         <section id="section-auth" class="auth hidden">
-            <p class="eyebrow">siem · consola</p>
+            <p class="auth-brand">
+                <svg class="auth-logo" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="7" fill="#202020"/><path d="M4.5 18.5h5l2.5-6 4 11 3.5-13.5 2.5 8.5h2" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="25.5" cy="18.5" r="2.6" fill="#ff682c"/></svg>
+                <span>GoSiem</span>
+            </p>
             <h1>1 - acceso</h1>
             <p class="muted">Token del dashboard: <code>APP_DASHBOARD_TOKEN</code> del <code>.env</code> del backend.</p>
             <p id="p-auth-message" class="notice hidden"></p>
@@ -53,18 +60,17 @@
         </section>
 
         <!-- portada: servidor (DashboardView) + tabla de proyectos con filtros (ProjectsTableView) y su formulario
-             plegable de alta / edicion (ProjectFormView) -->
+             plegable de alta / edicion (ProjectFormView). Sin cabecera editorial: arranca en "1 - servidor", como el
+             detalle de un proyecto -->
         <section id="section-dashboard" data-screen="dashboard" class="screen hidden">
-            <header class="page-head">
-                <p class="display">Lo que vigilan tus agentes, <em>de un vistazo</em>.</p>
-                <p class="lede">Estado del servidor, salud de cada proyecto en las últimas 24 h y alta de proyectos nuevos.</p>
-            </header>
             <p id="p-dashboard-errors" class="error hidden"></p>
             <h1>1 - servidor</h1>
             <div id="div-dashboard-server"></div>
 
             <h1>2 - proyectos <span id="span-projects-count" class="muted"></span></h1>
             <p id="p-projects-message" class="notice hidden"></p>
+            <!-- tras borrar un proyecto (ProjectDeletedView): donde desinstalar sus clientes; se queda hasta "Entendido" -->
+            <div id="div-project-deleted" class="notice notice-block hidden" role="status"></div>
             <p id="p-projects-errors" class="error hidden"></p>
 
             <!-- plegado al entrar (patron task-js): el mismo para editar, con el uuid oculto; Ctrl+Enter guarda -->
@@ -117,12 +123,16 @@
         </section>
 
         <!-- detalle de un proyecto: cabecera (ProjectDetailView), tabla de agentes con filtros (AgentsTableView) y su
-             formulario plegable de alta / edicion (AgentFormView), monitores (MonitorsView) y borrar proyecto
-             (ProjectDangerView) -->
+             formulario plegable de alta / edicion (AgentFormView) y monitores (MonitorsView). "Borrar proyecto" abre el
+             modal #dialog-project-delete (ProjectDeleteDialogView) -->
         <section id="section-project" data-screen="projects" class="screen hidden">
             <p id="p-project-errors" class="error hidden"></p>
             <div id="div-project-body">
                 <div id="div-project-header"></div>
+                <p class="project-head-actions">
+                    <a id="a-project-events" class="link-action" href="#/events">ver sus eventos</a>
+                    <button id="button-project-delete-open" type="button" class="button button-small button-danger-fill">Borrar proyecto</button>
+                </p>
 
                 <h1>2 - agentes <span id="span-agents-count" class="muted"></span></h1>
                 <p id="p-agents-message" class="notice hidden"></p>
@@ -185,13 +195,22 @@
                 </div>
 
                 <h1>3 - monitores <span class="muted">(recursos a vigilar)</span></h1>
-                <p class="muted">Lo que se crea aquí lo descargan solos los agentes del proyecto en menos de un minuto: no hay que tocar los servidores.</p>
+                <p class="muted">Lo que se crea aquí lo descargan solos los agentes en menos de un minuto: no hay que tocar los servidores.
+                    Un monitor de un agente se crea desde su fila («Crear monitor»); aquí, los que vigilan lo mismo en todos.</p>
+                <div class="toolbar">
+                    <button id="button-monitor-create-all" type="button" class="button button-primary">Crear monitor para todos los agentes</button>
+                </div>
+                <p id="p-monitors-message" class="notice hidden"></p>
                 <p id="p-monitors-errors" class="error hidden"></p>
                 <div id="div-monitors-table"></div>
 
-                <h1 id="h2-monitor-form">4 - Nuevo monitor</h1>
-                <form id="form-monitor" class="panel form-grid">
+                <!-- alta y edicion de un monitor (MonitorsView), modal nativo como en task-js: Esc o Cancelar cierran. El
+                     ambito lo fija desde donde se abre (fila de un agente o "todos") y no se cambia. -->
+                <dialog id="dialog-monitor" class="dialog" aria-labelledby="h2-monitor-form">
+                <h2 id="h2-monitor-form">Nuevo monitor</h2>
+                <form id="form-monitor" class="form-grid">
                     <input id="hidden-monitor-uuid" type="hidden" value="">
+                    <input id="hidden-monitor-agent-uuid" type="hidden" value="">
                     <div class="field">
                         <label for="select-monitor-type">Tipo</label>
                         <select id="select-monitor-type"></select>
@@ -201,8 +220,8 @@
                         <input id="input-monitor-name" type="text" maxlength="100" autocomplete="off" placeholder="disco-raiz">
                     </div>
                     <div class="field">
-                        <label for="select-monitor-agent">Ámbito</label>
-                        <select id="select-monitor-agent"></select>
+                        <span class="label">Ámbito</span>
+                        <strong id="strong-monitor-scope" class="field-value"></strong>
                     </div>
                     <div class="field field-check">
                         <label><input id="checkbox-monitor-enabled" type="checkbox" checked> Activo</label>
@@ -251,37 +270,56 @@
                         </div>
                     </div>
 
+                    <p id="p-monitor-duplicate" class="error field-full hidden" role="status"></p>
                     <div class="field field-actions field-full">
                         <button id="button-monitor-submit" type="submit" class="button button-primary">Crear monitor</button>
-                        <button id="button-monitor-cancel" type="button" class="button hidden">Cancelar edición</button>
+                        <button id="button-monitor-cancel" type="button" class="button">Cancelar</button>
                     </div>
                     <p id="p-monitor-form-errors" class="error field-full hidden"></p>
-                    <p id="p-monitor-form-message" class="notice field-full hidden"></p>
                 </form>
+                </dialog>
 
-                <h1>5 - borrar proyecto</h1>
-                <form id="form-project-delete" class="panel panel-danger form-grid">
-                    <p class="field-full">Se borran el proyecto, sus agentes, sus monitores y todos sus eventos. No se puede deshacer.
-                        Para confirmar, escribe su nombre: <strong id="span-project-delete-name"></strong></p>
-                    <div class="field field-wide">
-                        <label for="input-project-delete-name" class="sr-only">Nombre del proyecto</label>
-                        <input id="input-project-delete-name" type="text" autocomplete="off" placeholder="nombre del proyecto">
-                    </div>
-                    <div class="field field-actions">
-                        <button id="button-project-delete" type="submit" class="button button-danger" disabled>Borrar proyecto</button>
-                    </div>
-                    <p id="p-project-delete-errors" class="error field-full hidden"></p>
-                </form>
             </div>
         </section>
 
-        <!-- visor de eventos tipo Discover (EventsView) -->
+        <!-- borrar un proyecto (ProjectDeleteDialogView): modal nativo, lo abren "Borrar" de la tabla de la portada y el
+             boton rojo del detalle. Fuera de las secciones: sirve en las dos pantallas -->
+        <dialog id="dialog-project-delete" class="dialog dialog-narrow" aria-labelledby="h2-project-delete">
+            <h2 id="h2-project-delete">Borrar proyecto</h2>
+            <form id="form-project-delete" class="form-grid">
+                <p class="field-full">Se borran el proyecto <strong id="span-project-delete-name"></strong>, sus agentes, sus
+                    monitores y todos sus eventos. No se puede deshacer. Sus clientes siguen instalados en sus servidores:
+                    al terminar se dice dónde desinstalarlos.</p>
+                <div class="field field-full">
+                    <label for="input-project-delete-name">Para confirmar, escribe su nombre</label>
+                    <input id="input-project-delete-name" type="text" autocomplete="off" placeholder="nombre del proyecto">
+                </div>
+                <div class="field field-actions field-full">
+                    <button id="button-project-delete" type="submit" class="button button-danger-fill" disabled>Borrar proyecto</button>
+                    <button id="button-project-delete-cancel" type="button" class="button">Cancelar</button>
+                </div>
+                <p id="p-project-delete-errors" class="error field-full hidden"></p>
+            </form>
+        </dialog>
+
+        <!-- visor de eventos tipo Discover (EventsView): la pantalla de entrada. Sin cabecera editorial: arranca en la
+             consulta, con los filtros multiples Proyecto -> Agente -> Monitor encadenados (casillas en un <details>) -->
         <section id="section-events" data-screen="events" class="screen hidden">
-            <header class="page-head page-head-compact">
-                <p class="display">Cada línea, <em>filtrable</em>.</p>
-                <p class="lede">Busca en el mensaje, acota el rango y filtra con + / − desde los campos o las barras del histograma.</p>
-            </header>
             <h1>1 - consulta</h1>
+            <div class="toolbar toolbar-scope">
+                <details id="details-events-project" class="multi-select" aria-label="Proyectos">
+                    <summary></summary>
+                    <div class="multi-select-options"></div>
+                </details>
+                <details id="details-events-agent" class="multi-select" aria-label="Agentes">
+                    <summary></summary>
+                    <div class="multi-select-options"></div>
+                </details>
+                <details id="details-events-monitor" class="multi-select" aria-label="Monitores">
+                    <summary></summary>
+                    <div class="multi-select-options"></div>
+                </details>
+            </div>
             <div class="toolbar">
                 <form id="form-events-query" class="toolbar-query">
                     <label for="input-events-search" class="sr-only">Texto en el mensaje</label>

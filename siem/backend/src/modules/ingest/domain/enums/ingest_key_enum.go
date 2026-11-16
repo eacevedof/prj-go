@@ -8,6 +8,7 @@ var IngestKeyEnum = struct {
     HOST_NAME      string
     HOST_OS        string
     CLIENT_VERSION string
+    CLIENT_PATH    string
     EVENTS         string
 
     QUEUED_EVENTS string
@@ -33,6 +34,7 @@ var IngestKeyEnum = struct {
     HOST_NAME:      "host_name",
     HOST_OS:        "host_os",
     CLIENT_VERSION: "client_version",
+    CLIENT_PATH:    "client_path",
     EVENTS:         "events",
 
     QUEUED_EVENTS: "queued_events",

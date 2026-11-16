@@ -21,7 +21,7 @@ func (r *ProjectsReaderSqliteRepository) GetProjectById(projectId int) (*entitie
         -- getProjectById
         SELECT
             id, project_uuid, project_name, project_description, created_at, updated_at
-        FROM `+"`projects`"+`
+        FROM `+"`app_projects`"+`
         WHERE 1=1
         AND id = %d
         `, projectId)
@@ -33,7 +33,7 @@ func (r *ProjectsReaderSqliteRepository) GetProjectByProjectUuid(projectUuid str
         -- getProjectByProjectUuid
         SELECT
             id, project_uuid, project_name, project_description, created_at, updated_at
-        FROM ` + "`projects`" + `
+        FROM ` + "`app_projects`" + `
         WHERE 1=1
         AND project_uuid = ?
         `
@@ -46,7 +46,7 @@ func (r *ProjectsReaderSqliteRepository) DoesProjectNameExist(projectName string
         -- doesProjectNameExist
         SELECT
             COUNT(*) AS n_rows
-        FROM ` + "`projects`" + `
+        FROM ` + "`app_projects`" + `
         WHERE 1=1
         AND project_name = ? COLLATE NOCASE
         `
@@ -63,7 +63,7 @@ func (r *ProjectsReaderSqliteRepository) DoesProjectNameExistInOtherProject(proj
         -- doesProjectNameExistInOtherProject
         SELECT
             COUNT(*) AS n_rows
-        FROM ` + "`projects`" + `
+        FROM ` + "`app_projects`" + `
         WHERE 1=1
         AND project_name = ? COLLATE NOCASE
         AND id <> ?
@@ -88,7 +88,7 @@ func (r *ProjectsReaderSqliteRepository) GetAllProjects() ([]*entities.ProjectEn
         -- getAllProjects
         SELECT
             id, project_uuid, project_name, project_description, created_at, updated_at
-        FROM ` + "`projects`" + `
+        FROM ` + "`app_projects`" + `
         ORDER BY project_name COLLATE NOCASE ASC
         `
     rows, err := r.Query(sql)

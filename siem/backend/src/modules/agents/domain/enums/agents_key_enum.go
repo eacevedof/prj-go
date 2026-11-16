@@ -13,6 +13,7 @@ var AgentsKeyEnum = struct {
     HOST_OS                    string
     HOST_IP                    string
     CLIENT_VERSION             string
+    CLIENT_PATH                string
     LAST_SEEN_AT               string
     CREATED_AT                 string
     UPDATED_AT                 string
@@ -33,6 +34,7 @@ var AgentsKeyEnum = struct {
     HOST_OS:                    "host_os",
     HOST_IP:                    "host_ip",
     CLIENT_VERSION:             "client_version",
+    CLIENT_PATH:                "client_path",
     LAST_SEEN_AT:               "last_seen_at",
     CREATED_AT:                 "created_at",
     UPDATED_AT:                 "updated_at",

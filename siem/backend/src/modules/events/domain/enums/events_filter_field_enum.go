@@ -1,7 +1,8 @@
 package enums
 
 // EventsFilterFieldEnum los campos por los que se puede filtrar (incluir o, con el prefijo not_, excluir) en
-// GET /api/v1/events, /events/histogram y /events/facets. Los valores son los parametros de la query.
+// GET /api/v1/events, /events/histogram y /events/facets. Los valores son los parametros de la query. monitor_uuid es la
+// columna events.monitor_uuid (attributes.monitor_uuid copiado al insertar: eventos host_metric y log_pattern).
 var EventsFilterFieldEnum = struct {
     PROJECT_UUID string
     AGENT_UUID   string
@@ -9,6 +10,7 @@ var EventsFilterFieldEnum = struct {
     EVENT_TYPE   string
     SOURCE_TYPE  string
     SOURCE_NAME  string
+    MONITOR_UUID string
 
     VALUES     []string
     NOT_PREFIX string
@@ -21,8 +23,9 @@ var EventsFilterFieldEnum = struct {
     EVENT_TYPE:   "event_type",
     SOURCE_TYPE:  "source_type",
     SOURCE_NAME:  "source_name",
+    MONITOR_UUID: "monitor_uuid",
 
-    VALUES:               []string{"project_uuid", "agent_uuid", "severity", "event_type", "source_type", "source_name"},
+    VALUES:               []string{"project_uuid", "agent_uuid", "severity", "event_type", "source_type", "source_name", "monitor_uuid"},
     NOT_PREFIX:           "not_",
     MAX_VALUES_PER_FIELD: 20,
 }

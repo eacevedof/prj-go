@@ -157,6 +157,26 @@ export class EventsQueryParser {
     }
 
     /**
+     * Lo marcado en los filtros multiples Proyecto / Agente / Monitor: cada campo pasa a incluir exactamente esos
+     * valores ([] = sin filtro en ese campo) y deja de excluirlos. Los campos que no vienen no se tocan. Vuelve a la
+     * primera pagina.
+     * @param {Object} state
+     * @param {Object} selectedValuesByField {campo: ["uuid", ...]}
+     * @returns {Object} estado nuevo
+     */
+    getStateWithSelectedValues(state, selectedValuesByField) {
+        const nextState = this.#getCopy(state);
+        nextState.page = EventsPaginationEnum.FIRST_PAGE;
+        Object.entries(selectedValuesByField).forEach(([field, selectedValues]) => {
+            if (!EVENT_FILTER_FIELDS.includes(field)) return;
+            const values = [...new Set((selectedValues ?? []).map(String).filter(Boolean))];
+            nextState.include[field] = values;
+            nextState.exclude[field] = nextState.exclude[field].filter((excluded) => !values.includes(excluded));
+        });
+        return nextState;
+    }
+
+    /**
      * @param {Object} state
      * @returns {Object} estado nuevo sin ningun filtro de campo (el texto y el rango se quedan)
      */

@@ -74,7 +74,8 @@ func (c *UpdateProjectRestController) Invoke(projectUuid string) *httpresponder.
     return c.RespondOk(updateProjectResultDto.ToArray())
 }
 
-// DeleteProjectRestController DELETE /api/v1/projects/:project_uuid (Bearer del dashboard) -> {project_uuid}
+// DeleteProjectRestController DELETE /api/v1/projects/:project_uuid (Bearer del dashboard) ->
+// {project_uuid, project_name, agents: [{agent_name, host_name, host_os, host_ip, client_path}]}
 type DeleteProjectRestController struct {
     sharedcontrollers.AbstractRestController
 }

@@ -19,7 +19,7 @@ func ProjectsWriterSqliteRepositoryGetInstance() *ProjectsWriterSqliteRepository
 func (r *ProjectsWriterSqliteRepository) InsertProject(projectEntity *entities.ProjectEntity) (int, error) {
     sql := `
         -- insertProject
-        INSERT INTO ` + "`projects`" + `
+        INSERT INTO ` + "`app_projects`" + `
             (project_uuid, project_name, project_description, created_at, updated_at)
         VALUES
             (?, ?, ?, ?, ?)
@@ -41,7 +41,7 @@ func (r *ProjectsWriterSqliteRepository) InsertProject(projectEntity *entities.P
 func (r *ProjectsWriterSqliteRepository) UpdateProjectById(projectId int, projectName string, projectDescription string, updatedAt string) (int, error) {
     sql := `
         -- updateProjectById
-        UPDATE ` + "`projects`" + `
+        UPDATE ` + "`app_projects`" + `
         SET
             project_name = ?, project_description = ?, updated_at = ?
         WHERE 1=1
@@ -54,7 +54,7 @@ func (r *ProjectsWriterSqliteRepository) UpdateProjectById(projectId int, projec
 func (r *ProjectsWriterSqliteRepository) DeleteProjectById(projectId int) (int, error) {
     sql := fmt.Sprintf(`
         -- deleteProjectById
-        DELETE FROM `+"`projects`"+`
+        DELETE FROM `+"`app_projects`"+`
         WHERE 1=1
         AND id = %d
         `, projectId)

@@ -1,4 +1,5 @@
 import { HttpCodeEnum } from "/js/Modules/Shared/Domain/Enums/HttpCodeEnum.js";
+import { RouteHashEnum } from "/js/Modules/Shared/Domain/Enums/RouteHashEnum.js";
 import { Dispatcher } from "/js/Modules/Shared/Infrastructure/Components/Dispatcher.js";
 import { SessionStorer } from "/js/Modules/Shared/Infrastructure/Components/SessionStorer.js";
 import { Subscriber } from "/js/Modules/Shared/Infrastructure/Components/Subscriber.js";
@@ -12,14 +13,18 @@ import { ProjectsEventEnum } from "/js/Modules/Projects/Domain/Enums/ProjectsEve
 import { ProjectsMessageEnum } from "/js/Modules/Projects/Domain/Enums/ProjectsMessageEnum.js";
 import { DeleteProjectDto } from "/js/Modules/Projects/Application/DeleteProject/DeleteProjectDto.js";
 import { DeleteProjectService } from "/js/Modules/Projects/Application/DeleteProject/DeleteProjectService.js";
-import { ProjectDangerView } from "/js/Modules/Projects/Infrastructure/Views/ProjectDangerView.js";
+import { ProjectDeleteDialogView } from "/js/Modules/Projects/Infrastructure/Views/ProjectDeleteDialogView.js";
+import { ProjectDeletedView } from "/js/Modules/Projects/Infrastructure/Views/ProjectDeletedView.js";
+import { ProjectFormView } from "/js/Modules/Projects/Infrastructure/Views/ProjectFormView.js";
+import { ProjectsTableView } from "/js/Modules/Projects/Infrastructure/Views/ProjectsTableView.js";
 import { ProjectsException } from "/js/Modules/Projects/Domain/Exceptions/ProjectsException.js";
 
-const DASHBOARD_HASH = "#/";
 
 /**
- * Baja de un proyecto desde su detalle (ya confirmada en la vista): borrado, se vuelve a la portada. Tambien le dice
- * a la vista que proyecto se esta viendo (Projects escucha a Dashboard, no al reves).
+ * Baja de un proyecto, venga de la tabla de la portada o de la cabecera de su detalle: el modal pide el nombre, se
+ * borra y se vuelve a la portada con el aviso de los siem-client que siguen instalados (servidor, ruta y comando para
+ * desinstalarlos). Tambien abre el modal y le dice que proyecto se esta viendo (Projects escucha a Dashboard, no al
+ * reves).
  */
 export class DeleteProjectController {
 
@@ -27,14 +32,20 @@ export class DeleteProjectController {
     #sessionStorer;
     #subscriber;
     #navigationView;
-    #projectDangerView;
+    #projectDeleteDialogView;
+    #projectDeletedView;
+    #projectFormView;
+    #projectsTableView;
 
     constructor() {
         this.#dispatcher = Dispatcher.getInstance();
         this.#sessionStorer = SessionStorer.getInstance();
         this.#subscriber = Subscriber.getInstance();
         this.#navigationView = NavigationView.getInstance();
-        this.#projectDangerView = ProjectDangerView.getInstance();
+        this.#projectDeleteDialogView = ProjectDeleteDialogView.getInstance();
+        this.#projectDeletedView = ProjectDeletedView.getInstance();
+        this.#projectFormView = ProjectFormView.getInstance();
+        this.#projectsTableView = ProjectsTableView.getInstance();
     }
 
     /**
@@ -45,8 +56,9 @@ export class DeleteProjectController {
     }
 
     init() {
+        this.#subscriber.subscribe(ProjectsEventEnum.DELETE_PROJECT_DIALOG_REQUESTED, (request) => this.#projectDeleteDialogView.open(request));
         this.#subscriber.subscribe(ProjectsEventEnum.DELETE_PROJECT_REQUESTED, (request) => this.invoke(request));
-        this.#subscriber.subscribe(DashboardEventEnum.PROJECT_DETAIL_RENDERED, (request) => this.#projectDangerView.renderProject(request.project ?? {}));
+        this.#subscriber.subscribe(DashboardEventEnum.PROJECT_DETAIL_RENDERED, (request) => this.#projectDeleteDialogView.renderProject(request.project ?? {}));
     }
 
     /**
@@ -54,26 +66,32 @@ export class DeleteProjectController {
      */
     async invoke(request) {
         try {
-            await DeleteProjectService.getInstance().invoke(
+            const deleteProjectResultDto = await DeleteProjectService.getInstance().invoke(
                 DeleteProjectDto.fromPrimitives({
                     dashboardToken: this.#sessionStorer.getDashboardToken(),
                     projectUuid: request.projectUuid,
                 })
             );
-            this.#projectDangerView.reset();
-            this.#navigationView.goToHash(DASHBOARD_HASH);
+            this.#projectDeleteDialogView.close();
+            this.#projectFormView.resetIfEditing(deleteProjectResultDto.getProjectUuid());
+            this.#projectsTableView.renderMessage("");
+            this.#projectDeletedView.renderDeletedProject(
+                deleteProjectResultDto.getProjectName(), deleteProjectResultDto.getAgents()
+            );
+            this.#navigationView.goToHash(RouteHashEnum.PROJECTS);
         }
         catch (error) {
             if (error instanceof ProjectsException && error.getCode() === HttpCodeEnum.UNAUTHORIZED) {
+                this.#projectDeleteDialogView.close();
                 this.#dispatcher.dispatch(SessionEventEnum.SESSION_EXPIRED);
                 return;
             }
             if (error instanceof ProjectsException) {
-                this.#projectDangerView.renderErrors(error.getErrors());
+                this.#projectDeleteDialogView.renderErrors(error.getErrors());
                 return;
             }
             console.error("DeleteProjectController.invoke", error);
-            this.#projectDangerView.renderErrors([ProjectsMessageEnum.UNEXPECTED_ERROR]);
+            this.#projectDeleteDialogView.renderErrors([ProjectsMessageEnum.UNEXPECTED_ERROR]);
         }
     }
 }

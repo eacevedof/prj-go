@@ -24,7 +24,7 @@ func (r *DashboardReaderSqliteRepository) GetQueueStatsByStatus() ([]map[string]
         SELECT
             queue_status, COUNT(*) AS n_batches, COALESCE(SUM(events_count), 0) AS n_events,
             MIN(received_at) AS oldest_received_at
-        FROM ` + "`ingest_queue`" + `
+        FROM ` + "`app_ingest_queue`" + `
         WHERE 1=1
         AND queue_status IN ('pending', 'failed')
         GROUP BY queue_status
@@ -37,7 +37,7 @@ func (r *DashboardReaderSqliteRepository) GetEventsTotal() (int, error) {
         -- getEventsTotal
         SELECT
             COUNT(*) AS n_rows
-        FROM ` + "`events`" + `
+        FROM ` + "`app_events`" + `
         `
     return r.getFirstInt(r.Query(sql))
 }
@@ -60,7 +60,7 @@ func (r *DashboardReaderSqliteRepository) GetEventsStatsByProjectIdSince(project
         -- getEventsStatsByProjectIdSince
         SELECT
             severity, COUNT(*) AS n_events
-        FROM `+"`events`"+`
+        FROM `+"`app_events`"+`
         WHERE 1=1
         AND project_id = %d
         AND occurred_at >= ?
@@ -75,7 +75,7 @@ func (r *DashboardReaderSqliteRepository) GetEventsStatsByAgentIdSince(agentId i
         -- getEventsStatsByAgentIdSince
         SELECT
             severity, COUNT(*) AS n_events
-        FROM `+"`events`"+`
+        FROM `+"`app_events`"+`
         WHERE 1=1
         AND agent_id = %d
         AND occurred_at >= ?
@@ -90,8 +90,8 @@ func (r *DashboardReaderSqliteRepository) GetLastEventAtByProjectId() (map[int]s
         -- getLastEventAtByProjectId
         SELECT
             a.project_id, MAX(s.last_event_at) AS last_event_at
-        FROM ` + "`sources`" + ` s
-        INNER JOIN ` + "`agents`" + ` a ON a.id = s.agent_id
+        FROM ` + "`app_sources`" + ` s
+        INNER JOIN ` + "`app_agents`" + ` a ON a.id = s.agent_id
         GROUP BY a.project_id
         `
     rows, err := r.Query(sql)

@@ -12,6 +12,7 @@ type EnqueueIngestBatchDto struct {
     hostName      string
     hostOs        string
     clientVersion string
+    clientPath    string
     eventsJson    string
     eventsCount   int
 }
@@ -24,6 +25,7 @@ func EnqueueIngestBatchDtoFromPrimitives(primitives map[string]any) *EnqueueInge
         hostName:         application.GetTrimmedString(primitives, "hostName"),
         hostOs:           application.GetTrimmedString(primitives, "hostOs"),
         clientVersion:    application.GetTrimmedString(primitives, "clientVersion"),
+        clientPath:       application.GetTrimmedString(primitives, "clientPath"),
         eventsJson:       application.GetTrimmedString(primitives, "eventsJson"),
         eventsCount:      application.GetInt(primitives, "eventsCount"),
     }
@@ -55,4 +57,8 @@ func (d *EnqueueIngestBatchDto) GetEventsJson() string {
 
 func (d *EnqueueIngestBatchDto) GetEventsCount() int {
     return d.eventsCount
+}
+
+func (d *EnqueueIngestBatchDto) GetClientPath() string {
+    return d.clientPath
 }

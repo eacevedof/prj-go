@@ -3,6 +3,7 @@ package server
 import (
     "net"
     "os"
+    "path/filepath"
 )
 
 // ServerIdentifier nombre e ip de la maquina que ejecuta la app.
@@ -33,4 +34,17 @@ func (s *ServerIdentifier) GetServerIp() string {
         }
     }
     return serverName
+}
+
+// GetExecutablePath ruta absoluta del binario que se esta ejecutando (symlinks resueltos), o "" si el SO no la da.
+// Viaja al backend para que el panel diga donde desinstalar el agente.
+func (s *ServerIdentifier) GetExecutablePath() string {
+    executable, err := os.Executable()
+    if err != nil {
+        return ""
+    }
+    if resolved, err := filepath.EvalSymlinks(executable); err == nil {
+        return resolved
+    }
+    return executable
 }

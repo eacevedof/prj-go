@@ -2,6 +2,7 @@ package controllers
 
 import (
     "siem-backend/src/modules/events/application/geteventsfacets"
+    "siem-backend/src/modules/events/application/geteventsfilteroptions"
     "siem-backend/src/modules/events/application/geteventshistogram"
     "siem-backend/src/modules/events/application/searchevents"
     "siem-backend/src/modules/events/domain/enums"
@@ -11,10 +12,11 @@ import (
     sharedcontrollers "siem-backend/src/modules/shared/infrastructure/controllers"
 )
 
-// Los tres controllers REST del visor de eventos (Bearer del dashboard) comparten los mismos parametros de filtro:
+// Los tres controllers REST de busqueda del visor de eventos (Bearer del dashboard) comparten los mismos parametros:
 //   from, to (rango UTC sobre occurred_at) · search (texto en el mensaje)
-//   project_uuid, agent_uuid, severity, event_type, source_type, source_name  -> incluir (varios valores con coma)
-//   not_<campo>                                                               -> excluir
+//   project_uuid, agent_uuid, monitor_uuid, severity, event_type, source_type, source_name -> incluir (con coma)
+//   not_<campo>                                                                            -> excluir
+// El cuarto, filter-options, da el catalogo de los desplegables Proyecto / Agente / Monitor.
 
 // getFilterPrimitives los parametros de filtro de la query tal cual (clave de la API -> valor).
 func getFilterPrimitives(httpRequest *httprequester.HttpRequester) map[string]any {
@@ -114,4 +116,31 @@ func (c *GetEventsFacetsRestController) Invoke() *httpresponder.HttpResponder {
         return c.RespondError(err, "GetEventsFacetsRestController.Invoke")
     }
     return c.RespondOk(getEventsFacetsResultDto.ToArray())
+}
+
+// GetEventsFilterOptionsRestController GET /api/v1/events/filter-options
+// -> {projects: [{project_uuid, project_name}], agents: [{agent_uuid, agent_name, project_uuid}],
+//     monitors: [{monitor_uuid, monitor_name, monitor_type, project_uuid, agent_uuid}]}
+type GetEventsFilterOptionsRestController struct {
+    sharedcontrollers.AbstractRestController
+}
+
+func GetEventsFilterOptionsRestControllerGetInstance(httpRequester *httprequester.HttpRequester) *GetEventsFilterOptionsRestController {
+    return &GetEventsFilterOptionsRestController{AbstractRestController: sharedcontrollers.NewAbstractRestController(httpRequester)}
+}
+
+func (c *GetEventsFilterOptionsRestController) Invoke() *httpresponder.HttpResponder {
+    dashboardAuthPrimitives, err := c.GetDashboardAuthOrFail()
+    if err != nil {
+        return c.RespondError(err, "GetEventsFilterOptionsRestController.Invoke")
+    }
+    getEventsFilterOptionsResultDto, err := geteventsfilteroptions.GetEventsFilterOptionsServiceGetInstance().Invoke(
+        geteventsfilteroptions.GetEventsFilterOptionsDtoFromPrimitives(application.MergePrimitives(
+            c.GetHttpRequest().GetMetadata(), dashboardAuthPrimitives,
+        )),
+    )
+    if err != nil {
+        return c.RespondError(err, "GetEventsFilterOptionsRestController.Invoke")
+    }
+    return c.RespondOk(getEventsFilterOptionsResultDto.ToArray())
 }

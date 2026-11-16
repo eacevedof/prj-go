@@ -13,6 +13,7 @@ var EventsKeyEnum = struct {
     EXIT_CODE   string
     DURATION_MS string
     ATTRIBUTES  string
+    MONITOR_UUID string
     OCCURRED_AT string
     RECEIVED_AT string
 
@@ -48,6 +49,7 @@ var EventsKeyEnum = struct {
     EXIT_CODE:   "exit_code",
     DURATION_MS: "duration_ms",
     ATTRIBUTES:  "attributes",
+    MONITOR_UUID: "monitor_uuid",
     OCCURRED_AT: "occurred_at",
     RECEIVED_AT: "received_at",
 

@@ -3,6 +3,7 @@ import { HttpRequester } from "/js/Modules/Shared/Infrastructure/Components/Http
 const PATH_EVENTS = "/api/v1/events";
 const PATH_EVENTS_HISTOGRAM = "/api/v1/events/histogram";
 const PATH_EVENTS_FACETS = "/api/v1/events/facets";
+const PATH_EVENTS_FILTER_OPTIONS = "/api/v1/events/filter-options";
 
 /**
  * Lecturas de eventos. Las tres comparten los mismos filtros (claves de la API: from, to, search, campo=a,b,
@@ -48,5 +49,13 @@ export class EventsReaderHttpRepository {
      */
     async getEventsFacets(filters, dashboardToken) {
         return this.#httpRequester.getResult(PATH_EVENTS_FACETS, filters, dashboardToken);
+    }
+
+    /**
+     * GET /api/v1/events/filter-options: {projects[], agents[], monitors[]} (el catalogo de los desplegables).
+     * @param {string} dashboardToken
+     */
+    async getEventsFilterOptions(dashboardToken) {
+        return this.#httpRequester.getResult(PATH_EVENTS_FILTER_OPTIONS, {}, dashboardToken);
     }
 }

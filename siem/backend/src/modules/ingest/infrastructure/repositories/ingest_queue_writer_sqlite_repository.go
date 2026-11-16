@@ -22,7 +22,7 @@ func IngestQueueWriterSqliteRepositoryGetInstance() *IngestQueueWriterSqliteRepo
 func (r *IngestQueueWriterSqliteRepository) InsertBatchIfNew(agentId int, batchUuid string, payload string, eventsCount int, receivedAt string) (int, error) {
     sql := fmt.Sprintf(`
         -- insertBatchIfNew
-        INSERT OR IGNORE INTO `+"`ingest_queue`"+`
+        INSERT OR IGNORE INTO `+"`app_ingest_queue`"+`
             (agent_id, batch_uuid, payload, events_count, queue_status, received_at)
         VALUES
             (%d, ?, ?, %d, ?, ?)
@@ -35,7 +35,7 @@ func (r *IngestQueueWriterSqliteRepository) InsertBatchIfNew(agentId int, batchU
 func (r *IngestQueueWriterSqliteRepository) UpdatePendingBatchAsDoneById(batchId int, processedAt string) (int, error) {
     sql := fmt.Sprintf(`
         -- updatePendingBatchAsDoneById
-        UPDATE `+"`ingest_queue`"+`
+        UPDATE `+"`app_ingest_queue`"+`
         SET queue_status = ?, payload = '', processed_at = ?, error_message = NULL
         WHERE 1=1
         AND id = %d
@@ -52,7 +52,7 @@ func (r *IngestQueueWriterSqliteRepository) UpdateBatchAfterFailureById(batchId 
     }
     sql := fmt.Sprintf(`
         -- updateBatchAfterFailureById
-        UPDATE `+"`ingest_queue`"+`
+        UPDATE `+"`app_ingest_queue`"+`
         SET queue_status = ?, attempts = attempts + 1, error_message = ?, processed_at = ?
         WHERE 1=1
         AND id = %d
@@ -64,7 +64,7 @@ func (r *IngestQueueWriterSqliteRepository) UpdateBatchAfterFailureById(batchId 
 func (r *IngestQueueWriterSqliteRepository) DeleteDoneBatchesProcessedBefore(processedBefore string) (int, error) {
     sql := `
         -- deleteDoneBatchesProcessedBefore
-        DELETE FROM ` + "`ingest_queue`" + `
+        DELETE FROM ` + "`app_ingest_queue`" + `
         WHERE 1=1
         AND queue_status = ?
         AND processed_at < ?

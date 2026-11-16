@@ -4,6 +4,12 @@ La versión es `APP_VERSION` en `src/modules/shared/infrastructure/repositories/
 (la muestran `version` y `help`, viaja al backend en cada envío y da nombre a los binarios de `make dist`). Lo más nuevo
 arriba.
 
+## 0.4.0 — 2026-11-16
+
+1. Cada envío (también el latido) lleva `agent.client_path`: la ruta absoluta del ejecutable (`os.Executable`, con los
+   symlinks resueltos). El panel la usa para decir dónde desinstalar el agente cuando se borra su proyecto. Un backend
+   anterior a 0.8.0 la ignora.
+
 ## 0.3.0 — 2026-11-15
 
 1. **Config remota**: el agente baja del backend lo que tiene que vigilar (`GET .../agent-config`, los monitores que se

@@ -8,6 +8,8 @@ export const EventFilterFieldEnum = Object.freeze({
     EVENT_TYPE: "event_type",
     SOURCE_TYPE: "source_type",
     SOURCE_NAME: "source_name",
+    // attributes.monitor_uuid: solo los eventos de un monitor (host_metric, log_pattern)
+    MONITOR_UUID: "monitor_uuid",
 });
 
 export const EVENT_FILTER_FIELDS = Object.freeze(Object.values(EventFilterFieldEnum));
@@ -20,6 +22,7 @@ export const EVENT_FILTER_FIELD_LABELS = Object.freeze({
     [EventFilterFieldEnum.EVENT_TYPE]: "tipo",
     [EventFilterFieldEnum.SOURCE_TYPE]: "tipo de fuente",
     [EventFilterFieldEnum.SOURCE_NAME]: "fuente",
+    [EventFilterFieldEnum.MONITOR_UUID]: "monitor",
 });
 
 /**

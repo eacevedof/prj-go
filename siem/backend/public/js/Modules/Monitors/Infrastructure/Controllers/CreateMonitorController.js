@@ -6,6 +6,8 @@ import { NavigationView } from "/js/Modules/Shared/Infrastructure/Views/Navigati
 
 import { SessionEventEnum } from "/js/Modules/Session/Domain/Enums/SessionEventEnum.js";
 
+import { AgentsEventEnum } from "/js/Modules/Agents/Domain/Enums/AgentsEventEnum.js";
+
 import { MonitorsEventEnum } from "/js/Modules/Monitors/Domain/Enums/MonitorsEventEnum.js";
 import { MonitorsMessageEnum } from "/js/Modules/Monitors/Domain/Enums/MonitorsMessageEnum.js";
 import { CreateMonitorDto } from "/js/Modules/Monitors/Application/CreateMonitor/CreateMonitorDto.js";
@@ -14,7 +16,9 @@ import { MonitorsView } from "/js/Modules/Monitors/Infrastructure/Views/Monitors
 import { MonitorsException } from "/js/Modules/Monitors/Domain/Exceptions/MonitorsException.js";
 
 /**
- * Alta de un monitor desde el formulario del detalle de un proyecto: creado, se repinta la pantalla (sale en la tabla).
+ * Alta de un monitor desde el modal del detalle de un proyecto: creado, se repinta la pantalla (sale en la tabla).
+ * El modal lo abre "Crear monitor" en la fila de un agente (Agents avisa con CREATE_MONITOR_REQUESTED: el monitor
+ * sera de ese agente) o el boton de "todos los agentes" de la propia vista.
  */
 export class CreateMonitorController {
 
@@ -41,6 +45,9 @@ export class CreateMonitorController {
 
     init() {
         this.#subscriber.subscribe(MonitorsEventEnum.CREATE_MONITOR_REQUESTED, (request) => this.invoke(request));
+        this.#subscriber.subscribe(AgentsEventEnum.CREATE_MONITOR_REQUESTED, (request) => {
+            this.#monitorsView.openCreateDialog(request.agentUuid ?? "", request.agentName ?? "");
+        });
     }
 
     /**

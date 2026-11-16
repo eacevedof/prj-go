@@ -7,8 +7,6 @@ import { Subscriber } from "/js/Modules/Shared/Infrastructure/Components/Subscri
 
 import { SessionEventEnum } from "/js/Modules/Session/Domain/Enums/SessionEventEnum.js";
 
-import { DashboardEventEnum } from "/js/Modules/Dashboard/Domain/Enums/DashboardEventEnum.js";
-
 import { MonitorsMessageEnum } from "/js/Modules/Monitors/Domain/Enums/MonitorsMessageEnum.js";
 import { ListMonitorsDto } from "/js/Modules/Monitors/Application/ListMonitors/ListMonitorsDto.js";
 import { ListMonitorsService } from "/js/Modules/Monitors/Application/ListMonitors/ListMonitorsService.js";
@@ -17,8 +15,8 @@ import { MonitorsException } from "/js/Modules/Monitors/Domain/Exceptions/Monito
 
 /**
  * Los monitores del proyecto que se esta viendo (#/projects/<project_uuid>): se piden cada vez que se pide esa
- * pantalla (tambien en cada refresco: el ultimo valor por agente cambia solo). Monitors escucha a Dashboard para
- * saber a que agentes se puede asignar un monitor. El refresco lo programa el controller del detalle, no este.
+ * pantalla (tambien en cada refresco: el ultimo valor por agente cambia solo). El refresco lo programa el controller
+ * del detalle, no este.
  */
 export class ListMonitorsController {
 
@@ -47,7 +45,6 @@ export class ListMonitorsController {
             this.#monitorsView.renderProject(request.pathParam ?? "");
             this.invoke({ projectUuid: request.pathParam });
         });
-        this.#subscriber.subscribe(DashboardEventEnum.PROJECT_DETAIL_RENDERED, (request) => this.#monitorsView.renderAgentOptions(request.agents ?? []));
         this.#subscriber.subscribe(SessionEventEnum.USER_LOGGED_OUT, () => this.#monitorsView.renderProject(""));
     }
 

@@ -19,7 +19,7 @@ func AgentsWriterSqliteRepositoryGetInstance() *AgentsWriterSqliteRepository {
 func (r *AgentsWriterSqliteRepository) InsertAgent(agentEntity *entities.AgentEntity) (int, error) {
     sql := fmt.Sprintf(`
         -- insertAgent
-        INSERT INTO `+"`agents`"+`
+        INSERT INTO `+"`app_agents`"+`
             (project_id, agent_uuid, agent_name, api_token_hash, heartbeat_interval_seconds, created_at, updated_at)
         VALUES
             (%d, ?, ?, ?, %d, ?, ?)
@@ -42,8 +42,8 @@ func (r *AgentsWriterSqliteRepository) InsertAgent(agentEntity *entities.AgentEn
 func (r *AgentsWriterSqliteRepository) UpdateHostDataAndLastSeenById(agentEntity *entities.AgentEntity) (int, error) {
     sql := fmt.Sprintf(`
         -- updateHostDataAndLastSeenById
-        UPDATE `+"`agents`"+`
-        SET host_name = ?, host_os = ?, host_ip = ?, client_version = ?, last_seen_at = ?, updated_at = ?
+        UPDATE `+"`app_agents`"+`
+        SET host_name = ?, host_os = ?, host_ip = ?, client_version = ?, client_path = ?, last_seen_at = ?, updated_at = ?
         WHERE 1=1
         AND id = %d
         `, agentEntity.GetId())
@@ -52,6 +52,7 @@ func (r *AgentsWriterSqliteRepository) UpdateHostDataAndLastSeenById(agentEntity
         agentEntity.GetHostOs(),
         agentEntity.GetHostIp(),
         agentEntity.GetClientVersion(),
+        agentEntity.GetClientPath(),
         agentEntity.GetLastSeenAt(),
         agentEntity.GetLastSeenAt(),
     )
@@ -65,7 +66,7 @@ func (r *AgentsWriterSqliteRepository) UpdateAgentById(agentId int, agentName st
     }
     sql := fmt.Sprintf(`
         -- updateAgentById
-        UPDATE `+"`agents`"+`
+        UPDATE `+"`app_agents`"+`
         SET agent_name = ?, heartbeat_interval_seconds = %d, is_enabled = %d, updated_at = ?
         WHERE 1=1
         AND id = %d
@@ -77,7 +78,7 @@ func (r *AgentsWriterSqliteRepository) UpdateAgentById(agentId int, agentName st
 func (r *AgentsWriterSqliteRepository) DeleteAgentById(agentId int) (int, error) {
     sql := fmt.Sprintf(`
         -- deleteAgentById
-        DELETE FROM `+"`agents`"+`
+        DELETE FROM `+"`app_agents`"+`
         WHERE 1=1
         AND id = %d
         `, agentId)

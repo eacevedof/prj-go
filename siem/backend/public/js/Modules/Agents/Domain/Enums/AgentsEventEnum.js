@@ -7,6 +7,8 @@ export const AgentsEventEnum = Object.freeze({
     EDIT_AGENT_REQUESTED: "agents.edit-agent-requested",
     // {agentUuid, agentName}: ya confirmado en la fila ("Sí, borrar")
     DELETE_AGENT_REQUESTED: "agents.delete-agent-requested",
+    // {agentUuid, agentName}: "Crear monitor" en la fila; lo atiende Monitors (abre su modal con ese agente fijado)
+    CREATE_MONITOR_REQUESTED: "agents.create-monitor-requested",
     // {filters: {agentText, agentStatus}}: cambio un filtro de la tabla (se filtra en el front, sin pedir nada)
     AGENTS_FILTERS_CHANGED: "agents.agents-filters-changed",
 });

@@ -85,6 +85,9 @@ func GetRoutes() []boot.Route {
         {Url: "/api/v1/events/facets", Allowed: []string{"get"}, Controller: func(h *httprequester.HttpRequester, args map[string]string) *httpresponder.HttpResponder {
             return eventscontrollers.GetEventsFacetsRestControllerGetInstance(h).Invoke()
         }},
+        {Url: "/api/v1/events/filter-options", Allowed: []string{"get"}, Controller: func(h *httprequester.HttpRequester, args map[string]string) *httpresponder.HttpResponder {
+            return eventscontrollers.GetEventsFilterOptionsRestControllerGetInstance(h).Invoke()
+        }},
 
         //@panel: binarios del siem-client
         {Url: "/api/v1/downloads", Allowed: []string{"get"}, Controller: func(h *httprequester.HttpRequester, args map[string]string) *httpresponder.HttpResponder {

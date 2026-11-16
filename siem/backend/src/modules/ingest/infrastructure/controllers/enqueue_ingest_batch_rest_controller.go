@@ -16,8 +16,8 @@ import (
 
 // EnqueueIngestBatchRestController POST /api/v1/ingest-batches  (Bearer: api_token del agente)
 //
-//	body: {batch_uuid, agent: {host_name, host_os, client_version}, events: [{event_type, source_name, message, ...}]}
-//	202: {batch_uuid, queued_events, is_duplicate}. "events" vacio = solo latido.
+//    body: {batch_uuid, agent: {host_name, host_os, client_version, client_path}, events: [{event_type, source_name, message, ...}]}
+//    202: {batch_uuid, queued_events, is_duplicate}. "events" vacio = solo latido.
 type EnqueueIngestBatchRestController struct {
     sharedcontrollers.AbstractRestController
 }
@@ -64,6 +64,7 @@ func (c *EnqueueIngestBatchRestController) getEnqueueIngestBatchResultDto() (*en
                 "hostName":      application.GetTrimmedString(agent, enums.IngestKeyEnum.HOST_NAME),
                 "hostOs":        application.GetTrimmedString(agent, enums.IngestKeyEnum.HOST_OS),
                 "clientVersion": application.GetTrimmedString(agent, enums.IngestKeyEnum.CLIENT_VERSION),
+                "clientPath":    application.GetTrimmedString(agent, enums.IngestKeyEnum.CLIENT_PATH),
                 "eventsJson":    eventsJson,
                 "eventsCount":   eventsCount,
             },

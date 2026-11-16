@@ -10,7 +10,7 @@ import (
 
 const agentColumns = `
             id, project_id, agent_uuid, agent_name, heartbeat_interval_seconds, is_enabled,
-            host_name, host_os, host_ip, client_version, last_seen_at, created_at, updated_at`
+            host_name, host_os, host_ip, client_version, client_path, last_seen_at, created_at, updated_at`
 
 type AgentsReaderSqliteRepository struct {
     sharedrepositories.AbstractSqliteRepository
@@ -24,7 +24,7 @@ func (r *AgentsReaderSqliteRepository) GetAgentById(agentId int) (*entities.Agen
     sql := fmt.Sprintf(`
         -- getAgentById
         SELECT`+agentColumns+`
-        FROM `+"`agents`"+`
+        FROM `+"`app_agents`"+`
         WHERE 1=1
         AND id = %d
         `, agentId)
@@ -36,7 +36,7 @@ func (r *AgentsReaderSqliteRepository) GetAgentByApiTokenHash(apiTokenHash strin
     sql := `
         -- getAgentByApiTokenHash
         SELECT` + agentColumns + `
-        FROM ` + "`agents`" + `
+        FROM ` + "`app_agents`" + `
         WHERE 1=1
         AND api_token_hash = ?
         `
@@ -48,7 +48,7 @@ func (r *AgentsReaderSqliteRepository) GetAgentsByProjectId(projectId int) ([]*e
     sql := fmt.Sprintf(`
         -- getAgentsByProjectId
         SELECT`+agentColumns+`
-        FROM `+"`agents`"+`
+        FROM `+"`app_agents`"+`
         WHERE 1=1
         AND project_id = %d
         ORDER BY agent_name ASC
@@ -61,7 +61,7 @@ func (r *AgentsReaderSqliteRepository) GetAllAgents() ([]*entities.AgentEntity, 
     sql := `
         -- getAllAgents
         SELECT` + agentColumns + `
-        FROM ` + "`agents`" + `
+        FROM ` + "`app_agents`" + `
         ORDER BY project_id ASC, agent_name ASC
         `
     return r.getAgentEntities(r.Query(sql))
@@ -73,7 +73,7 @@ func (r *AgentsReaderSqliteRepository) DoesAgentNameExistInProject(projectId int
         -- doesAgentNameExistInProject
         SELECT
             COUNT(*) AS n_rows
-        FROM `+"`agents`"+`
+        FROM `+"`app_agents`"+`
         WHERE 1=1
         AND project_id = %d
         AND agent_name = ? COLLATE NOCASE
@@ -91,7 +91,7 @@ func (r *AgentsReaderSqliteRepository) DoesAgentNameExistInOtherAgent(projectId 
         -- doesAgentNameExistInOtherAgent
         SELECT
             COUNT(*) AS n_rows
-        FROM `+"`agents`"+`
+        FROM `+"`app_agents`"+`
         WHERE 1=1
         AND project_id = %d
         AND agent_name = ? COLLATE NOCASE
@@ -126,7 +126,7 @@ func (r *AgentsReaderSqliteRepository) GetAgentByAgentUuid(agentUuid string) (*e
     sql := `
         -- getAgentByAgentUuid
         SELECT` + agentColumns + `
-        FROM ` + "`agents`" + `
+        FROM ` + "`app_agents`" + `
         WHERE 1=1
         AND agent_uuid = ?
         `

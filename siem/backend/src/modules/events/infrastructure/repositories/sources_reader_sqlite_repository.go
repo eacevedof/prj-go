@@ -21,7 +21,7 @@ func (r *SourcesReaderSqliteRepository) GetSourceIdByAgentIdAndTypeAndName(agent
         -- getSourceIdByAgentIdAndTypeAndName
         SELECT
             id
-        FROM `+"`sources`"+`
+        FROM `+"`app_sources`"+`
         WHERE 1=1
         AND agent_id = %d
         AND source_type = ?
@@ -41,8 +41,8 @@ func (r *SourcesReaderSqliteRepository) GetSourcesByProjectId(projectId int) ([]
         SELECT
             s.agent_id, s.source_type, s.source_name, s.events_count, s.last_event_at, s.last_severity,
             s.last_exit_code, s.last_message
-        FROM `+"`sources`"+` s
-        INNER JOIN `+"`agents`"+` a ON a.id = s.agent_id
+        FROM `+"`app_sources`"+` s
+        INNER JOIN `+"`app_agents`"+` a ON a.id = s.agent_id
         WHERE 1=1
         AND a.project_id = %d
         ORDER BY s.agent_id ASC, s.source_type ASC, s.source_name ASC

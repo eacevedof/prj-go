@@ -51,6 +51,10 @@ func (s *CreateMonitorService) Invoke(createMonitorDto *CreateMonitorDto) (*Crea
     if err := s.FailIfMonitorNameExists(projectEntity.GetId(), createMonitorDto.GetMonitorName(), 0); err != nil {
         return nil, err
     }
+    normalizedConfig := s.MonitorFieldsValidator.GetNormalizedConfig(monitorType, createMonitorDto.GetMonitorConfig())
+    if err := s.FailIfMonitorResourceExists(projectEntity.GetId(), agentId, monitorType, normalizedConfig, 0); err != nil {
+        return nil, err
+    }
 
     warningThreshold, criticalThreshold := s.GetThresholdsOrNil(createMonitorDto.MonitorInput, monitorType)
     monitorId, err := s.MonitorsWriterSqliteRepository.InsertMonitor(entities.MonitorEntityFromPrimitives(map[string]any{
@@ -61,7 +65,7 @@ func (s *CreateMonitorService) Invoke(createMonitorDto *CreateMonitorDto) (*Crea
         enums.MonitorsKeyEnum.MONITOR_NAME:       createMonitorDto.GetMonitorName(),
         enums.MonitorsKeyEnum.IS_ENABLED:         createMonitorDto.IsEnabled(),
         enums.MonitorsKeyEnum.INTERVAL_SECONDS:   createMonitorDto.GetIntervalSeconds(),
-        enums.MonitorsKeyEnum.CONFIG:             s.MonitorFieldsValidator.GetNormalizedConfig(monitorType, createMonitorDto.GetMonitorConfig()),
+        enums.MonitorsKeyEnum.CONFIG:             normalizedConfig,
         enums.MonitorsKeyEnum.WARNING_THRESHOLD:  warningThreshold,
         enums.MonitorsKeyEnum.CRITICAL_THRESHOLD: criticalThreshold,
         enums.MonitorsKeyEnum.CREATED_AT:         s.dateTimer.GetNowDtIntoTargetTz(),

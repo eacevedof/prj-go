@@ -20,6 +20,8 @@ type EventEntity struct {
     durationMs  int
     // JSON compacto de los attributes del evento ("" = sin attributes)
     attributes  string
+    // attributes.monitor_uuid copiado a su columna (filtro del visor por monitor); "" = no es de un monitor
+    monitorUuid string
     occurredAt  string
     receivedAt  string
 }
@@ -37,6 +39,7 @@ func EventEntityFromPrimitives(primitives map[string]any) *EventEntity {
         exitCode:   application.GetInt(primitives, enums.EventsKeyEnum.EXIT_CODE),
         durationMs: application.GetInt(primitives, enums.EventsKeyEnum.DURATION_MS),
         attributes: application.GetTrimmedString(primitives, enums.EventsKeyEnum.ATTRIBUTES),
+        monitorUuid: application.GetTrimmedString(primitives, enums.EventsKeyEnum.MONITOR_UUID),
         occurredAt: application.GetTrimmedString(primitives, enums.EventsKeyEnum.OCCURRED_AT),
         receivedAt: application.GetTrimmedString(primitives, enums.EventsKeyEnum.RECEIVED_AT),
     }
@@ -102,4 +105,9 @@ func (e *EventEntity) GetReceivedAt() string {
 
 func (e *EventEntity) GetAttributes() string {
     return e.attributes
+}
+
+// GetMonitorUuid el monitor que genero el evento ("" = no es de un monitor).
+func (e *EventEntity) GetMonitorUuid() string {
+    return e.monitorUuid
 }

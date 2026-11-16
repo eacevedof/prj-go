@@ -21,7 +21,7 @@ func SourcesWriterSqliteRepositoryGetInstance() *SourcesWriterSqliteRepository {
 func (r *SourcesWriterSqliteRepository) InsertSource(agentId int, sourceType string, sourceName string, createdAt string) (int, error) {
     sql := fmt.Sprintf(`
         -- insertSource
-        INSERT INTO `+"`sources`"+`
+        INSERT INTO `+"`app_sources`"+`
             (agent_id, source_type, source_name, created_at, updated_at)
         VALUES
             (%d, ?, ?, ?, ?)
@@ -46,7 +46,7 @@ func (r *SourcesWriterSqliteRepository) UpdateLastEventById(sourceId int, lastEv
 
     sql := fmt.Sprintf(`
         -- updateLastEventById
-        UPDATE `+"`sources`"+`
+        UPDATE `+"`app_sources`"+`
         SET events_count = events_count + %d, last_event_at = ?, last_severity = ?, last_exit_code = ?,
             last_message = ?, updated_at = ?
         WHERE 1=1

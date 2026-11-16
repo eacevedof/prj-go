@@ -154,6 +154,7 @@ func (s *SendSpooledEventsService) sendIngestBatch(batchUuid string, events []ma
                 enums.ShipperKeyEnum.HOST_NAME:      s.serverIdentifier.GetServerName(),
                 enums.ShipperKeyEnum.HOST_OS:        runtime.GOOS,
                 enums.ShipperKeyEnum.CLIENT_VERSION: s.environmentReaderRawRepository.GetAppVersion(),
+                enums.ShipperKeyEnum.CLIENT_PATH:    s.serverIdentifier.GetExecutablePath(),
             },
             enums.ShipperKeyEnum.EVENTS: events,
         },

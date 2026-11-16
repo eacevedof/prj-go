@@ -104,6 +104,10 @@ func (e *MonitorEntity) GetAgentId() int {
     return e.agentId
 }
 
+func (e *MonitorEntity) GetAgentName() string {
+    return e.agentName
+}
+
 func (e *MonitorEntity) GetMonitorType() string {
     return e.monitorType
 }

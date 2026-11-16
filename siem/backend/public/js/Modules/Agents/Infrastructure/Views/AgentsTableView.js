@@ -12,6 +12,7 @@ import { AgentsTextEnum } from "/js/Modules/Agents/Domain/Enums/AgentsTextEnum.j
 const CSS_HIDDEN = "hidden";
 const ACTION_TOGGLE_DETAIL = "toggle-detail";
 const ACTION_EDIT = "edit";
+const ACTION_CREATE_MONITOR = "create-monitor";
 const ACTION_ASK_DELETE = "ask-delete";
 const ACTION_CONFIRM_DELETE = "confirm-delete";
 const ACTION_CANCEL_DELETE = "cancel-delete";
@@ -28,7 +29,7 @@ const COUNT_CSS_ZERO = "count-zero";
 /**
  * Tabla de agentes del detalle de un proyecto (mismo patron que la de proyectos): filtros (texto y estado), una fila
  * por agente con id, uuid, nombre (con su estado, y su host y ultimo latido debajo), warnings, errores y criticos de
- * 24 h, y acciones (ver detalle, editar, borrar). "Ver detalle" despliega bajo la fila su latido, host, cliente y sus
+ * 24 h, y acciones (ver detalle, editar, crear monitor, borrar). "Ver detalle" despliega bajo la fila su latido, host, cliente y sus
  * fuentes (carpeta, comando, contenedor, monitor) con el ultimo resultado. Borrar se confirma en la propia fila.
  * Filas desplegadas, confirmacion pendiente y filtros sobreviven al auto-refresco; al cambiar de proyecto se vacian.
  * Una sola instancia: guarda las referencias al DOM y ese estado.
@@ -193,6 +194,14 @@ export class AgentsTableView {
                 this.renderMessage("");
                 this.#dispatcher.dispatch(AgentsEventEnum.EDIT_AGENT_REQUESTED, { agent });
                 return;
+            case ACTION_CREATE_MONITOR:
+                if (!agent) return;
+                this.renderMessage("");
+                this.#dispatcher.dispatch(AgentsEventEnum.CREATE_MONITOR_REQUESTED, {
+                    agentUuid,
+                    agentName: agent[AgentsKeyEnum.AGENT_NAME],
+                });
+                return;
             case ACTION_ASK_DELETE:
                 this.#askingDeleteAgentUuid = agentUuid;
                 this.#renderAgentsTable();
@@ -283,6 +292,7 @@ export class AgentsTableView {
         const toggleText = isExpanded ? AgentsTextEnum.HIDE_DETAIL : AgentsTextEnum.SHOW_DETAIL;
         return `<button type="button" class="button button-small button-ghost" data-action="${ACTION_TOGGLE_DETAIL}" data-agent-uuid="${escapedAgentUuid}" aria-expanded="${isExpanded}">${h.getEscaped(toggleText)}</button>
             <button type="button" class="button button-small" data-action="${ACTION_EDIT}" data-agent-uuid="${escapedAgentUuid}">${h.getEscaped(AgentsTextEnum.EDIT)}</button>
+            <button type="button" class="button button-small" data-action="${ACTION_CREATE_MONITOR}" data-agent-uuid="${escapedAgentUuid}">${h.getEscaped(AgentsTextEnum.CREATE_MONITOR)}</button>
             <button type="button" class="button button-small button-ghost" data-action="${ACTION_ASK_DELETE}" data-agent-uuid="${escapedAgentUuid}">${h.getEscaped(AgentsTextEnum.DELETE)}</button>`;
     }
 

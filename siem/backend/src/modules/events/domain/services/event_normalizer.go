@@ -17,6 +17,8 @@ const (
     FILE_PATH_MAX_LENGTH   = 500
     // attributes son unos pocos datos estructurados (estado, exit_code, % de cpu...): mas que esto no es un attribute
     ATTRIBUTES_MAX_BYTES = 4000
+    // events.monitor_uuid VARCHAR(50)
+    MONITOR_UUID_MAX_LENGTH = 50
     EMPTY_COMMAND_OUTPUT = "(no output)"
 )
 
@@ -66,6 +68,7 @@ func (n *EventNormalizer) GetEventEntityOrNil(rawEvent map[string]any, projectId
         enums.EventsKeyEnum.EXIT_CODE:   exitCode,
         enums.EventsKeyEnum.DURATION_MS: max(0, application.GetInt(rawEvent, enums.EventsKeyEnum.DURATION_MS)),
         enums.EventsKeyEnum.ATTRIBUTES:  n.getAttributesJson(attributes),
+        enums.EventsKeyEnum.MONITOR_UUID: n.getMonitorUuid(attributes),
         enums.EventsKeyEnum.OCCURRED_AT: n.getOccurredAtOrReceivedAt(application.GetTrimmedString(rawEvent, enums.EventsKeyEnum.OCCURRED_AT), receivedAt),
         enums.EventsKeyEnum.RECEIVED_AT: receivedAt,
     })
@@ -114,4 +117,14 @@ func (n *EventNormalizer) getTruncated(text string, maxLength int) string {
         return text
     }
     return string(runes[:maxLength])
+}
+
+// getMonitorUuid attributes.monitor_uuid (lo pone el agente en los eventos de un monitor) para su columna; uno que no
+// cabe en ella (no es un uuid de monitor) se ignora.
+func (n *EventNormalizer) getMonitorUuid(attributes map[string]any) string {
+    monitorUuid := application.GetTrimmedString(attributes, enums.MonitorAttributeEnum.MONITOR_UUID)
+    if len(monitorUuid) > MONITOR_UUID_MAX_LENGTH {
+        return ""
+    }
+    return monitorUuid
 }

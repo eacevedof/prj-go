@@ -7,6 +7,7 @@ import {
     METRIC_MONITOR_TYPES, MONITOR_SEVERITIES, MONITOR_TYPE_LABELS, MONITOR_TYPES, MonitorDefaultEnum, MonitorTypeEnum,
     PERCENT_MONITOR_TYPES,
 } from "/js/Modules/Monitors/Domain/Enums/MonitorTypeEnum.js";
+import { DuplicateReasonEnum, MonitorDuplicateFinder } from "/js/Modules/Monitors/Domain/Services/MonitorDuplicateFinder.js";
 
 const CSS_HIDDEN = "hidden";
 const ACTION_EDIT = "edit";
@@ -17,7 +18,7 @@ const ACTION_CANCEL_DELETE = "cancel-delete";
 const ALL_AGENTS_LABEL = "todos los agentes";
 const UNIT_PERCENT = "%";
 const UNIT_MBIT = "Mbit/s";
-const TITLE_CREATE = "4 - Nuevo monitor";
+const TITLE_CREATE = "Nuevo monitor";
 const SUBMIT_CREATE = "Crear monitor";
 const SUBMIT_UPDATE = "Guardar cambios";
 // que campos de config enseña el formulario para cada tipo
@@ -30,9 +31,11 @@ const CONFIG_FIELDS_BY_TYPE = Object.freeze({
 
 /**
  * "Monitores" del detalle de un proyecto: los recursos a vigilar (cpu, memoria, disco, gpu, red, carpetas, patrones
- * de log). Tabla con su monitor_uuid (copiable), ambito, umbrales y ultimo valor por agente; y un formulario (el mismo
- * para alta y edicion) cuyo bloque de config cambia con el tipo. El formulario es html fijo: el refresco solo repinta
- * la tabla, asi que lo que se este escribiendo no se pierde. Borrar pide un segundo clic en la propia fila.
+ * de log). Tabla con su monitor_uuid (copiable), ambito, umbrales y ultimo valor por agente; y un modal (<dialog>, el
+ * mismo para alta y edicion) cuyo bloque de config cambia con el tipo. El ambito lo fija desde donde se abre: la fila
+ * de un agente ("Crear monitor"), el boton de "todos los agentes" o "Editar" (el que ya tenia). Mientras se escribe
+ * avisa si el monitor estaria repetido (MonitorDuplicateFinder) y no deja enviarlo. El refresco solo repinta la tabla:
+ * lo que se este escribiendo no se pierde. Borrar pide un segundo clic en la propia fila.
  * Una sola instancia: guarda las referencias al DOM, el proyecto y los monitores pintados.
  */
 export class MonitorsView {
@@ -42,15 +45,19 @@ export class MonitorsView {
     #dateTimer;
     #dispatcher;
     #htmler;
+    #monitorDuplicateFinder;
     #elements = {};
     #projectUuid = "";
     #monitorsByUuid = new Map();
     #pendingDeleteMonitorUuid = "";
+    #isBusy = false;
+    #hasDuplicate = false;
 
     constructor() {
         this.#dateTimer = DateTimer.getInstance();
         this.#dispatcher = Dispatcher.getInstance();
         this.#htmler = Htmler.getInstance();
+        this.#monitorDuplicateFinder = MonitorDuplicateFinder.getInstance();
     }
 
     /**
@@ -66,13 +73,16 @@ export class MonitorsView {
         this.#loadSelectOptions();
         this.#renderFormByType();
         this.#elements.selectMonitorType.addEventListener("change", () => this.#renderFormByType());
+        this.#elements.formMonitor.addEventListener("input", () => this.#renderDuplicate());
+        this.#elements.formMonitor.addEventListener("change", () => this.#renderDuplicate());
         this.#elements.formMonitor.addEventListener("submit", (event) => this.#onSubmit(event));
-        this.#elements.buttonMonitorCancel.addEventListener("click", () => this.resetForm());
+        this.#elements.buttonMonitorCancel.addEventListener("click", () => this.closeDialog());
+        this.#elements.buttonMonitorCreateAll.addEventListener("click", () => this.openCreateDialog("", ""));
         this.#elements.divMonitorsTable.addEventListener("click", (event) => this.#onTableClick(event));
     }
 
     /**
-     * El proyecto que se esta viendo. Al cambiar de proyecto, tabla y formulario se vacian; en un refresco, no.
+     * El proyecto que se esta viendo. Al cambiar de proyecto, tabla y modal se vacian; en un refresco, no.
      * @param {string} projectUuid
      */
     renderProject(projectUuid) {
@@ -81,21 +91,31 @@ export class MonitorsView {
         this.#pendingDeleteMonitorUuid = "";
         this.#monitorsByUuid = new Map();
         this.#elements.divMonitorsTable.innerHTML = "";
-        this.renderAgentOptions([]);
-        this.resetForm();
+        this.closeDialog();
+        this.renderMessage("");
         this.renderErrors([]);
     }
 
     /**
-     * A que agentes se puede asignar un monitor (ademas de "todos"). Respeta lo que hubiera elegido.
-     * @param {{agent_uuid: string, agent_name: string}[]} agents los del proyecto
+     * Modal de alta. agentUuid vacio = para todos los agentes del proyecto.
+     * @param {string} agentUuid
+     * @param {string} agentName
      */
-    renderAgentOptions(agents) {
-        const h = this.#htmler;
-        const selectedAgentUuid = this.#elements.selectMonitorAgent.value;
-        this.#elements.selectMonitorAgent.innerHTML = `<option value="">${ALL_AGENTS_LABEL}</option>`
-            + agents.map((agent) => `<option value="${h.getEscaped(agent.agent_uuid)}">${h.getEscaped(agent.agent_name)}</option>`).join("");
-        this.#elements.selectMonitorAgent.value = agents.some((agent) => agent.agent_uuid === selectedAgentUuid) ? selectedAgentUuid : "";
+    openCreateDialog(agentUuid, agentName) {
+        this.resetForm();
+        this.#renderScope(agentUuid, agentName);
+        this.#elements.h2MonitorForm.textContent = agentUuid ? `${TITLE_CREATE} en ${agentName}` : `${TITLE_CREATE} para ${ALL_AGENTS_LABEL}`;
+        this.renderMessage("");
+        this.#showDialog();
+        this.#elements.selectMonitorType.focus();
+    }
+
+    closeDialog() {
+        if (typeof this.#elements.dialogMonitor.close === "function") {
+            this.#elements.dialogMonitor.close();
+            return;
+        }
+        this.#elements.dialogMonitor.removeAttribute("open");
     }
 
     /**
@@ -108,6 +128,16 @@ export class MonitorsView {
         }
         this.renderErrors([]);
         this.#renderTable();
+        // otro pudo crear o borrar uno mientras el modal estaba abierto
+        if (this.#elements.dialogMonitor.open) this.#renderDuplicate();
+    }
+
+    /**
+     * Aviso del camino feliz (creado, guardado), encima de la tabla. Vacio lo oculta.
+     * @param {string} message
+     */
+    renderMessage(message) {
+        this.#renderText(this.#elements.pMonitorsMessage, message);
     }
 
     /**
@@ -118,26 +148,28 @@ export class MonitorsView {
     }
 
     /**
-     * @param {string[]} errors del formulario
+     * @param {string[]} errors del formulario (los de la API, como el 409 de repetido, incluidos)
      */
     renderFormErrors(errors) {
         this.#renderText(this.#elements.pMonitorFormErrors, errors.join(" · "));
     }
 
     /**
-     * Guardado: formulario a "nuevo monitor" y aviso.
+     * Guardado: se cierra el modal y se avisa encima de la tabla.
      * @param {string} message
      */
     renderSaved(message) {
+        this.closeDialog();
         this.resetForm();
-        this.#renderText(this.#elements.pMonitorFormMessage, message);
+        this.renderMessage(message);
     }
 
     /**
      * @param {boolean} isBusy
      */
     renderBusy(isBusy) {
-        this.#elements.buttonMonitorSubmit.disabled = isBusy;
+        this.#isBusy = isBusy;
+        this.#renderSubmitState();
     }
 
     resetForm() {
@@ -148,22 +180,25 @@ export class MonitorsView {
         this.#elements.checkboxMonitorEnabled.checked = true;
         this.#elements.h2MonitorForm.textContent = TITLE_CREATE;
         this.#elements.buttonMonitorSubmit.textContent = SUBMIT_CREATE;
-        this.#elements.buttonMonitorCancel.classList.add(CSS_HIDDEN);
+        this.#renderScope("", "");
         this.renderFormErrors([]);
-        this.#renderText(this.#elements.pMonitorFormMessage, "");
         this.#renderFormByType();
     }
 
     #loadElements() {
         this.#elements = {
+            buttonMonitorCreateAll: document.getElementById("button-monitor-create-all"),
+            pMonitorsMessage: document.getElementById("p-monitors-message"),
             pMonitorsErrors: document.getElementById("p-monitors-errors"),
             divMonitorsTable: document.getElementById("div-monitors-table"),
+            dialogMonitor: document.getElementById("dialog-monitor"),
             h2MonitorForm: document.getElementById("h2-monitor-form"),
             formMonitor: document.getElementById("form-monitor"),
             hiddenMonitorUuid: document.getElementById("hidden-monitor-uuid"),
+            hiddenMonitorAgentUuid: document.getElementById("hidden-monitor-agent-uuid"),
+            strongMonitorScope: document.getElementById("strong-monitor-scope"),
             selectMonitorType: document.getElementById("select-monitor-type"),
             inputMonitorName: document.getElementById("input-monitor-name"),
-            selectMonitorAgent: document.getElementById("select-monitor-agent"),
             checkboxMonitorEnabled: document.getElementById("checkbox-monitor-enabled"),
             divMonitorMetricFields: document.getElementById("div-monitor-metric-fields"),
             inputMonitorInterval: document.getElementById("input-monitor-interval"),
@@ -180,10 +215,10 @@ export class MonitorsView {
             divMonitorFieldMatch: document.getElementById("div-monitor-field-match"),
             inputMonitorMatch: document.getElementById("input-monitor-match"),
             selectMonitorSeverity: document.getElementById("select-monitor-severity"),
+            pMonitorDuplicate: document.getElementById("p-monitor-duplicate"),
             buttonMonitorSubmit: document.getElementById("button-monitor-submit"),
             buttonMonitorCancel: document.getElementById("button-monitor-cancel"),
             pMonitorFormErrors: document.getElementById("p-monitor-form-errors"),
-            pMonitorFormMessage: document.getElementById("p-monitor-form-message"),
         };
     }
 
@@ -192,6 +227,20 @@ export class MonitorsView {
             .map((monitorType) => `<option value="${monitorType}">${this.#htmler.getEscaped(MONITOR_TYPE_LABELS[monitorType])}</option>`).join("");
         this.#elements.selectMonitorSeverity.innerHTML = `<option value="">la que deduzca el backend</option>`
             + MONITOR_SEVERITIES.map((severity) => `<option value="${severity}">${severity}</option>`).join("");
+    }
+
+    #showDialog() {
+        // <dialog>: modal nativo (foco atrapado, Esc cierra); sin soporte, al menos visible
+        if (typeof this.#elements.dialogMonitor.showModal === "function") {
+            if (!this.#elements.dialogMonitor.open) this.#elements.dialogMonitor.showModal();
+            return;
+        }
+        this.#elements.dialogMonitor.setAttribute("open", "");
+    }
+
+    #renderScope(agentUuid, agentName) {
+        this.#elements.hiddenMonitorAgentUuid.value = agentUuid;
+        this.#elements.strongMonitorScope.textContent = agentUuid ? (agentName || agentUuid) : ALL_AGENTS_LABEL;
     }
 
     /**
@@ -207,12 +256,50 @@ export class MonitorsView {
         this.#elements.divMonitorFieldMatch.classList.toggle(CSS_HIDDEN, !configFields.includes("match"));
         this.#elements.spanMonitorThresholdUnit.textContent = this.#getUnit(monitorType);
         this.#elements.inputMonitorPath.placeholder = monitorType === MonitorTypeEnum.DISK ? MonitorDefaultEnum.DISK_PATH : "/var/log/nginx";
+        this.#renderDuplicate();
+    }
+
+    /**
+     * Si lo que hay en el modal chocaria con un monitor ya creado: aviso con cual y por que, y el boton desactivado.
+     */
+    #renderDuplicate() {
+        const formPrimitives = this.#getFormPrimitives();
+        const duplicate = this.#monitorDuplicateFinder.getDuplicate([...this.#monitorsByUuid.values()], {
+            monitorUuid: formPrimitives.monitorUuid,
+            monitorType: formPrimitives.monitorType,
+            monitorName: formPrimitives.monitorName,
+            agentUuid: formPrimitives.agentUuid,
+            config: {
+                path: formPrimitives.path,
+                interface: formPrimitives.interface,
+                pattern: formPrimitives.pattern,
+                match: formPrimitives.match,
+            },
+        });
+        this.#hasDuplicate = duplicate !== null;
+        this.#renderText(this.#elements.pMonitorDuplicate, duplicate ? this.#getDuplicateText(duplicate) : "");
+        this.#renderSubmitState();
+    }
+
+    #getDuplicateText(duplicate) {
+        const monitor = duplicate.monitor;
+        if (duplicate.reason === DuplicateReasonEnum.NAME) {
+            return `Repetido: ya hay un monitor que se llama ${monitor.monitor_name} en este proyecto. Elige otro nombre.`;
+        }
+        const scope = monitor.agent_uuid ? `el agente ${monitor.agent_name || monitor.agent_uuid}` : ALL_AGENTS_LABEL;
+        const configLabel = this.#getConfigLabel(monitor);
+        return `Repetido: ${monitor.monitor_name} (${monitor.monitor_type}${configLabel ? ` ${configLabel}` : ""}) ya vigila lo mismo en ${scope}.`
+            + " Edita ese monitor en vez de crear otro.";
+    }
+
+    #renderSubmitState() {
+        this.#elements.buttonMonitorSubmit.disabled = this.#isBusy || this.#hasDuplicate;
     }
 
     #renderTable() {
         const monitors = [...this.#monitorsByUuid.values()];
         if (monitors.length === 0) {
-            this.#elements.divMonitorsTable.innerHTML = `<p class="empty">Sin monitores. Crea el primero en el apartado 5: los agentes del proyecto lo aplican solos en menos de un minuto.</p>`;
+            this.#elements.divMonitorsTable.innerHTML = `<p class="empty">Sin monitores. Créalo desde la fila de un agente («Crear monitor») o para todos con el botón de arriba: los agentes lo aplican solos en menos de un minuto.</p>`;
             return;
         }
         this.#elements.divMonitorsTable.innerHTML = `<div class="table-wrap"><table class="table">
@@ -305,7 +392,7 @@ export class MonitorsView {
         const monitor = this.#monitorsByUuid.get(button.dataset.monitorUuid ?? "");
         switch (button.dataset.action) {
             case ACTION_EDIT:
-                if (monitor) this.#renderFormForEdit(monitor);
+                if (monitor) this.#openEditDialog(monitor);
                 return;
             case ACTION_TOGGLE:
                 if (!monitor) return;
@@ -351,15 +438,15 @@ export class MonitorsView {
         };
     }
 
-    #renderFormForEdit(monitor) {
+    #openEditDialog(monitor) {
         const primitives = this.#getFormPrimitivesOfMonitor(monitor);
         this.resetForm();
         this.#elements.hiddenMonitorUuid.value = primitives.monitorUuid;
         this.#elements.selectMonitorType.value = primitives.monitorType;
-        // el tipo de un monitor no cambia: se borra y se crea otro
+        // el tipo y el ambito de un monitor no cambian: se borra y se crea otro
         this.#elements.selectMonitorType.disabled = true;
+        this.#renderScope(primitives.agentUuid, monitor.agent_name ?? "");
         this.#elements.inputMonitorName.value = primitives.monitorName;
-        this.#elements.selectMonitorAgent.value = primitives.agentUuid;
         this.#elements.checkboxMonitorEnabled.checked = primitives.isEnabled;
         this.#elements.inputMonitorInterval.value = primitives.intervalSeconds;
         this.#elements.inputMonitorWarning.value = primitives.warningThreshold;
@@ -370,26 +457,24 @@ export class MonitorsView {
         this.#elements.checkboxMonitorRecursive.checked = primitives.isRecursive;
         this.#elements.inputMonitorMatch.value = primitives.match;
         this.#elements.selectMonitorSeverity.value = primitives.severity;
-        this.#elements.h2MonitorForm.textContent = `4 - Editar monitor ${primitives.monitorName}`;
+        this.#elements.h2MonitorForm.textContent = `Editar monitor ${primitives.monitorName}`;
         this.#elements.buttonMonitorSubmit.textContent = SUBMIT_UPDATE;
-        this.#elements.buttonMonitorCancel.classList.remove(CSS_HIDDEN);
         this.#renderFormByType();
-        this.#elements.formMonitor.scrollIntoView({ block: "nearest" });
+        this.renderMessage("");
+        this.#showDialog();
         this.#elements.inputMonitorName.focus();
     }
 
-    #onSubmit(event) {
-        event.preventDefault();
-        this.renderFormErrors([]);
-        this.#renderText(this.#elements.pMonitorFormMessage, "");
-
-        const monitorUuid = this.#elements.hiddenMonitorUuid.value;
-        const primitives = {
+    /**
+     * Lo que hay ahora en el modal, como los primitivos de CreateMonitorDto / UpdateMonitorDto.
+     */
+    #getFormPrimitives() {
+        return {
             projectUuid: this.#projectUuid,
-            monitorUuid,
+            monitorUuid: this.#elements.hiddenMonitorUuid.value,
             monitorType: this.#elements.selectMonitorType.value,
             monitorName: this.#elements.inputMonitorName.value,
-            agentUuid: this.#elements.selectMonitorAgent.value,
+            agentUuid: this.#elements.hiddenMonitorAgentUuid.value,
             isEnabled: this.#elements.checkboxMonitorEnabled.checked,
             intervalSeconds: this.#elements.inputMonitorInterval.value,
             warningThreshold: this.#elements.inputMonitorWarning.value,
@@ -401,8 +486,17 @@ export class MonitorsView {
             match: this.#elements.inputMonitorMatch.value,
             severity: this.#elements.selectMonitorSeverity.value,
         };
+    }
+
+    #onSubmit(event) {
+        event.preventDefault();
+        this.renderFormErrors([]);
+        this.#renderDuplicate();
+        if (this.#hasDuplicate) return;
+
+        const primitives = this.#getFormPrimitives();
         this.#dispatcher.dispatch(
-            monitorUuid ? MonitorsEventEnum.UPDATE_MONITOR_REQUESTED : MonitorsEventEnum.CREATE_MONITOR_REQUESTED,
+            primitives.monitorUuid ? MonitorsEventEnum.UPDATE_MONITOR_REQUESTED : MonitorsEventEnum.CREATE_MONITOR_REQUESTED,
             primitives
         );
     }

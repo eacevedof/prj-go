@@ -3,6 +3,70 @@
 La versión es `APP_VERSION` en `src/modules/shared/infrastructure/repositories/configuration/environment_reader_raw_repository.go`
 (la muestra el dashboard). Lo más nuevo arriba.
 
+## 0.9.0 — 2026-11-16
+
+1. **Eventos es la pantalla de entrada**: `#/` (y un hash desconocido) lleva al visor. Menú reordenado: 1 Eventos ·
+   2 Proyectos · 3 Descargas; la lista de proyectos pasa a `#/projects` (el detalle sigue en `#/projects/<uuid>`). El
+   visor pierde su cabecera editorial: arranca en "1 - consulta". Hashes en `RouteHashEnum`.
+2. **Filtros múltiples Proyecto → Agente → Monitor** en el visor: tres desplegables de casillas (`<details>`), con
+   resumen ("Todos", el nombre o "3 agentes"). Encadenados: los proyectos marcados acotan los agentes que se ofrecen, y
+   proyectos + agentes, los monitores (uno de "todos los agentes" vale para cualquier agente de su proyecto); al
+   desmarcar se quita lo que deja de ser suyo. Viven en el hash como los demás filtros (`project_uuid=a,b`…), salen en
+   las pastillas con su nombre y el auto-refresco no cierra el desplegable abierto. Clic fuera lo cierra.
+3. API: filtro **`monitor_uuid`** (y `not_monitor_uuid`) en `GET /api/v1/events`, `/histogram` y `/facets`;
+   `GET /api/v1/events/filter-options` → `{projects, agents, monitors}` (el catálogo entero, no solo lo que tiene
+   eventos como las facetas). El front lo pide aparte, sin esperar a las facetas.
+4. Columna **`events.monitor_uuid`** (copia de `attributes.monitor_uuid` al insertar, índice `(monitor_uuid,
+   occurred_at)`; la migración rellena los eventos que ya había): filtrar con `json_extract` sobre `attributes`
+   recorría la tabla (facetas de 5 a 9 s). Excluir un monitor conserva los eventos que no son de ninguno.
+5. Índice **`events(occurred_at)`**: el visor sin filtros solo acota por fecha y hacía SCAN de la tabla.
+6. **Prefijo `app_` en todas las tablas** (`app_projects`, `app_agents`, `app_sources`, `app_ingest_queue`,
+   `app_events`, `app_monitors`) con una migración de `RENAME` (conserva datos; SQLite reescribe las FK). `migrations`,
+   la del runner, se queda como está.
+7. **El panel se llama GoSiem** y se ve: logo (el favicon en línea: pulso blanco sobre grafito con el punto ember) +
+   «GoSiem» en la barra y en la entrada, y en el título de la pestaña. Fuera «siem · consola».
+8. **Descargas, macOS: «3.4 Si falla en Mac»** (solo con macOS elegido): el binario se compila sin Mac y sin firma de
+   Apple ni prueba en un Mac real, así que se explican los fallos esperables y su salida: Gatekeeper (`xattr` o «Abrir
+   igualmente»), «Killed: 9» (firma ad hoc con `codesign`), «bad CPU type» (solo Apple Silicon), sin arranque con el
+   sistema (aún sin LaunchDaemon), métricas del host «no disponible» (solo Linux) y «nunca visto» (`config-sync`).
+   Textos en `DownloadsTextEnum`.
+
+## 0.8.0 — 2026-11-16
+
+1. **Borrar proyecto en un modal**: botón rojo "Borrar proyecto" en la cabecera del detalle (junto a "ver sus eventos")
+   y "Borrar" (rojo) en la tabla de la portada abren el mismo `<dialog>`, que pide escribir el nombre del proyecto. Se
+   quitan el apartado "4 - borrar proyecto" del detalle y la confirmación en la fila de la tabla. La cabecera del
+   detalle ya no enseña el uuid del proyecto (está en la url y en la tabla).
+2. **Qué queda instalado**: al borrar se vuelve a la portada con un aviso que se queda hasta "Entendido": por cada
+   agente, su servidor (host · SO · ip), la ruta de su ejecutable (Copiar) y el comando para desinstalarlo (bash:
+   servicio systemd + carpeta; PowerShell: tarea programada + carpeta). Si el binario no está en una carpeta
+   `siem-client` (p. ej. `/usr/local/bin`) se borra solo el binario, nunca la carpeta. Un agente que nunca conectó
+   solo dice dónde estaría.
+3. API: `DELETE /api/v1/projects/:project_uuid` devuelve `{project_uuid, project_name, agents: [{agent_name, host_name,
+   host_os, host_ip, client_path}]}` (leídos antes de la cascada).
+4. Columna `agents.client_path` (migración `20261116100000-add-client-path-to-agents.sql`, sin borrar la BD): ruta del
+   ejecutable que el siem-client ≥ 0.4.0 manda en cada envío (`agent.client_path`); sale en el detalle del proyecto.
+5. Portada sin cabecera editorial ("Lo que vigilan tus agentes, de un vistazo" + entradilla): arranca en "1 - servidor"
+   bajo las migas, como el detalle de un proyecto.
+6. Front: `ProjectDeleteDialogView` y `ProjectDeletedView` sustituyen a `ProjectDangerView`; un solo
+   `DeleteProjectController` (fuera `DeleteListedProjectController` y `DELETE_LISTED_PROJECT_REQUESTED`); servicio de
+   dominio `ClientUninstallCommandBuilder`. Botón `button-danger-fill`.
+
+## 0.7.0 — 2026-11-16
+
+1. **Crear monitor desde el agente**: botón "Crear monitor" en las acciones de cada fila de agentes; abre un modal
+   (`<dialog>` nativo, patrón task-js) con el agente fijado. En "monitores", "Crear monitor para todos los agentes"
+   abre el mismo modal para los generales (`agent_uuid` vacío), y "Editar" también edita en el modal. Se quita el
+   formulario fijo del apartado 4 y el select de ámbito: el ámbito lo decide desde dónde se abre y no se cambia al
+   editar (como el tipo). "Borrar proyecto" pasa a ser el apartado 4.
+2. **Monitores repetidos**: además del nombre (único por proyecto), no puede haber dos monitores que vigilen el mismo
+   recurso en un agente que aplicaría los dos. Recurso: cpu, memoria y gpu, uno por agente · disco, la ruta · red, la
+   interfaz · carpeta, ruta + glob · log, ruta + glob + regex. Rutas sin separador final y, las de Windows, sin
+   distinguir mayúsculas. Uno de "todos" choca con cualquiera del proyecto; uno de un agente, con los suyos y con los
+   de todos. El modal avisa mientras se escribe (con el monitor que choca) y no deja enviar; la API responde 409
+   (`POST` y `PUT`). Servicio de dominio `MonitorResourceKeyer` (Go, con tests) y su gemelo `MonitorDuplicateFinder`
+   (front).
+
 ## 0.6.0 — 2026-11-16
 
 1. **Proyectos en tabla CRUD** (patrón task-js) en lugar de tarjetas: columnas ID, UUID (con Copiar), proyecto (nombre
