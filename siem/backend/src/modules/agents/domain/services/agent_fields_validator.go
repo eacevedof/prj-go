@@ -16,11 +16,18 @@ func AgentFieldsValidatorGetInstance() *AgentFieldsValidator {
     return &AgentFieldsValidator{}
 }
 
+// GetErrors en el alta: el proyecto donde se crea mas los campos del agente.
 func (v *AgentFieldsValidator) GetErrors(projectUuid string, agentName string, heartbeatIntervalSeconds int) []string {
     errors := []string{}
     if projectUuid == "" {
         errors = append(errors, enums.AgentsMessageEnum.PROJECT_UUID_IS_REQUIRED)
     }
+    return append(errors, v.GetAgentFieldsErrors(agentName, heartbeatIntervalSeconds)...)
+}
+
+// GetAgentFieldsErrors los campos editables de un agente (alta y edicion).
+func (v *AgentFieldsValidator) GetAgentFieldsErrors(agentName string, heartbeatIntervalSeconds int) []string {
+    errors := []string{}
     agentNameLength := utf8.RuneCountInString(agentName)
     if agentNameLength < 3 || agentNameLength > 100 {
         errors = append(errors, enums.AgentsMessageEnum.AGENT_NAME_LENGTH_MUST_BE_3_TO_100)

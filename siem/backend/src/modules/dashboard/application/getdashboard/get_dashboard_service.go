@@ -171,6 +171,7 @@ func (s *GetDashboardService) getProject(projectEntity *projectsentities.Project
     criticals24h := eventsCountBySeverity[eventsenums.EventSeverityEnum.CRITICAL]
 
     return map[string]any{
+        enums.DashboardKeyEnum.PROJECT_ID:          projectEntity.GetId(),
         enums.DashboardKeyEnum.PROJECT_UUID:        projectEntity.GetProjectUuid(),
         enums.DashboardKeyEnum.PROJECT_NAME:        projectEntity.GetProjectName(),
         enums.DashboardKeyEnum.PROJECT_DESCRIPTION: projectEntity.GetProjectDescription(),

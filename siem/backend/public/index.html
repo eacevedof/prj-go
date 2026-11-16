@@ -35,6 +35,9 @@
         <!-- visible hasta que cargan los modulos (main.js lo oculta): la primera vez, sin cache, son ~130 ficheros -->
         <p id="p-app-loading" class="app-loading">Cargando el panel…</p>
 
+        <!-- migas de pan de la pantalla visible: solo con sesion (NavigationView.renderBreadcrumbs) -->
+        <nav id="nav-breadcrumbs" class="breadcrumbs hidden"></nav>
+
         <!-- entrada: token del dashboard (AuthView) -->
         <section id="section-auth" class="auth hidden">
             <p class="eyebrow">siem · consola</p>
@@ -49,10 +52,10 @@
             <p id="p-auth-errors" class="error hidden"></p>
         </section>
 
-        <!-- portada: servidor + proyectos (DashboardView) + alta de proyecto (ProjectFormView) -->
+        <!-- portada: servidor (DashboardView) + tabla de proyectos con filtros (ProjectsTableView) y su formulario
+             plegable de alta / edicion (ProjectFormView) -->
         <section id="section-dashboard" data-screen="dashboard" class="screen hidden">
             <header class="page-head">
-                <p class="eyebrow">Proyectos</p>
                 <p class="display">Lo que vigilan tus agentes, <em>de un vistazo</em>.</p>
                 <p class="lede">Estado del servidor, salud de cada proyecto en las últimas 24 h y alta de proyectos nuevos.</p>
             </header>
@@ -60,65 +63,133 @@
             <h1>1 - servidor</h1>
             <div id="div-dashboard-server"></div>
 
-            <h1>2 - proyectos</h1>
-            <div id="div-dashboard-projects"></div>
+            <h1>2 - proyectos <span id="span-projects-count" class="muted"></span></h1>
+            <p id="p-projects-message" class="notice hidden"></p>
+            <p id="p-projects-errors" class="error hidden"></p>
 
-            <h1>3 - nuevo proyecto</h1>
-            <form id="form-project" class="panel form-grid">
-                <div class="field">
-                    <label for="input-project-name">Nombre</label>
-                    <input id="input-project-name" type="text" maxlength="100" autocomplete="off" placeholder="Mi app">
-                </div>
-                <div class="field field-wide">
-                    <label for="input-project-description">Descripción <span class="muted">(opcional)</span></label>
-                    <input id="input-project-description" type="text" maxlength="255" autocomplete="off" placeholder="producción">
-                </div>
-                <div class="field field-actions">
-                    <button id="button-project-submit" type="submit" class="button button-primary">Crear proyecto</button>
-                </div>
-                <p id="p-project-form-errors" class="error field-full hidden"></p>
-                <p id="p-project-form-message" class="notice field-full hidden"></p>
+            <!-- plegado al entrar (patron task-js): el mismo para editar, con el uuid oculto; Ctrl+Enter guarda -->
+            <details id="details-project-form" class="panel form-panel">
+                <summary id="summary-project-form">Nuevo proyecto</summary>
+                <form id="form-project" class="form-grid">
+                    <input id="hidden-project-uuid" type="hidden" value="">
+                    <div class="field field-full">
+                        <label for="input-project-name">Nombre <span class="muted">(letras, dígitos, espacios y . _ -)</span></label>
+                        <input id="input-project-name" type="text" maxlength="100" autocomplete="off" placeholder="Mi app" required>
+                    </div>
+                    <div class="field field-full">
+                        <label for="textarea-project-description">Descripción <span class="muted">(opcional)</span></label>
+                        <textarea id="textarea-project-description" maxlength="500" rows="3" placeholder="producción"></textarea>
+                    </div>
+                    <div class="field field-actions field-full">
+                        <button id="button-project-submit" type="submit" class="button button-primary">Crear proyecto</button>
+                        <button id="button-project-cancel" type="button" class="button hidden">Cancelar edición</button>
+                        <span class="muted hint">Ctrl+Enter guarda</span>
+                    </div>
+                    <p id="p-project-form-errors" class="error field-full hidden"></p>
+                </form>
+            </details>
+
+            <form id="form-projects-filters" class="toolbar">
+                <label for="input-filter-project-text" class="sr-only">Buscar</label>
+                <input id="input-filter-project-text" type="search" class="toolbar-search" autocomplete="off" placeholder="Id, uuid, nombre o descripción">
+                <label for="select-filter-project-health" class="sr-only">Salud</label>
+                <select id="select-filter-project-health"></select>
+                <button id="button-clear-projects-filters" type="button" class="button">Limpiar filtros</button>
             </form>
+
+            <p id="p-projects-empty" class="empty hidden"></p>
+            <div id="div-projects-table" class="table-wrap hidden">
+                <table class="table table-crud">
+                    <thead>
+                        <tr>
+                            <th class="num">ID</th>
+                            <th>UUID</th>
+                            <th>Proyecto</th>
+                            <th class="num">Warnings 24 h</th>
+                            <th class="num">Errores 24 h</th>
+                            <th class="num">Críticos 24 h</th>
+                            <th class="row-actions">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbody-projects"></tbody>
+                </table>
+            </div>
         </section>
 
-        <!-- detalle de un proyecto: cabecera y agentes (ProjectDetailView), alta de agente (AgentFormView),
-             monitores (MonitorsView) y borrar proyecto (ProjectDangerView) -->
+        <!-- detalle de un proyecto: cabecera (ProjectDetailView), tabla de agentes con filtros (AgentsTableView) y su
+             formulario plegable de alta / edicion (AgentFormView), monitores (MonitorsView) y borrar proyecto
+             (ProjectDangerView) -->
         <section id="section-project" data-screen="projects" class="screen hidden">
-            <p class="eyebrow back-link"><a href="#/">← Proyectos</a></p>
             <p id="p-project-errors" class="error hidden"></p>
             <div id="div-project-body">
                 <div id="div-project-header"></div>
 
-                <h1>2 - agentes</h1>
+                <h1>2 - agentes <span id="span-agents-count" class="muted"></span></h1>
+                <p id="p-agents-message" class="notice hidden"></p>
                 <p id="p-agents-errors" class="error hidden"></p>
-                <div id="div-project-agents"></div>
 
-                <h1>3 - nuevo agente</h1>
-                <form id="form-agent" class="panel form-grid">
-                    <div class="field">
-                        <label for="input-agent-name">Nombre <span class="muted">(letras, dígitos, . _ -)</span></label>
-                        <input id="input-agent-name" type="text" maxlength="100" autocomplete="off" placeholder="web-01">
-                    </div>
-                    <div class="field">
-                        <label for="input-agent-heartbeat">Latido cada (s)</label>
-                        <input id="input-agent-heartbeat" type="number" min="5" max="3600" step="1" value="30">
-                    </div>
-                    <div class="field field-actions">
-                        <button id="button-agent-submit" type="submit" class="button button-primary">Crear agente</button>
-                    </div>
-                    <p id="p-agent-form-errors" class="error field-full hidden"></p>
-                </form>
+                <!-- plegado al entrar (patron task-js): el mismo para editar, con el uuid oculto; Ctrl+Enter guarda -->
+                <details id="details-agent-form" class="panel form-panel">
+                    <summary id="summary-agent-form">Nuevo agente</summary>
+                    <form id="form-agent" class="form-grid">
+                        <input id="hidden-agent-uuid" type="hidden" value="">
+                        <div class="field">
+                            <label for="input-agent-name">Nombre <span class="muted">(3 a 100: letras, dígitos, . _ -)</span></label>
+                            <input id="input-agent-name" type="text" maxlength="100" autocomplete="off" placeholder="web-01" required>
+                        </div>
+                        <div class="field">
+                            <label for="input-agent-heartbeat">Latido cada (s) <span class="muted">(10 a 86400)</span></label>
+                            <input id="input-agent-heartbeat" type="number" min="10" max="86400" step="1" value="30">
+                        </div>
+                        <div id="div-agent-field-enabled" class="field field-check hidden">
+                            <label><input id="checkbox-agent-enabled" type="checkbox" checked> Activo
+                                <span class="muted">(desactivado, su token no vale)</span></label>
+                        </div>
+                        <div class="field field-actions field-full">
+                            <button id="button-agent-submit" type="submit" class="button button-primary">Crear agente</button>
+                            <button id="button-agent-cancel" type="button" class="button hidden">Cancelar edición</button>
+                            <span class="muted hint">Ctrl+Enter guarda</span>
+                        </div>
+                        <p id="p-agent-form-errors" class="error field-full hidden"></p>
+                    </form>
+                </details>
                 <div id="div-agent-token" class="panel panel-once hidden">
                     <div id="div-agent-token-content"></div>
                     <button id="button-agent-token-hide" type="button" class="button button-small">Ya lo he copiado: ocultar</button>
                 </div>
 
-                <h1>4 - monitores <span class="muted">(recursos a vigilar)</span></h1>
+                <form id="form-agents-filters" class="toolbar">
+                    <label for="input-filter-agent-text" class="sr-only">Buscar</label>
+                    <input id="input-filter-agent-text" type="search" class="toolbar-search" autocomplete="off" placeholder="Id, uuid, nombre, host, ip o versión">
+                    <label for="select-filter-agent-status" class="sr-only">Estado</label>
+                    <select id="select-filter-agent-status"></select>
+                    <button id="button-clear-agents-filters" type="button" class="button">Limpiar filtros</button>
+                </form>
+
+                <p id="p-agents-empty" class="empty hidden"></p>
+                <div id="div-agents-table" class="table-wrap hidden">
+                    <table class="table table-crud">
+                        <thead>
+                            <tr>
+                                <th class="num">ID</th>
+                                <th>UUID</th>
+                                <th>Agente</th>
+                                <th class="num">Warnings 24 h</th>
+                                <th class="num">Errores 24 h</th>
+                                <th class="num">Críticos 24 h</th>
+                                <th class="row-actions">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-agents"></tbody>
+                    </table>
+                </div>
+
+                <h1>3 - monitores <span class="muted">(recursos a vigilar)</span></h1>
                 <p class="muted">Lo que se crea aquí lo descargan solos los agentes del proyecto en menos de un minuto: no hay que tocar los servidores.</p>
                 <p id="p-monitors-errors" class="error hidden"></p>
                 <div id="div-monitors-table"></div>
 
-                <h1 id="h2-monitor-form">5 - Nuevo monitor</h1>
+                <h1 id="h2-monitor-form">4 - Nuevo monitor</h1>
                 <form id="form-monitor" class="panel form-grid">
                     <input id="hidden-monitor-uuid" type="hidden" value="">
                     <div class="field">
@@ -188,7 +259,7 @@
                     <p id="p-monitor-form-message" class="notice field-full hidden"></p>
                 </form>
 
-                <h1>6 - borrar proyecto</h1>
+                <h1>5 - borrar proyecto</h1>
                 <form id="form-project-delete" class="panel panel-danger form-grid">
                     <p class="field-full">Se borran el proyecto, sus agentes, sus monitores y todos sus eventos. No se puede deshacer.
                         Para confirmar, escribe su nombre: <strong id="span-project-delete-name"></strong></p>
@@ -207,7 +278,6 @@
         <!-- visor de eventos tipo Discover (EventsView) -->
         <section id="section-events" data-screen="events" class="screen hidden">
             <header class="page-head page-head-compact">
-                <p class="eyebrow">Eventos</p>
                 <p class="display">Cada línea, <em>filtrable</em>.</p>
                 <p class="lede">Busca en el mensaje, acota el rango y filtra con + / − desde los campos o las barras del histograma.</p>
             </header>
@@ -260,7 +330,6 @@
         <!-- descargas: asistente de instalacion de un agente en 3 pasos (DownloadsView) -->
         <section id="section-downloads" data-screen="downloads" class="screen hidden">
             <header class="page-head">
-                <p class="eyebrow">Descargas</p>
                 <p class="display">Un agente nuevo, <em>en tres pasos</em>.</p>
             </header>
             <p class="lede">Instalar un agente en un servidor. En el servidor solo van el binario y un <code>.env</code> con la

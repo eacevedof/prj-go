@@ -17,7 +17,7 @@ const ACTION_CANCEL_DELETE = "cancel-delete";
 const ALL_AGENTS_LABEL = "todos los agentes";
 const UNIT_PERCENT = "%";
 const UNIT_MBIT = "Mbit/s";
-const TITLE_CREATE = "5 - Nuevo monitor";
+const TITLE_CREATE = "4 - Nuevo monitor";
 const SUBMIT_CREATE = "Crear monitor";
 const SUBMIT_UPDATE = "Guardar cambios";
 // que campos de config enseña el formulario para cada tipo
@@ -370,7 +370,7 @@ export class MonitorsView {
         this.#elements.checkboxMonitorRecursive.checked = primitives.isRecursive;
         this.#elements.inputMonitorMatch.value = primitives.match;
         this.#elements.selectMonitorSeverity.value = primitives.severity;
-        this.#elements.h2MonitorForm.textContent = `5 - Editar monitor ${primitives.monitorName}`;
+        this.#elements.h2MonitorForm.textContent = `4 - Editar monitor ${primitives.monitorName}`;
         this.#elements.buttonMonitorSubmit.textContent = SUBMIT_UPDATE;
         this.#elements.buttonMonitorCancel.classList.remove(CSS_HIDDEN);
         this.#renderFormByType();

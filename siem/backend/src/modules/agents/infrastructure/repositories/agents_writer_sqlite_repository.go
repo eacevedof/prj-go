@@ -57,6 +57,22 @@ func (r *AgentsWriterSqliteRepository) UpdateHostDataAndLastSeenById(agentEntity
     )
 }
 
+// UpdateAgentById lo que se edita desde el panel: nombre, latido y si esta activo (el token y el host no cambian).
+func (r *AgentsWriterSqliteRepository) UpdateAgentById(agentId int, agentName string, heartbeatIntervalSeconds int, isEnabled bool, updatedAt string) (int, error) {
+    isEnabledValue := 0
+    if isEnabled {
+        isEnabledValue = 1
+    }
+    sql := fmt.Sprintf(`
+        -- updateAgentById
+        UPDATE `+"`agents`"+`
+        SET agent_name = ?, heartbeat_interval_seconds = %d, is_enabled = %d, updated_at = ?
+        WHERE 1=1
+        AND id = %d
+        `, heartbeatIntervalSeconds, isEnabledValue, agentId)
+    return r.Execute(sql, agentName, updatedAt)
+}
+
 // DeleteAgentById se lleva por delante (ON DELETE CASCADE) sus sources, sus eventos, su cola y sus monitores propios.
 func (r *AgentsWriterSqliteRepository) DeleteAgentById(agentId int) (int, error) {
     sql := fmt.Sprintf(`

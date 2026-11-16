@@ -199,7 +199,6 @@ p { margin: 0 0 var(--s-2); }
 .eyebrow { font: 400 13px/1.3 var(--font-display); color: var(--brass); margin: 0 0 var(--s-4); }
 .eyebrow a { text-decoration: none; }
 .eyebrow a:hover { color: var(--ember-ink); }
-.back-link { padding-top: var(--s-7); margin-bottom: 0; }
 .display {
     font: 400 var(--text-display)/0.95 var(--font-display);
     letter-spacing: var(--tracking);
@@ -222,8 +221,9 @@ p { margin: 0 0 var(--s-2); }
 .auth h1 { margin-top: 0; }
 
 /* ---- controles: rectos, sin sombra ---- */
-button, input, select { font: inherit; color: inherit; }
-input[type="text"], input[type="password"], input[type="search"], input[type="number"], select {
+button, input, select, textarea { font: inherit; color: inherit; }
+textarea { resize: vertical; line-height: 1.5; }
+input[type="text"], input[type="password"], input[type="search"], input[type="number"], select, textarea {
     background: var(--canvas);
     border: 1px solid var(--line-strong);
     border-radius: 0;
@@ -231,13 +231,13 @@ input[type="text"], input[type="password"], input[type="search"], input[type="nu
     min-height: 44px;
     width: 100%;
 }
-input:hover, select:hover { border-color: var(--slate); }
-input:focus, select:focus { border-color: var(--graphite); outline: none; }
+input:hover, select:hover, textarea:hover { border-color: var(--slate); }
+input:focus, select:focus, textarea:focus { border-color: var(--graphite); outline: none; }
 input:focus-visible, select:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
 input::placeholder { color: var(--slate); opacity: 1; }
-.panel input[type="text"], .panel input[type="password"], .panel input[type="number"], .panel select, .auth input { border-color: transparent; }
-.panel input:hover, .panel select:hover, .auth input:hover { border-color: var(--line-strong); }
-.panel input:focus, .panel select:focus, .auth input:focus { border-color: var(--graphite); }
+.panel input[type="text"], .panel input[type="password"], .panel input[type="number"], .panel select, .panel textarea, .auth input { border-color: transparent; }
+.panel input:hover, .panel select:hover, .panel textarea:hover, .auth input:hover { border-color: var(--line-strong); }
+.panel input:focus, .panel select:focus, .panel textarea:focus, .auth input:focus { border-color: var(--graphite); }
 
 .button {
     background: transparent;
@@ -293,8 +293,7 @@ input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--graphite
 .facts { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 6px var(--s-5); margin: 0 0 var(--s-4); font-size: var(--text-sm); }
 .facts dt { color: var(--slate); }
 .facts dd { margin: 0; overflow-wrap: anywhere; }
-.agent-name, .download-name { font: 400 22px/1.2 var(--font-display); letter-spacing: var(--tracking); }
-.panel.agent { background: var(--fog); }
+.download-name { font: 400 22px/1.2 var(--font-display); letter-spacing: var(--tracking); }
 
 .copyable { display: inline-flex; align-items: center; gap: var(--s-2); max-width: 100%; flex-wrap: wrap; }
 .copyable code { overflow-wrap: anywhere; }
@@ -310,19 +309,47 @@ input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--graphite
 .stat.is-bad { background: var(--error-soft); }
 .stat.is-bad .stat-value { color: var(--error); }
 
-.projects { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: var(--s-5); }
-.project-card { position: relative; display: block; background: var(--ash); border-radius: var(--radius-card); padding: var(--s-6) var(--s-6) var(--s-5); color: var(--graphite); text-decoration: none; }
-.project-card::before { content: ""; position: absolute; top: 0; left: var(--s-6); width: 40px; height: 3px; background: var(--debug); }
-.project-card:hover { background: var(--ivory); color: var(--graphite); }
-.project-card.health-ok::before { background: var(--ok); }
-.project-card.health-warning::before { background: var(--warning); }
-.project-card.health-critical::before { background: var(--ember); }
-.project-name { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--s-3); margin-bottom: var(--s-1); }
-.project-title { font: 400 22px/1.2 var(--font-display); letter-spacing: var(--tracking); }
-.project-card > .muted { font-size: var(--text-sm); min-height: 1.5em; }
-.project-card dl { display: grid; grid-template-columns: minmax(0, 1fr) max-content; gap: 6px var(--s-4); margin: var(--s-5) 0 0; padding-top: var(--s-4); border-top: 1px solid var(--line-strong); font-size: var(--text-sm); }
-.project-card dt { color: var(--steel); }
-.project-card dd { margin: 0; text-align: right; }
+/* ---- tablas CRUD (proyectos, agentes): formulario plegable (patron task-js) + filtros + tabla ---- */
+.form-panel { padding-block: var(--s-4); }
+.form-panel > summary { cursor: pointer; font: 400 var(--text-lg)/1.3 var(--font-display); letter-spacing: var(--tracking); padding: var(--s-2) 0; list-style-position: inside; }
+.form-panel > summary::marker { color: var(--ember); }
+.form-panel[open] > summary { margin-bottom: var(--s-4); }
+.form-panel[open] { padding-bottom: var(--s-6); }
+.hint { font-size: var(--text-xs); }
+.toolbar-search { flex: 1 1 320px; width: auto; background: var(--fog); border-color: var(--fog); }
+.toolbar-search:focus { border-color: var(--graphite); }
+.table-crud .row-id { width: 1%; color: var(--slate); }
+.table-crud .row-uuid { width: 1%; white-space: nowrap; }
+.table-crud .row-uuid code { color: var(--steel); }
+.table-crud .row-uuid .copyable { flex-wrap: nowrap; }
+.row-main-head { display: flex; align-items: center; gap: var(--s-2); flex-wrap: wrap; }
+.row-title { font: 400 var(--text-lg)/1.25 var(--font-display); letter-spacing: var(--tracking); }
+.row-sub { color: var(--steel); margin-top: 2px; }
+.row-sub.is-excerpt { cursor: help; text-decoration: underline dotted var(--line-strong); text-underline-offset: 3px; }
+.table-crud > tbody > tr > td.num { font: 400 var(--text-lg)/1.25 var(--font-display); letter-spacing: var(--tracking); }
+.table-crud .is-disabled .row-title { color: var(--slate); text-decoration: line-through; }
+.agent-row.is-expanded > td { background: var(--fog); border-bottom-color: transparent; }
+.agent-detail > td { background: var(--fog); padding: var(--s-2) var(--s-5) var(--s-5); }
+.agent-detail .table-wrap { background: transparent; }
+.agent-detail .table th { background: var(--fog); }
+.agent-detail .facts { margin-bottom: var(--s-4); }
+
+/* migas de pan: hacen de "eyebrow" de cada pantalla (latón, 13 px), con separador fino */
+.breadcrumbs { padding-top: var(--s-7); }
+.breadcrumbs ol { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--s-2); margin: 0; padding: 0; list-style: none; font: 400 13px/1.3 var(--font-display); color: var(--brass); }
+.breadcrumbs li + li::before { content: "/"; margin-right: var(--s-2); color: var(--line-strong); }
+.breadcrumbs a { text-decoration: none; color: var(--slate); }
+.breadcrumbs a:hover { color: var(--ember-ink); text-decoration: underline; }
+.breadcrumbs [aria-current="page"] { color: var(--brass); }
+.breadcrumbs ~ .screen > .page-head { padding-top: var(--s-4); }
+.breadcrumbs ~ .screen > .page-head-compact { padding-top: var(--s-3); }
+.count-zero { color: var(--line-strong); }
+.count-warning { color: var(--warning); }
+.count-error { color: var(--error); }
+.count-critical { color: var(--critical); font-weight: 600; }
+.row-actions { width: 1%; white-space: nowrap; text-align: right; }
+.table th.row-actions { text-align: right; }
+.row-actions .button + .button { margin-left: var(--s-1); }
 
 /* ---- pastillas de estado (tags, radio 20): color + forma, se distinguen sin color ---- */
 .badge { display: inline-flex; align-items: center; gap: 6px; padding: 0 10px; border-radius: var(--radius-card); font: 500 12px/24px var(--font); white-space: nowrap; background: var(--debug-soft); color: var(--debug); }
@@ -475,5 +502,5 @@ input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--graphite
 }
 
 @media (prefers-reduced-motion: no-preference) {
-    .button, .nav a, .segment, .project-card, .filter-button, a { transition: background-color 0.15s, border-color 0.15s, color 0.15s; }
+    .button, .nav a, .segment, .filter-button, a { transition: background-color 0.15s, border-color 0.15s, color 0.15s; }
 }

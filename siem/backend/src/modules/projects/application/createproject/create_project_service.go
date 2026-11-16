@@ -14,7 +14,7 @@ import (
     "siem-backend/src/modules/shared/infrastructure/traits"
 )
 
-// CreateProjectService alta de un proyecto (lo que se monitoriza). Solo por consola: ./console project-create
+// CreateProjectService alta de un proyecto (lo que se monitoriza): desde el panel (POST) y por consola (project-create).
 type CreateProjectService struct {
     traits.ErrorStackTrait
 

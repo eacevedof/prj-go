@@ -5,6 +5,7 @@ import (
 
     "siem-backend/src/modules/agents/application/createagent"
     "siem-backend/src/modules/agents/application/deleteagent"
+    "siem-backend/src/modules/agents/application/updateagent"
     "siem-backend/src/modules/agents/domain/entities"
     "siem-backend/src/modules/agents/domain/enums"
     "siem-backend/src/modules/shared/infrastructure/repositories/configuration"
@@ -57,6 +58,40 @@ const ingestPath = "/api/v1/ingest-batches"
 type createdAgentPrimitives struct {
     entities.AgentWithApiTokenPrimitives
     EndpointUrl string `json:"endpoint_url"`
+}
+
+// UpdateAgentRestController PUT /api/v1/agents/:agent_uuid (Bearer del dashboard)
+// {agent_name, heartbeat_interval_seconds, is_enabled} -> 200 el agente (sin token: ese no cambia).
+type UpdateAgentRestController struct {
+    sharedcontrollers.AbstractRestController
+}
+
+func UpdateAgentRestControllerGetInstance(httpRequester *httprequester.HttpRequester) *UpdateAgentRestController {
+    return &UpdateAgentRestController{AbstractRestController: sharedcontrollers.NewAbstractRestController(httpRequester)}
+}
+
+func (c *UpdateAgentRestController) Invoke(agentUuid string) *httpresponder.HttpResponder {
+    dashboardAuthPrimitives, err := c.GetDashboardAuthOrFail()
+    if err != nil {
+        return c.RespondError(err, "UpdateAgentRestController.Invoke")
+    }
+    httpRequest := c.GetHttpRequest()
+    body := httpRequest.GetPost()
+    updateAgentResultDto, err := updateagent.UpdateAgentServiceGetInstance().Invoke(
+        updateagent.UpdateAgentDtoFromPrimitives(application.MergePrimitives(
+            httpRequest.GetMetadata(), dashboardAuthPrimitives,
+            map[string]any{
+                "agentUuid":                agentUuid,
+                "agentName":                httpRequest.GetPostString(enums.AgentsKeyEnum.AGENT_NAME),
+                "heartbeatIntervalSeconds": httpRequest.GetPostString(enums.AgentsKeyEnum.HEARTBEAT_INTERVAL_SECONDS),
+                "isEnabled":                body[enums.AgentsKeyEnum.IS_ENABLED],
+            },
+        )),
+    )
+    if err != nil {
+        return c.RespondError(err, "UpdateAgentRestController.Invoke")
+    }
+    return c.RespondOk(updateAgentResultDto.ToArray())
 }
 
 // DeleteAgentRestController DELETE /api/v1/agents/:agent_uuid (Bearer del dashboard) -> {agent_uuid}

@@ -25,6 +25,7 @@ var DashboardKeyEnum = struct {
     EVENTS_RETENTION_DAYS     string
 
     // project
+    PROJECT_ID          string
     PROJECT_UUID        string
     PROJECT_NAME        string
     PROJECT_DESCRIPTION string
@@ -38,6 +39,7 @@ var DashboardKeyEnum = struct {
     LAST_EVENT_AT       string
 
     // agent
+    AGENT_ID     string
     AGENT_STATUS string
 }{
     SERVER:   "server",
@@ -61,6 +63,7 @@ var DashboardKeyEnum = struct {
     QUEUE_WORKER_INTERVAL:   "queue_worker_interval_seconds",
     EVENTS_RETENTION_DAYS:   "events_retention_days",
 
+    PROJECT_ID:          "project_id",
     PROJECT_UUID:        "project_uuid",
     PROJECT_NAME:        "project_name",
     PROJECT_DESCRIPTION: "project_description",
@@ -73,5 +76,6 @@ var DashboardKeyEnum = struct {
     CRITICALS_24H:       "criticals_24h",
     LAST_EVENT_AT:       "last_event_at",
 
+    AGENT_ID:     "agent_id",
     AGENT_STATUS: "agent_status",
 }

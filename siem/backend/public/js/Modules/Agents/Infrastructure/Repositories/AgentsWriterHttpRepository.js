@@ -29,6 +29,16 @@ export class AgentsWriterHttpRepository {
     }
 
     /**
+     * PUT /api/v1/agents/:agent_uuid (nombre, latido y si esta activo; el token no cambia).
+     * @param {string} agentUuid
+     * @param {{agent_name: string, heartbeat_interval_seconds: number, is_enabled: boolean}} agent
+     * @param {string} dashboardToken
+     */
+    async updateAgentByAgentUuid(agentUuid, agent, dashboardToken) {
+        return this.#httpRequester.putResult(`${PATH_AGENTS}/${encodeURIComponent(agentUuid)}`, agent, dashboardToken);
+    }
+
+    /**
      * DELETE /api/v1/agents/:agent_uuid.
      * @param {string} agentUuid
      * @param {string} dashboardToken

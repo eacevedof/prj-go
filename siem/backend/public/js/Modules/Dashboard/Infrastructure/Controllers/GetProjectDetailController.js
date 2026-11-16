@@ -1,9 +1,11 @@
+import { BreadcrumbsTextEnum } from "/js/Modules/Shared/Domain/Enums/BreadcrumbsTextEnum.js";
 import { HttpCodeEnum } from "/js/Modules/Shared/Domain/Enums/HttpCodeEnum.js";
 import { ScreenEnum } from "/js/Modules/Shared/Domain/Enums/ScreenEnum.js";
 import { SharedEventEnum } from "/js/Modules/Shared/Domain/Enums/SharedEventEnum.js";
 import { Dispatcher } from "/js/Modules/Shared/Infrastructure/Components/Dispatcher.js";
 import { SessionStorer } from "/js/Modules/Shared/Infrastructure/Components/SessionStorer.js";
 import { Subscriber } from "/js/Modules/Shared/Infrastructure/Components/Subscriber.js";
+import { NavigationView } from "/js/Modules/Shared/Infrastructure/Views/NavigationView.js";
 
 import { SessionEventEnum } from "/js/Modules/Session/Domain/Enums/SessionEventEnum.js";
 
@@ -14,20 +16,25 @@ import { GetProjectDetailService } from "/js/Modules/Dashboard/Application/GetPr
 import { ProjectDetailView } from "/js/Modules/Dashboard/Infrastructure/Views/ProjectDetailView.js";
 import { DashboardException } from "/js/Modules/Dashboard/Domain/Exceptions/DashboardException.js";
 
+const DASHBOARD_HASH = "#/";
+
 /**
- * Detalle de un proyecto (#/projects/<project_uuid>): agentes y sus fuentes con el ultimo resultado. Se repinta sola.
+ * Detalle de un proyecto (#/projects/<project_uuid>): su cabecera y las migas con su nombre; los agentes (con sus
+ * fuentes) los pinta Agents al oir PROJECT_DETAIL_RENDERED. Se repinta sola.
  */
 export class GetProjectDetailController {
 
     #dispatcher;
     #sessionStorer;
     #subscriber;
+    #navigationView;
     #projectDetailView;
 
     constructor() {
         this.#dispatcher = Dispatcher.getInstance();
         this.#sessionStorer = SessionStorer.getInstance();
         this.#subscriber = Subscriber.getInstance();
+        this.#navigationView = NavigationView.getInstance();
         this.#projectDetailView = ProjectDetailView.getInstance();
     }
 
@@ -56,14 +63,16 @@ export class GetProjectDetailController {
                     projectUuid: request.projectUuid,
                 })
             );
-            this.#projectDetailView.renderProjectDetail(
-                getProjectDetailResultDto.getProject(),
-                getProjectDetailResultDto.getAgents(),
-                getProjectDetailResultDto.getServerNow()
-            );
+            const project = getProjectDetailResultDto.getProject();
+            this.#projectDetailView.renderProject(project);
+            this.#navigationView.renderBreadcrumbs([
+                { label: BreadcrumbsTextEnum.PROJECTS, hash: DASHBOARD_HASH },
+                { label: String(project.project_name ?? "") },
+            ]);
             this.#dispatcher.dispatch(DashboardEventEnum.PROJECT_DETAIL_RENDERED, {
-                project: getProjectDetailResultDto.getProject(),
+                project,
                 agents: getProjectDetailResultDto.getAgents(),
+                serverNow: getProjectDetailResultDto.getServerNow(),
             });
         }
         catch (error) {

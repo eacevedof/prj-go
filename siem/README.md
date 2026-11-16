@@ -44,10 +44,10 @@ client (por host)                          backend (uno)
 |---|---|---|---|
 | 1 | `POST /api/v1/ingest-batches` | agente | el cliente envía un lote (202); `events: []` = latido |
 | 2 | `GET /api/v1/agent-config` | agente | los monitores que tiene que vigilar ese agente: `{config_hash, monitors}` |
-| 3 | `GET /api/v1/dashboard` | dashboard | servidor + semáforo por proyecto |
-| 4 | `POST /api/v1/projects` · `DELETE /api/v1/projects/:project_uuid` | dashboard | alta (`{project_name, project_description}`) y baja (en cascada) |
+| 3 | `GET /api/v1/dashboard` | dashboard | servidor + semáforo por proyecto (con `project_id`, `project_uuid` y los contadores de 24 h) |
+| 4 | `POST /api/v1/projects` · `PUT` · `DELETE /api/v1/projects/:project_uuid` | dashboard | alta y edición (`{project_name, project_description}`; nombre único) y baja (en cascada) |
 | 5 | `GET /api/v1/projects/:project_uuid` | dashboard | agentes y fuentes de un proyecto |
-| 6 | `POST /api/v1/projects/:project_uuid/agents` · `DELETE /api/v1/agents/:agent_uuid` | dashboard | alta (`{agent_name, heartbeat_interval_seconds}` → `api_token`, **una vez**) y baja |
+| 6 | `POST /api/v1/projects/:project_uuid/agents` · `PUT` · `DELETE /api/v1/agents/:agent_uuid` | dashboard | alta (`{agent_name, heartbeat_interval_seconds}` → `api_token`, **una vez**), edición (`+ is_enabled`: desactivado, su token da 401) y baja |
 | 7 | `GET` · `POST /api/v1/projects/:project_uuid/monitors` | dashboard | monitores del proyecto (con su último valor por agente) y alta |
 | 8 | `PUT` · `DELETE /api/v1/monitors/:monitor_uuid` | dashboard | edición (todo menos el tipo) y baja |
 | 9 | `GET /api/v1/events` | dashboard | visor: `{events, page, page_size, has_more}` |

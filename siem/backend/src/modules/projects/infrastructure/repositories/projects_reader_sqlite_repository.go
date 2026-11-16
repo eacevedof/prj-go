@@ -57,6 +57,24 @@ func (r *ProjectsReaderSqliteRepository) DoesProjectNameExist(projectName string
     return application.ToInt(rows[0]["n_rows"]) > 0, nil
 }
 
+// DoesProjectNameExistInOtherProject al editar: el nombre lo tiene otro proyecto que no es excludedProjectId.
+func (r *ProjectsReaderSqliteRepository) DoesProjectNameExistInOtherProject(projectName string, excludedProjectId int) (bool, error) {
+    sql := `
+        -- doesProjectNameExistInOtherProject
+        SELECT
+            COUNT(*) AS n_rows
+        FROM ` + "`projects`" + `
+        WHERE 1=1
+        AND project_name = ? COLLATE NOCASE
+        AND id <> ?
+        `
+    rows, err := r.Query(sql, projectName, excludedProjectId)
+    if err != nil || len(rows) == 0 {
+        return false, err
+    }
+    return application.ToInt(rows[0]["n_rows"]) > 0, nil
+}
+
 func (r *ProjectsReaderSqliteRepository) getFirstProjectEntity(rows []map[string]any, err error) (*entities.ProjectEntity, error) {
     if err != nil || len(rows) == 0 {
         return nil, err

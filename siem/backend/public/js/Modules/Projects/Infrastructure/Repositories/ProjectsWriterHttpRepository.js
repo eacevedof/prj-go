@@ -27,6 +27,16 @@ export class ProjectsWriterHttpRepository {
     }
 
     /**
+     * PUT /api/v1/projects/:project_uuid (nombre y descripcion).
+     * @param {string} projectUuid
+     * @param {{project_name: string, project_description: string}} project
+     * @param {string} dashboardToken
+     */
+    async updateProjectByProjectUuid(projectUuid, project, dashboardToken) {
+        return this.#httpRequester.putResult(`${PATH_PROJECTS}/${encodeURIComponent(projectUuid)}`, project, dashboardToken);
+    }
+
+    /**
      * DELETE /api/v1/projects/:project_uuid (borra agentes, monitores y eventos).
      * @param {string} projectUuid
      * @param {string} dashboardToken

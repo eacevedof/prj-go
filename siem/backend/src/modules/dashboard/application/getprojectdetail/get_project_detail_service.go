@@ -134,12 +134,14 @@ func (s *GetProjectDetailService) getAgent(agentEntity *agentsentities.AgentEnti
     }
 
     return map[string]any{
+        enums.DashboardKeyEnum.AGENT_ID:      agentEntity.GetId(),
         agentsenums.AgentsKeyEnum.AGENT_UUID: agentEntity.GetAgentUuid(),
         agentsenums.AgentsKeyEnum.AGENT_NAME: agentEntity.GetAgentName(),
         agentsenums.AgentsKeyEnum.AGENT_STATUS: s.agentStatusResolver.GetAgentStatus(
             agentEntity.IsEnabled(), agentEntity.GetLastSeenAt(), agentEntity.GetHeartbeatIntervalSeconds(), s.nowDt,
         ),
         agentsenums.AgentsKeyEnum.HEARTBEAT_INTERVAL_SECONDS: agentEntity.GetHeartbeatIntervalSeconds(),
+        agentsenums.AgentsKeyEnum.IS_ENABLED:                 agentEntity.IsEnabled(),
         agentsenums.AgentsKeyEnum.HOST_NAME:                  agentEntity.GetHostName(),
         agentsenums.AgentsKeyEnum.HOST_OS:                    agentEntity.GetHostOs(),
         agentsenums.AgentsKeyEnum.HOST_IP:                    agentEntity.GetHostIp(),

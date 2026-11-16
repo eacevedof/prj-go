@@ -17,13 +17,20 @@ import { DashboardView } from "/js/Modules/Dashboard/Infrastructure/Views/Dashbo
 import { ProjectDetailView } from "/js/Modules/Dashboard/Infrastructure/Views/ProjectDetailView.js";
 
 import { CreateProjectController } from "/js/Modules/Projects/Infrastructure/Controllers/CreateProjectController.js";
+import { DeleteListedProjectController } from "/js/Modules/Projects/Infrastructure/Controllers/DeleteListedProjectController.js";
 import { DeleteProjectController } from "/js/Modules/Projects/Infrastructure/Controllers/DeleteProjectController.js";
+import { FilterProjectsController } from "/js/Modules/Projects/Infrastructure/Controllers/FilterProjectsController.js";
+import { UpdateProjectController } from "/js/Modules/Projects/Infrastructure/Controllers/UpdateProjectController.js";
 import { ProjectDangerView } from "/js/Modules/Projects/Infrastructure/Views/ProjectDangerView.js";
 import { ProjectFormView } from "/js/Modules/Projects/Infrastructure/Views/ProjectFormView.js";
+import { ProjectsTableView } from "/js/Modules/Projects/Infrastructure/Views/ProjectsTableView.js";
 
 import { CreateAgentController } from "/js/Modules/Agents/Infrastructure/Controllers/CreateAgentController.js";
 import { DeleteAgentController } from "/js/Modules/Agents/Infrastructure/Controllers/DeleteAgentController.js";
+import { FilterAgentsController } from "/js/Modules/Agents/Infrastructure/Controllers/FilterAgentsController.js";
+import { UpdateAgentController } from "/js/Modules/Agents/Infrastructure/Controllers/UpdateAgentController.js";
 import { AgentFormView } from "/js/Modules/Agents/Infrastructure/Views/AgentFormView.js";
+import { AgentsTableView } from "/js/Modules/Agents/Infrastructure/Views/AgentsTableView.js";
 
 import { CreateMonitorController } from "/js/Modules/Monitors/Infrastructure/Controllers/CreateMonitorController.js";
 import { DeleteMonitorController } from "/js/Modules/Monitors/Infrastructure/Controllers/DeleteMonitorController.js";
@@ -47,15 +54,15 @@ const start = async function () {
     document.getElementById("p-app-loading")?.classList.add("hidden");
     [
         NavigationView, CopyView, AuthView, SessionView,
-        DashboardView, ProjectDetailView, ProjectFormView, ProjectDangerView, AgentFormView, MonitorsView,
+        DashboardView, ProjectDetailView, ProjectsTableView, ProjectFormView, ProjectDangerView, AgentsTableView, AgentFormView, MonitorsView,
         EventsView, DownloadsView,
     ].forEach((view) => view.getInstance().init());
     [
         RefreshScreenController,
         LogInController, StartSessionController, LogOutController,
         GetDashboardController, GetProjectDetailController,
-        CreateProjectController, DeleteProjectController,
-        CreateAgentController, DeleteAgentController,
+        FilterProjectsController, CreateProjectController, UpdateProjectController, DeleteProjectController, DeleteListedProjectController,
+        FilterAgentsController, CreateAgentController, UpdateAgentController, DeleteAgentController,
         ListMonitorsController, CreateMonitorController, UpdateMonitorController, DeleteMonitorController,
         SearchEventsController,
         GetDownloadsController, CreateInstallAgentController,

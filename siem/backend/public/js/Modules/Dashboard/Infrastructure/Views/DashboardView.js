@@ -5,7 +5,7 @@ import { NumberFormatter } from "/js/Modules/Shared/Infrastructure/Components/Nu
 const CSS_HIDDEN = "hidden";
 
 /**
- * Portada: estado del servidor (tarjetas de cifras) y una tarjeta por proyecto con su semaforo. Fechas en UTC.
+ * Portada: estado del servidor (tarjetas de cifras). Fechas en UTC. La tabla de proyectos es de Projects (ProjectsTableView).
  * Si falla un refresco se deja lo ultimo pintado y se muestra el error encima.
  * Una sola instancia: guarda las referencias al DOM.
  */
@@ -36,18 +36,15 @@ export class DashboardView {
         this.#elements = {
             pDashboardErrors: document.getElementById("p-dashboard-errors"),
             divDashboardServer: document.getElementById("div-dashboard-server"),
-            divDashboardProjects: document.getElementById("div-dashboard-projects"),
         };
     }
 
     /**
      * @param {Object} server tal cual lo devuelve la API (claves snake_case)
-     * @param {Object[]} projects
      */
-    renderDashboard(server, projects) {
+    renderServer(server) {
         this.renderErrors([]);
         this.#elements.divDashboardServer.innerHTML = this.#getServerHtml(server);
-        this.#elements.divDashboardProjects.innerHTML = this.#getProjectsHtml(projects, server.now);
     }
 
     /**
@@ -78,30 +75,5 @@ export class DashboardView {
                 <div class="stat-label">${label}</div>
                 <div class="stat-value">${value}</div>
             </div>`).join("")}</div>`;
-    }
-
-    #getProjectsHtml(projects, now) {
-        const h = this.#htmler;
-        const n = this.#numberFormatter;
-        if (projects.length === 0) {
-            return `<p class="empty">Sin proyectos todavía. Crea el primero en el apartado 3.</p>`;
-        }
-        return `<div class="projects">${projects.map((project, index) => `
-            <a class="project-card health-${h.getEscaped(project.project_health)}" href="#/projects/${encodeURIComponent(project.project_uuid)}">
-                <div class="project-name">
-                    <span class="project-title">2.${index + 1} ${h.getEscaped(project.project_name)}</span>
-                    ${h.getBadge(project.project_health)}
-                </div>
-                <div class="muted">${h.getEscaped(project.project_description)}</div>
-                <dl>
-                    <dt>Agentes online</dt><dd>${n.getNumber(project.agents_online)} / ${n.getNumber(project.agents_total)}</dd>
-                    <dt>Eventos 24 h</dt><dd>${n.getNumber(project.events_24h)}</dd>
-                    <dt>Warnings 24 h</dt><dd>${n.getNumber(project.warnings_24h)}</dd>
-                    <dt>Errores 24 h</dt><dd>${n.getNumber(project.errors_24h)}</dd>
-                    <dt>Críticos 24 h</dt><dd>${n.getNumber(project.criticals_24h)}</dd>
-                    <dt>Último evento (UTC)</dt><dd>${h.getEscaped(this.#dateTimer.getUtcDateTime(project.last_event_at))}<br>
-                        <span class="muted">${this.#dateTimer.getTimeAgo(project.last_event_at, now)}</span></dd>
-                </dl>
-            </a>`).join("")}</div>`;
     }
 }

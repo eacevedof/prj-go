@@ -7,6 +7,7 @@ import { Subscriber } from "/js/Modules/Shared/Infrastructure/Components/Subscri
 
 import { SessionEventEnum } from "/js/Modules/Session/Domain/Enums/SessionEventEnum.js";
 
+import { DashboardEventEnum } from "/js/Modules/Dashboard/Domain/Enums/DashboardEventEnum.js";
 import { DashboardMessageEnum } from "/js/Modules/Dashboard/Domain/Enums/DashboardMessageEnum.js";
 import { GetDashboardDto } from "/js/Modules/Dashboard/Application/GetDashboard/GetDashboardDto.js";
 import { GetDashboardService } from "/js/Modules/Dashboard/Application/GetDashboard/GetDashboardService.js";
@@ -14,7 +15,7 @@ import { DashboardView } from "/js/Modules/Dashboard/Infrastructure/Views/Dashbo
 import { DashboardException } from "/js/Modules/Dashboard/Domain/Exceptions/DashboardException.js";
 
 /**
- * Portada (#/): estado del servidor y semaforo por proyecto. Se repinta sola (SCREEN_RENDERED con auto-refresco),
+ * Portada (#/): estado del servidor; los proyectos los pinta Projects (su tabla escucha DASHBOARD_RENDERED). Se repinta sola (SCREEN_RENDERED con auto-refresco),
  * tambien tras un error: si el backend vuelve, la pantalla se recupera sin recargar.
  */
 export class GetDashboardController {
@@ -52,7 +53,8 @@ export class GetDashboardController {
                     dashboardToken: this.#sessionStorer.getDashboardToken(),
                 })
             );
-            this.#dashboardView.renderDashboard(getDashboardResultDto.getServer(), getDashboardResultDto.getProjects());
+            this.#dashboardView.renderServer(getDashboardResultDto.getServer());
+            this.#dispatcher.dispatch(DashboardEventEnum.DASHBOARD_RENDERED, { projects: getDashboardResultDto.getProjects() });
         }
         catch (error) {
             if (error instanceof DashboardException && error.getCode() === HttpCodeEnum.UNAUTHORIZED) {

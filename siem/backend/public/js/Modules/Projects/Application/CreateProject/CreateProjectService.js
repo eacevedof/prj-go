@@ -4,6 +4,7 @@ import { CreateProjectResultDto } from "/js/Modules/Projects/Application/CreateP
 import { ProjectsWriterHttpRepository } from "/js/Modules/Projects/Infrastructure/Repositories/ProjectsWriterHttpRepository.js";
 
 const PROJECT_NAME_MAX_LENGTH = 100;
+const PROJECT_DESCRIPTION_MAX_LENGTH = 500;
 
 /**
  * Alta de un proyecto desde el panel. Aqui solo lo evidente (nombre obligatorio y su longitud): el resto de reglas
@@ -35,6 +36,9 @@ export class CreateProjectService {
         }
         if (createProjectDto.getProjectName().length > PROJECT_NAME_MAX_LENGTH) {
             ProjectsException.badRequestCustom([ProjectsMessageEnum.PROJECT_NAME_MAX_LENGTH_IS_100]);
+        }
+        if (createProjectDto.getProjectDescription().length > PROJECT_DESCRIPTION_MAX_LENGTH) {
+            ProjectsException.badRequestCustom([ProjectsMessageEnum.PROJECT_DESCRIPTION_MAX_LENGTH_IS_500]);
         }
 
         const apiResponse = await this.#projectsWriterHttpRepository.createProject(

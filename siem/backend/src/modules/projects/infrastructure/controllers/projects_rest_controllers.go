@@ -3,6 +3,7 @@ package controllers
 import (
     "siem-backend/src/modules/projects/application/createproject"
     "siem-backend/src/modules/projects/application/deleteproject"
+    "siem-backend/src/modules/projects/application/updateproject"
     "siem-backend/src/modules/projects/domain/enums"
     "siem-backend/src/modules/shared/application"
     "siem-backend/src/modules/shared/infrastructure/components/httprequester"
@@ -39,6 +40,38 @@ func (c *CreateProjectRestController) Invoke() *httpresponder.HttpResponder {
         return c.RespondError(err, "CreateProjectRestController.Invoke")
     }
     return c.RespondCreated(createProjectResultDto.ToArray())
+}
+
+// UpdateProjectRestController PUT /api/v1/projects/:project_uuid (Bearer del dashboard)
+// {project_name, project_description} -> 200 el proyecto.
+type UpdateProjectRestController struct {
+    sharedcontrollers.AbstractRestController
+}
+
+func UpdateProjectRestControllerGetInstance(httpRequester *httprequester.HttpRequester) *UpdateProjectRestController {
+    return &UpdateProjectRestController{AbstractRestController: sharedcontrollers.NewAbstractRestController(httpRequester)}
+}
+
+func (c *UpdateProjectRestController) Invoke(projectUuid string) *httpresponder.HttpResponder {
+    dashboardAuthPrimitives, err := c.GetDashboardAuthOrFail()
+    if err != nil {
+        return c.RespondError(err, "UpdateProjectRestController.Invoke")
+    }
+    httpRequest := c.GetHttpRequest()
+    updateProjectResultDto, err := updateproject.UpdateProjectServiceGetInstance().Invoke(
+        updateproject.UpdateProjectDtoFromPrimitives(application.MergePrimitives(
+            httpRequest.GetMetadata(), dashboardAuthPrimitives,
+            map[string]any{
+                "projectUuid":        projectUuid,
+                "projectName":        httpRequest.GetPostString(enums.ProjectsKeyEnum.PROJECT_NAME),
+                "projectDescription": httpRequest.GetPostString(enums.ProjectsKeyEnum.PROJECT_DESCRIPTION),
+            },
+        )),
+    )
+    if err != nil {
+        return c.RespondError(err, "UpdateProjectRestController.Invoke")
+    }
+    return c.RespondOk(updateProjectResultDto.ToArray())
 }
 
 // DeleteProjectRestController DELETE /api/v1/projects/:project_uuid (Bearer del dashboard) -> {project_uuid}

@@ -10,6 +10,7 @@ var AgentsMessageEnum = struct {
     HEARTBEAT_INTERVAL_SECONDS_MUST_BE_10_TO_86400  string
     PROJECT_UUID_IS_REQUIRED                        string
     AGENT_X_NOT_FOUND                               string
+    AGENT_UUID_IS_REQUIRED                          string
 }{
     INVALID_OR_MISSING_API_TOKEN:                   "Invalid or missing api token",
     PROJECT_X_NOT_FOUND:                            "Project {0} not found",
@@ -19,4 +20,5 @@ var AgentsMessageEnum = struct {
     HEARTBEAT_INTERVAL_SECONDS_MUST_BE_10_TO_86400: "heartbeat_interval_seconds: must be between 10 and 86400",
     PROJECT_UUID_IS_REQUIRED:                       "project_uuid: field is required",
     AGENT_X_NOT_FOUND:                              "Agent {0} not found",
+    AGENT_UUID_IS_REQUIRED:                         "agent_uuid: field is required",
 }

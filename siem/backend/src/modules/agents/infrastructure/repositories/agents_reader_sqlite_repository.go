@@ -85,6 +85,25 @@ func (r *AgentsReaderSqliteRepository) DoesAgentNameExistInProject(projectId int
     return application.ToInt(rows[0]["n_rows"]) > 0, nil
 }
 
+// DoesAgentNameExistInOtherAgent al editar: el nombre lo tiene otro agente del proyecto que no es excludedAgentId.
+func (r *AgentsReaderSqliteRepository) DoesAgentNameExistInOtherAgent(projectId int, agentName string, excludedAgentId int) (bool, error) {
+    sql := fmt.Sprintf(`
+        -- doesAgentNameExistInOtherAgent
+        SELECT
+            COUNT(*) AS n_rows
+        FROM `+"`agents`"+`
+        WHERE 1=1
+        AND project_id = %d
+        AND agent_name = ? COLLATE NOCASE
+        AND id <> %d
+        `, projectId, excludedAgentId)
+    rows, err := r.Query(sql, agentName)
+    if err != nil || len(rows) == 0 {
+        return false, err
+    }
+    return application.ToInt(rows[0]["n_rows"]) > 0, nil
+}
+
 func (r *AgentsReaderSqliteRepository) getFirstAgentEntity(rows []map[string]any, err error) (*entities.AgentEntity, error) {
     if err != nil || len(rows) == 0 {
         return nil, err

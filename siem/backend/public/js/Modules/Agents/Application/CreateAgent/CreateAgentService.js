@@ -1,11 +1,8 @@
+import { AgentFieldsEnum } from "/js/Modules/Agents/Domain/Enums/AgentFieldsEnum.js";
 import { AgentsMessageEnum } from "/js/Modules/Agents/Domain/Enums/AgentsMessageEnum.js";
 import { AgentsException } from "/js/Modules/Agents/Domain/Exceptions/AgentsException.js";
 import { CreateAgentResultDto } from "/js/Modules/Agents/Application/CreateAgent/CreateAgentResultDto.js";
 import { AgentsWriterHttpRepository } from "/js/Modules/Agents/Infrastructure/Repositories/AgentsWriterHttpRepository.js";
-
-const AGENT_NAME_PATTERN = /^[A-Za-z0-9._-]{1,100}$/;
-const HEARTBEAT_MIN_SECONDS = 5;
-const HEARTBEAT_MAX_SECONDS = 3600;
 
 /**
  * Alta de un agente (un host con siem-client) en un proyecto. La API devuelve su api_token una sola vez: de ella solo
@@ -36,12 +33,12 @@ export class CreateAgentService {
         if (!createAgentDto.getProjectUuid()) {
             errors.push(AgentsMessageEnum.PROJECT_UUID_IS_REQUIRED);
         }
-        if (!AGENT_NAME_PATTERN.test(createAgentDto.getAgentName())) {
+        if (!AgentFieldsEnum.AGENT_NAME_PATTERN.test(createAgentDto.getAgentName())) {
             errors.push(AgentsMessageEnum.AGENT_NAME_IS_NOT_VALID);
         }
         const heartbeat = createAgentDto.getHeartbeatIntervalSeconds();
-        if (!Number.isInteger(heartbeat) || heartbeat < HEARTBEAT_MIN_SECONDS || heartbeat > HEARTBEAT_MAX_SECONDS) {
-            errors.push(AgentsMessageEnum.HEARTBEAT_INTERVAL_MUST_BE_5_TO_3600);
+        if (!Number.isInteger(heartbeat) || heartbeat < AgentFieldsEnum.HEARTBEAT_MIN_SECONDS || heartbeat > AgentFieldsEnum.HEARTBEAT_MAX_SECONDS) {
+            errors.push(AgentsMessageEnum.HEARTBEAT_INTERVAL_MUST_BE_10_TO_86400);
         }
         if (errors.length) {
             AgentsException.badRequestCustom(errors);

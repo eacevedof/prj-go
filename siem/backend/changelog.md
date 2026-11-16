@@ -3,6 +3,36 @@
 La versión es `APP_VERSION` en `src/modules/shared/infrastructure/repositories/configuration/environment_reader_raw_repository.go`
 (la muestra el dashboard). Lo más nuevo arriba.
 
+## 0.6.0 — 2026-11-16
+
+1. **Proyectos en tabla CRUD** (patrón task-js) en lugar de tarjetas: columnas ID, UUID (con Copiar), proyecto (nombre
+   con su semáforo y la descripción debajo; si es larga, recortada y entera en el tooltip), warnings, errores y
+   críticos de 24 h, y acciones (Editar, Borrar). Filtros en el front: texto (id, uuid, nombre, descripción; con
+   debounce) y salud; contador "(2 de 4)". Filtros y confirmación pendiente sobreviven al auto-refresco.
+2. Formulario **plegable** "Nuevo proyecto", el mismo para editar ("Editar proyecto #3", uuid oculto, "Cancelar
+   edición"): foco en el nombre al desplegar y Ctrl+Enter guarda. Descripción en textarea (hasta 500).
+3. Borrar desde la tabla con confirmación en la fila ("Sí, borrar"); se queda en la portada. El borrado desde el
+   detalle (escribiendo el nombre) sigue igual.
+4. API: `PUT /api/v1/projects/:project_uuid` `{project_name, project_description}` (404 si no existe, 409 si el nombre
+   es de otro proyecto; cambiar solo mayúsculas vale). `GET /api/v1/dashboard` añade `project_id` a cada proyecto.
+5. Front: la tabla es del módulo Projects (escucha `DASHBOARD_RENDERED`); Dashboard solo pinta el servidor. Casos de
+   uso nuevos `UpdateProject` y `FilterProjects`; borrar desde la lista es su propio controller
+   (`DeleteListedProjectController`), sin flag. Componente `TextFormatter` para los `{0}` de los textos.
+6. **Agentes en tabla CRUD**, igual que proyectos, en el detalle de un proyecto: ID, UUID (Copiar), agente (nombre con
+   su estado; host y último latido debajo), warnings, errores y críticos de 24 h, acciones (Ver detalle, Editar,
+   Borrar). "Ver detalle" despliega bajo la fila lo que antes era la tarjeta: latido, host, cliente y la tabla de sus
+   fuentes. Filtros en el front (texto en id, uuid, nombre, host, ip y versión; estado). Filas abiertas, filtros y
+   confirmación sobreviven al auto-refresco; al cambiar de proyecto se vacían.
+7. Formulario plegable "Nuevo agente" que también edita ("Editar agente #4"): nombre, latido y, en edición, **Activo**
+   (desactivado, su token recibe 401 hasta reactivarlo; no se borra). El token del alta se sigue enseñando una vez.
+8. API: `PUT /api/v1/agents/:agent_uuid` `{agent_name, heartbeat_interval_seconds, is_enabled}` (404, 409 si el nombre
+   es de otro agente del proyecto). `GET /api/v1/projects/:uuid` añade `agent_id` e `is_enabled` a cada agente.
+9. **Migas de pan** en todas las pantallas (Proyectos · Proyectos / <nombre> · Eventos · Descargas), en lugar de los
+   eyebrow y del "← Proyectos"; las pinta `NavigationView` y el detalle las completa con el nombre.
+10. Fix: el front validaba el latido entre 5 y 3600 s y el nombre desde 1 carácter, pero la API exige 10-86400 s y 3-100
+    caracteres (un latido de 5 pasaba el front y la API lo rechazaba). Ahora los límites viven en `AgentFieldsEnum`.
+11. Detalle de proyecto renumerado: 2 agentes (con su formulario), 3 monitores, 4 nuevo monitor, 5 borrar proyecto.
+
 ## 0.5.1 — 2026-11-16
 
 1. Ejemplos neutros: el placeholder de "nuevo proyecto" y la ayuda de `project-create` dicen `Mi app` en vez de

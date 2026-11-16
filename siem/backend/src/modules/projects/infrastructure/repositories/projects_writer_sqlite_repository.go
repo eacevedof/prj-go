@@ -37,6 +37,19 @@ func (r *ProjectsWriterSqliteRepository) InsertProject(projectEntity *entities.P
     return r.GetLastInsertId(), nil
 }
 
+// UpdateProjectById nombre y descripcion (el uuid no cambia).
+func (r *ProjectsWriterSqliteRepository) UpdateProjectById(projectId int, projectName string, projectDescription string, updatedAt string) (int, error) {
+    sql := `
+        -- updateProjectById
+        UPDATE ` + "`projects`" + `
+        SET
+            project_name = ?, project_description = ?, updated_at = ?
+        WHERE 1=1
+        AND id = ?
+        `
+    return r.Execute(sql, projectName, projectDescription, updatedAt, projectId)
+}
+
 // DeleteProjectById se lleva por delante (ON DELETE CASCADE) sus agentes, monitores, sources y eventos.
 func (r *ProjectsWriterSqliteRepository) DeleteProjectById(projectId int) (int, error) {
     sql := fmt.Sprintf(`

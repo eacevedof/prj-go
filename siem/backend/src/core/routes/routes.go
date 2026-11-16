@@ -43,6 +43,9 @@ func GetRoutes() []boot.Route {
         {Url: "/api/v1/projects/:project_uuid", Allowed: []string{"get"}, Controller: func(h *httprequester.HttpRequester, args map[string]string) *httpresponder.HttpResponder {
             return dashboardcontrollers.GetProjectDetailRestControllerGetInstance(h).Invoke(args["project_uuid"])
         }},
+        {Url: "/api/v1/projects/:project_uuid", Allowed: []string{"put"}, Controller: func(h *httprequester.HttpRequester, args map[string]string) *httpresponder.HttpResponder {
+            return projectscontrollers.UpdateProjectRestControllerGetInstance(h).Invoke(args["project_uuid"])
+        }},
         {Url: "/api/v1/projects/:project_uuid", Allowed: []string{"delete"}, Controller: func(h *httprequester.HttpRequester, args map[string]string) *httpresponder.HttpResponder {
             return projectscontrollers.DeleteProjectRestControllerGetInstance(h).Invoke(args["project_uuid"])
         }},
@@ -50,6 +53,9 @@ func GetRoutes() []boot.Route {
         //@panel: agentes
         {Url: "/api/v1/projects/:project_uuid/agents", Allowed: []string{"post"}, Controller: func(h *httprequester.HttpRequester, args map[string]string) *httpresponder.HttpResponder {
             return agentscontrollers.CreateAgentRestControllerGetInstance(h).Invoke(args["project_uuid"])
+        }},
+        {Url: "/api/v1/agents/:agent_uuid", Allowed: []string{"put"}, Controller: func(h *httprequester.HttpRequester, args map[string]string) *httpresponder.HttpResponder {
+            return agentscontrollers.UpdateAgentRestControllerGetInstance(h).Invoke(args["agent_uuid"])
         }},
         {Url: "/api/v1/agents/:agent_uuid", Allowed: []string{"delete"}, Controller: func(h *httprequester.HttpRequester, args map[string]string) *httpresponder.HttpResponder {
             return agentscontrollers.DeleteAgentRestControllerGetInstance(h).Invoke(args["agent_uuid"])
