@@ -4,6 +4,13 @@ La versión es `APP_VERSION` en `src/modules/shared/infrastructure/repositories/
 (la muestran `version` y `help`, viaja al backend en cada envío y da nombre a los binarios de `make dist`). Lo más nuevo
 arriba.
 
+## 0.4.1 — 2026-11-16
+
+1. **Seguridad — `install.ps1`**: la carpeta de instalación deja de heredar permisos de `C:\` (ahí "Usuarios
+   autentificados" puede modificar): solo SYSTEM y Administradores (sin admin, el usuario actual) y dueño
+   Administradores. Antes cualquier usuario del equipo podía cambiar el `.exe` o el `siem-client.json` que la tarea
+   ejecuta como SYSTEM, o leer el token del `.env`. Relanzar el instalador corrige las instalaciones existentes.
+
 ## 0.4.0 — 2026-11-16
 
 1. Cada envío (también el latido) lleva `agent.client_path`: la ruta absoluta del ejecutable (`os.Executable`, con los

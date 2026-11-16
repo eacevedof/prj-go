@@ -3,6 +3,18 @@
 La versión es `APP_VERSION` en `src/modules/shared/infrastructure/repositories/configuration/environment_reader_raw_repository.go`
 (la muestra el dashboard). Lo más nuevo arriba.
 
+## 0.9.1 — 2026-11-16
+
+1. **Seguridad — `host_os` y `client_path` saneados al ingestar** (`AgentHostDataSanitizer` + `AgentHostOsEnum` en el
+   dominio de `agents`): el agente los informa de sí mismo y el panel monta con ellos el comando de desinstalar que el
+   admin pega en un shell elevado. `host_os` fuera de `linux|windows|darwin` y una ruta que no sea absoluta y limpia
+   para su SO (sin comillas, tampoco tipográficas, ni `$`, `;`, `&`…) se guardan vacías: el panel cae en la ruta por
+   defecto. Test en `tests/modules/agents/domain/services`.
+2. **Seguridad — front**: `ClientUninstallCommandBuilder` dobla también las comillas tipográficas U+2018-U+201B en el
+   comando de PowerShell (PowerShell las toma como comilla simple: inyección por copiar y pegar).
+3. Comentario de `AuthenticateDashboardService` al día: el token del panel lee y escribe (decía "solo lectura").
+   Auditoría completa y reglas en el vault: `projects/siem/siem-security.md`.
+
 ## 0.9.0 — 2026-11-16
 
 1. **Eventos es la pantalla de entrada**: `#/` (y un hash desconocido) lleva al visor. Menú reordenado: 1 Eventos ·

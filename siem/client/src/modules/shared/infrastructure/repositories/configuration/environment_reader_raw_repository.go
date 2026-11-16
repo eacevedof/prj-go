@@ -13,7 +13,7 @@ import (
 // Version del cliente: la muestran `version` y `help`, viaja al backend en cada envio (agent.client_version) y da
 // nombre a los binarios de make dist. Al subirla, anotar el cambio en changelog.md.
 const (
-    APP_VERSION        = "0.4.0"
+    APP_VERSION        = "0.4.1"
     APP_VERSION_UPDATE = "2026-11-16"
 )
 

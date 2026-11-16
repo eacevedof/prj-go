@@ -113,6 +113,13 @@ extensión de Go; al cerrar VS Code el contenedor sigue. Sin `formatOnSave`: el 
 
 Las instrucciones paso a paso, con los comandos para copiar por sistema operativo, están en el panel: **Descargas**.
 
+> **Permisos de la carpeta**: el agente corre como root / SYSTEM, así que solo root / SYSTEM y Administradores deben
+> poder escribir en su carpeta (y leer el `.env`, que lleva el token). `install.sh` y `install.ps1` ya lo dejan así
+> (en Windows, `icacls` sin herencia de `C:\`: ahí cualquier usuario autenticado puede modificar). En una instalación a
+> mano en Windows, hacer lo mismo:
+> `icacls <carpeta> /setowner *S-1-5-32-544 /T` y
+> `icacls <carpeta> /inheritance:r /grant:r "*S-1-5-18:(OI)(CI)F" "*S-1-5-32-544:(OI)(CI)F"`.
+
 1. `make dist` (con el contenedor del cliente levantado) → `build/dist/` y una copia en `backend/public/downloads/`
    (`siem-client-{linux,windows,macos}-<versión>`), que es de donde los sirve el panel. En el host se copia como
    `siem-client` (sin versión: la unidad systemd no cambia al actualizar; la versión la dice `version`).

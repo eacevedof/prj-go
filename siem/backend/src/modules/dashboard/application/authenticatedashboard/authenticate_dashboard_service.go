@@ -7,7 +7,7 @@ import (
     "siem-backend/src/modules/dashboard/domain/exceptions"
 )
 
-// AuthenticateDashboardService el Bearer del front contra APP_DASHBOARD_TOKEN (un unico token de solo lectura: el
+// AuthenticateDashboardService el Bearer del front contra APP_DASHBOARD_TOKEN (un unico token que lee y escribe: el
 // dashboard no tiene usuarios). Sin APP_DASHBOARD_TOKEN configurado no entra nadie.
 type AuthenticateDashboardService struct {
     tokenGenerator                 *token.TokenGenerator

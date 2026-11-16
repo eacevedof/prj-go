@@ -2,6 +2,8 @@ import { ClientOsEnum } from "/js/Modules/Projects/Domain/Enums/ClientOsEnum.js"
 
 const UNIX_PATH_SEPARATOR = "/";
 const WINDOWS_PATH_SEPARATOR = "\\";
+// PowerShell toma como comilla simple la ASCII y las tipograficas U+2018, U+2019, U+201A y U+201B: se doblan todas
+const POWERSHELL_SINGLE_QUOTES_PATTERN = /['\u2018\u2019\u201A\u201B]/g;
 
 /**
  * El comando para desinstalar el siem-client de un agente en su host, segun su SO y la ruta de su ejecutable
@@ -80,6 +82,6 @@ export class ClientUninstallCommandBuilder {
     }
 
     #getPowerShellQuoted(value) {
-        return `'${value.replaceAll("'", "''")}'`;
+        return `'${value.replace(POWERSHELL_SINGLE_QUOTES_PATTERN, "$&$&")}'`;
     }
 }

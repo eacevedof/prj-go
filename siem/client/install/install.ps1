@@ -70,6 +70,16 @@ $binary = $candidates | Sort-Object Version | Select-Object -Last 1
 if (-not $binary) { Stop-WithError "el panel no publica binario para Windows (make dist en el cliente)" }
 Write-Host "descargando $($binary.FileName)"
 New-Item -ItemType Directory -Force $Dir | Out-Null
+# La carpeta no hereda permisos: bajo C:\ "Usuarios autentificados" podria modificar el .exe, el .env (token) y el
+# siem-client.json, que la tarea programada ejecuta como SYSTEM. Solo SYSTEM y Administradores, y dueno Administradores
+# (si la creo otro usuario antes, como dueno podria volver a cambiar los permisos). Sin admin (-NoService), el usuario
+# actual en lugar de Administradores.
+$systemSid = "*S-1-5-18"
+$administratorsSid = "*S-1-5-32-544"
+$ownerSid = if ($isAdmin) { $administratorsSid } else { "*" + [Security.Principal.WindowsIdentity]::GetCurrent().User.Value }
+if ($isAdmin) { icacls $Dir /setowner $ownerSid /T /C /Q | Out-Null }
+icacls $Dir /inheritance:r /grant:r "${systemSid}:(OI)(CI)F" "${administratorsSid}:(OI)(CI)F" "${ownerSid}:(OI)(CI)F" /Q | Out-Null
+if ($LASTEXITCODE -ne 0) { Stop-WithError "no se pueden fijar los permisos de $Dir (icacls)" }
 $tempFile = Join-Path $env:TEMP "siem-client-$([guid]::NewGuid()).exe"
 try {
     Invoke-WebRequest -UseBasicParsing -Uri "$Url/downloads/$($binary.FileName)" -OutFile $tempFile

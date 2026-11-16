@@ -10,6 +10,7 @@ import (
 
     agentsenums "siem-backend/src/modules/agents/domain/enums"
     agentsentities "siem-backend/src/modules/agents/domain/entities"
+    agentsservices "siem-backend/src/modules/agents/domain/services"
     agentsrepositories "siem-backend/src/modules/agents/infrastructure/repositories"
 
     "siem-backend/src/modules/ingest/domain/enums"
@@ -26,6 +27,7 @@ type EnqueueIngestBatchService struct {
     traits.ErrorStackTrait
 
     dateTimer                         *datetimer.DateTimer
+    agentHostDataSanitizer            *agentsservices.AgentHostDataSanitizer
     agentsWriterSqliteRepository      *agentsrepositories.AgentsWriterSqliteRepository
     ingestQueueWriterSqliteRepository *repositories.IngestQueueWriterSqliteRepository
     ingestBatchValidator              *services.IngestBatchValidator
@@ -36,6 +38,7 @@ type EnqueueIngestBatchService struct {
 func EnqueueIngestBatchServiceGetInstance() *EnqueueIngestBatchService {
     return &EnqueueIngestBatchService{
         dateTimer:                         datetimer.GetInstance(),
+        agentHostDataSanitizer:            agentsservices.AgentHostDataSanitizerGetInstance(),
         agentsWriterSqliteRepository:      agentsrepositories.AgentsWriterSqliteRepositoryGetInstance(),
         ingestQueueWriterSqliteRepository: repositories.IngestQueueWriterSqliteRepositoryGetInstance(),
         ingestBatchValidator:              services.IngestBatchValidatorGetInstance(),
@@ -101,14 +104,21 @@ func (s *EnqueueIngestBatchService) failIfWrongInput() error {
 }
 
 func (s *EnqueueIngestBatchService) updateAgentHeartbeat(lastSeenAt string) error {
+    // host_os y client_path los informa el propio agente: el panel monta con ellos el comando de desinstalar
+    hostOs := s.agentHostDataSanitizer.GetHostOs(
+        s.getTruncated(s.enqueueIngestBatchDto.GetHostOs(), enums.IngestLimitEnum.HOST_OS_MAX_LENGTH),
+    )
+    clientPath := s.agentHostDataSanitizer.GetClientPath(
+        hostOs, s.getTruncated(s.enqueueIngestBatchDto.GetClientPath(), enums.IngestLimitEnum.CLIENT_PATH_MAX_LENGTH),
+    )
     _, err := s.agentsWriterSqliteRepository.UpdateHostDataAndLastSeenById(
         agentsentities.AgentEntityFromPrimitives(map[string]any{
             agentsenums.AgentsKeyEnum.ID:             s.enqueueIngestBatchDto.GetAuthAgentId(),
             agentsenums.AgentsKeyEnum.HOST_NAME:      s.getTruncated(s.enqueueIngestBatchDto.GetHostName(), enums.IngestLimitEnum.HOST_NAME_MAX_LENGTH),
-            agentsenums.AgentsKeyEnum.HOST_OS:        s.getTruncated(s.enqueueIngestBatchDto.GetHostOs(), enums.IngestLimitEnum.HOST_OS_MAX_LENGTH),
+            agentsenums.AgentsKeyEnum.HOST_OS:        hostOs,
             agentsenums.AgentsKeyEnum.HOST_IP:        s.getTruncated(s.enqueueIngestBatchDto.GetUserIpAddress(), enums.IngestLimitEnum.HOST_IP_MAX_LENGTH),
             agentsenums.AgentsKeyEnum.CLIENT_VERSION: s.getTruncated(s.enqueueIngestBatchDto.GetClientVersion(), enums.IngestLimitEnum.CLIENT_VERSION_MAX_LENGTH),
-            agentsenums.AgentsKeyEnum.CLIENT_PATH:    s.getTruncated(s.enqueueIngestBatchDto.GetClientPath(), enums.IngestLimitEnum.CLIENT_PATH_MAX_LENGTH),
+            agentsenums.AgentsKeyEnum.CLIENT_PATH:    clientPath,
             agentsenums.AgentsKeyEnum.LAST_SEEN_AT:   lastSeenAt,
         }),
     )
