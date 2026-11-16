@@ -10,7 +10,7 @@ import (
     sharedexceptions "siem-backend/src/modules/shared/infrastructure/exceptions"
 )
 
-// CreateProjectCommand ./console project-create --project_name="Track Alert" --project_description="prod"
+// CreateProjectCommand ./console project-create --project_name="Mi app" --project_description="prod"
 type CreateProjectCommand struct {
     sharedcommands.AbstractConsoleCommand
 }

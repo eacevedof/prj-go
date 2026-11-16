@@ -3,6 +3,11 @@
 La versión es `APP_VERSION` en `src/modules/shared/infrastructure/repositories/configuration/environment_reader_raw_repository.go`
 (la muestra el dashboard). Lo más nuevo arriba.
 
+## 0.5.1 — 2026-11-16
+
+1. Ejemplos neutros: el placeholder de "nuevo proyecto" y la ayuda de `project-create` dicen `Mi app` en vez de
+   un producto de Lazarus.
+
 ## 0.5.0 — 2026-11-16
 
 1. **Rediseño UI/UX del panel** con el lenguaje de Ventriloc (refero.design): casi monocromo (grafito sobre blanco,

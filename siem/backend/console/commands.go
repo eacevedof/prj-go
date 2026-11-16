@@ -42,7 +42,7 @@ func GetCommands() []application.CommandConfig {
                 return projectscommands.CreateProjectCommandGetInstance(input)
             },
             Info:    "alta de un proyecto; imprime su project_uuid",
-            Example: `--project_name="Track Alert" --project_description="produccion"`,
+            Example: `--project_name="Mi app" --project_description="produccion"`,
         },
         {
             Alias: "agent-create",
