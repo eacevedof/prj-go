@@ -1,0 +1,16 @@
+.vscode
+.idea
+
+.env
+.env.local
+
+# binarios (go build -o build/...)
+build/*
+!build/.gitkeep
+
+# storage: logs, spool (eventos sin enviar) y state (la ultima foto) se generan; se conserva el esqueleto
+storage/**/*
+!storage/**/
+!storage/**/.gitkeep
+
+docker/.env

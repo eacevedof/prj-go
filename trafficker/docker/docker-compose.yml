@@ -1,0 +1,35 @@
+# docker/docker-compose.yml -- trafficker en un contenedor para probarlo en local: compila y ejecuta el agente.
+# network_mode host + pid host: ve los sockets y los procesos del HOST (si no, solo veria los suyos). Corre como root
+# dentro del contenedor para poder leer los fd de todos los procesos. Lanzar desde prj-go/trafficker/ (make up).
+# El backend del siem, en local, queda en http://localhost:9400 (la red del host). El token va en docker/.env.
+name: trafficker
+
+services:
+  trafficker-app:
+    container_name: cont-trafficker-app
+    build:
+      context: app
+    network_mode: host
+    pid: host
+    # leer a que apunta /proc/<pid>/fd/* de otro proceso es un "ptrace read": sin SYS_PTRACE, y sin quitar el perfil
+    # AppArmor docker-default (que lo deniega aun con la capacidad), todos los sockets saldrian con proceso "?".
+    # Es un contenedor de pruebas local; en un host real el agente corre como servicio con root.
+    cap_add:
+      - SYS_PTRACE
+    security_opt:
+      - apparmor:unconfined
+    environment:
+      TZ: ${TIME_ZONE:-UTC}
+      APP_ENV: local
+      APP_SIEM_ENDPOINT_URL: ${APP_SIEM_ENDPOINT_URL:-http://localhost:9400/api/v1/ingest-batches}
+      APP_SIEM_API_TOKEN: ${APP_SIEM_API_TOKEN:-}
+    volumes:
+      - ../:/app
+      # usuarios del host: el duenyo de cada socket por su nombre y no por su uid
+      - /etc/passwd:/etc/passwd:ro
+      - trafficker-gomod:/go/pkg/mod
+      - trafficker-gocache:/root/.cache/go-build
+
+volumes:
+  trafficker-gomod:
+  trafficker-gocache:
