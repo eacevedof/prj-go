@@ -3,11 +3,12 @@ package commands
 import (
     "errors"
 
-    "siem-backend/src/modules/agents/application/createagent"
-    "siem-backend/src/modules/agents/domain/enums"
-    "siem-backend/src/modules/agents/domain/exceptions"
     sharedcommands "siem-backend/src/modules/shared/infrastructure/commands"
     sharedexceptions "siem-backend/src/modules/shared/infrastructure/exceptions"
+
+    "siem-backend/src/modules/agents/domain/enums"
+    "siem-backend/src/modules/agents/application/createagent"
+    "siem-backend/src/modules/agents/domain/exceptions"
 )
 
 // CreateAgentCommand ./console agent-create --project_uuid=<uuid> --agent_name=web-01 --heartbeat_interval_seconds=60

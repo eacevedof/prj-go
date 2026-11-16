@@ -1,8 +1,9 @@
 package commands
 
 import (
-    "siem-backend/src/modules/devops/application/runmigrations"
     sharedcommands "siem-backend/src/modules/shared/infrastructure/commands"
+
+    "siem-backend/src/modules/devops/application/runmigrations"
 )
 
 // RunMigrationsCommand ./console run-migrations   (make migrate)

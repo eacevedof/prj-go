@@ -22,7 +22,7 @@ type JsonEnvelope struct {
 // AbstractRestController base de los controllers REST. Envelope UNICO de respuesta, con el codigo tambien como
 // status HTTP:
 //
-//	{"code": int, "status": bool, "errors": string[], "data": object|array}
+//    {"code": int, "status": bool, "errors": string[], "data": object|array}
 type AbstractRestController struct {
     AbstractHttpController
 }
@@ -35,15 +35,15 @@ func (c *AbstractRestController) RespondOk(data any) *httpresponder.HttpResponde
     return c.getJsonResponse(enums.ExceptionEnum.CODE_OK, true, []string{}, data)
 }
 
-func (c *AbstractRestController) RespondErrors(code int, errors []string) *httpresponder.HttpResponder {
-    return c.getJsonResponse(code, false, errors, []any{})
+func (c *AbstractRestController) RespondErrors(code int, errorMessages []string) *httpresponder.HttpResponder {
+    return c.getJsonResponse(code, false, errorMessages, []any{})
 }
 
 // RespondDomainError excepcion controlada (de dominio o FieldsException): su codigo 4xx y su mensaje viajan al
 // cliente tal cual (una FieldsException ya trae en el mensaje el detalle por campo). El controller la distingue por
 // su tipo.
-func (c *AbstractRestController) RespondDomainError(ex exceptions.InterfaceException) *httpresponder.HttpResponder {
-    return c.RespondErrors(ex.GetCode(), []string{ex.Error()})
+func (c *AbstractRestController) RespondDomainError(controlledException exceptions.InterfaceException) *httpresponder.HttpResponder {
+    return c.RespondErrors(controlledException.GetCode(), []string{controlledException.Error()})
 }
 
 // RespondUnexpectedError cualquier otra cosa: 500, se loguea con el metodo que fallo y no filtra su mensaje.
@@ -56,14 +56,14 @@ func (c *AbstractRestController) RespondUnexpectedError(err error, logTitle stri
     )
 }
 
-func (c *AbstractRestController) getJsonResponse(code int, status bool, errors []string, data any) *httpresponder.HttpResponder {
+func (c *AbstractRestController) getJsonResponse(code int, isSuccess bool, errorMessages []string, data any) *httpresponder.HttpResponder {
     headers := map[string]string{}
     // RFC 6750: un 401 indica al cliente el esquema que se espera
     if code == enums.ExceptionEnum.CODE_UNAUTHORIZED {
         headers[enums.HttpEnum.HEADER_WWW_AUTHENTICATE] = enums.HttpEnum.AUTH_SCHEME_BEARER
     }
     return httpresponder.Json(
-        GetJsonEncoded(JsonEnvelope{Code: code, Status: status, Errors: errors, Data: data}),
+        GetJsonEncoded(JsonEnvelope{Code: code, Status: isSuccess, Errors: errorMessages, Data: data}),
         code,
         headers,
     )

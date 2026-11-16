@@ -2,9 +2,10 @@ package deletemonitor
 
 import (
     "siem-backend/src/core/config"
+
     "siem-backend/src/modules/monitors/domain/enums"
-    "siem-backend/src/modules/monitors/domain/exceptions"
     "siem-backend/src/modules/monitors/infrastructure/repositories"
+    "siem-backend/src/modules/monitors/domain/exceptions"
 )
 
 // DeleteMonitorService baja de un monitor desde el panel. El agente deja de vigilarlo en su siguiente sincronizacion;

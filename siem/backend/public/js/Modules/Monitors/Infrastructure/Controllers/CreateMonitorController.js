@@ -2,6 +2,7 @@ import { HttpCodeEnum } from "/js/Modules/Shared/Domain/Enums/HttpCodeEnum.js";
 import { Dispatcher } from "/js/Modules/Shared/Infrastructure/Components/Dispatcher.js";
 import { SessionStorer } from "/js/Modules/Shared/Infrastructure/Components/SessionStorer.js";
 import { Subscriber } from "/js/Modules/Shared/Infrastructure/Components/Subscriber.js";
+import { TextFormatter } from "/js/Modules/Shared/Infrastructure/Components/TextFormatter.js";
 import { NavigationView } from "/js/Modules/Shared/Infrastructure/Views/NavigationView.js";
 
 import { SessionEventEnum } from "/js/Modules/Session/Domain/Enums/SessionEventEnum.js";
@@ -10,6 +11,7 @@ import { AgentsEventEnum } from "/js/Modules/Agents/Domain/Enums/AgentsEventEnum
 
 import { MonitorsEventEnum } from "/js/Modules/Monitors/Domain/Enums/MonitorsEventEnum.js";
 import { MonitorsMessageEnum } from "/js/Modules/Monitors/Domain/Enums/MonitorsMessageEnum.js";
+import { MonitorsTextEnum } from "/js/Modules/Monitors/Domain/Enums/MonitorsTextEnum.js";
 import { CreateMonitorDto } from "/js/Modules/Monitors/Application/CreateMonitor/CreateMonitorDto.js";
 import { CreateMonitorService } from "/js/Modules/Monitors/Application/CreateMonitor/CreateMonitorService.js";
 import { MonitorsView } from "/js/Modules/Monitors/Infrastructure/Views/MonitorsView.js";
@@ -25,6 +27,7 @@ export class CreateMonitorController {
     #dispatcher;
     #sessionStorer;
     #subscriber;
+    #textFormatter;
     #navigationView;
     #monitorsView;
 
@@ -32,6 +35,7 @@ export class CreateMonitorController {
         this.#dispatcher = Dispatcher.getInstance();
         this.#sessionStorer = SessionStorer.getInstance();
         this.#subscriber = Subscriber.getInstance();
+        this.#textFormatter = TextFormatter.getInstance();
         this.#navigationView = NavigationView.getInstance();
         this.#monitorsView = MonitorsView.getInstance();
     }
@@ -59,7 +63,9 @@ export class CreateMonitorController {
             const createMonitorResultDto = await CreateMonitorService.getInstance().invoke(
                 CreateMonitorDto.fromPrimitives({ ...request, dashboardToken: this.#sessionStorer.getDashboardToken() })
             );
-            this.#monitorsView.renderSaved(`Monitor ${createMonitorResultDto.getMonitorName()} creado: los agentes lo aplican en su siguiente sincronización (≤ 1 min).`);
+            this.#monitorsView.renderSaved(
+                this.#textFormatter.getFormatted(MonitorsTextEnum.MONITOR_CREATED, createMonitorResultDto.getMonitorName())
+            );
             this.#navigationView.renderCurrentScreen();
         }
         catch (error) {

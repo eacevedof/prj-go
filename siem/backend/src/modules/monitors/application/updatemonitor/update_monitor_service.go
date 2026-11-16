@@ -2,11 +2,13 @@ package updatemonitor
 
 import (
     "siem-backend/src/core/config"
-    "siem-backend/src/modules/monitors/domain/entities"
-    "siem-backend/src/modules/monitors/domain/enums"
-    "siem-backend/src/modules/monitors/domain/exceptions"
-    "siem-backend/src/modules/monitors/infrastructure/traits"
+
     "siem-backend/src/modules/shared/infrastructure/components/datetimer"
+
+    "siem-backend/src/modules/monitors/domain/enums"
+    "siem-backend/src/modules/monitors/domain/entities"
+    "siem-backend/src/modules/monitors/infrastructure/traits"
+    "siem-backend/src/modules/monitors/domain/exceptions"
 )
 
 // UpdateMonitorService edicion de un monitor desde el panel: nombre, ambito (agente), activo, intervalo, config y

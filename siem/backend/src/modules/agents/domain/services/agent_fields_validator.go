@@ -29,12 +29,13 @@ func (v *AgentFieldsValidator) GetErrors(projectUuid string, agentName string, h
 func (v *AgentFieldsValidator) GetAgentFieldsErrors(agentName string, heartbeatIntervalSeconds int) []string {
     errors := []string{}
     agentNameLength := utf8.RuneCountInString(agentName)
-    if agentNameLength < 3 || agentNameLength > 100 {
+    if agentNameLength < enums.AgentFieldsLimitEnum.AGENT_NAME_MIN_LENGTH || agentNameLength > enums.AgentFieldsLimitEnum.AGENT_NAME_MAX_LENGTH {
         errors = append(errors, enums.AgentsMessageEnum.AGENT_NAME_LENGTH_MUST_BE_3_TO_100)
     } else if !agentNamePattern.MatchString(agentName) {
         errors = append(errors, enums.AgentsMessageEnum.AGENT_NAME_HAS_INVALID_CHARS)
     }
-    if heartbeatIntervalSeconds < 10 || heartbeatIntervalSeconds > 86400 {
+    if heartbeatIntervalSeconds < enums.AgentFieldsLimitEnum.HEARTBEAT_INTERVAL_SECONDS_MIN ||
+        heartbeatIntervalSeconds > enums.AgentFieldsLimitEnum.HEARTBEAT_INTERVAL_SECONDS_MAX {
         errors = append(errors, enums.AgentsMessageEnum.HEARTBEAT_INTERVAL_SECONDS_MUST_BE_10_TO_86400)
     }
     return errors

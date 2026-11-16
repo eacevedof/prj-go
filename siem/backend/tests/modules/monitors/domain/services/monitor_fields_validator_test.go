@@ -4,8 +4,9 @@ import (
     "strings"
     "testing"
 
-    "siem-backend/src/modules/monitors/domain/services"
     "siem-backend/tests"
+
+    "siem-backend/src/modules/monitors/domain/services"
 )
 
 func getThreshold(value float64) *float64 {

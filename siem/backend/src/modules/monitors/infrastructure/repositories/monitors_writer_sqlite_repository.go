@@ -3,8 +3,9 @@ package repositories
 import (
     "fmt"
 
-    "siem-backend/src/modules/monitors/domain/entities"
     sharedrepositories "siem-backend/src/modules/shared/infrastructure/repositories"
+
+    "siem-backend/src/modules/monitors/domain/entities"
 )
 
 type MonitorsWriterSqliteRepository struct {
@@ -24,15 +25,15 @@ func (r *MonitorsWriterSqliteRepository) InsertMonitor(monitorEntity *entities.M
              warning_threshold, critical_threshold, created_at, updated_at)
         VALUES
             (?, %d, ?, ?, ?, %d, %d, ?, ?, ?, ?, ?)
-        `, monitorEntity.GetProjectId(), getBoolAsInt(monitorEntity.IsEnabled()), monitorEntity.GetIntervalSeconds())
+        `, monitorEntity.GetProjectId(), r.getIsEnabledAsInt(monitorEntity.IsEnabled()), monitorEntity.GetIntervalSeconds())
     _, err := r.Execute(sql,
         monitorEntity.GetMonitorUuid(),
-        getIdOrNil(monitorEntity.GetAgentId()),
+        r.getIdOrNil(monitorEntity.GetAgentId()),
         monitorEntity.GetMonitorType(),
         monitorEntity.GetMonitorName(),
         monitorEntity.GetConfigJson(),
-        getThresholdOrNil(monitorEntity.GetWarningThreshold()),
-        getThresholdOrNil(monitorEntity.GetCriticalThreshold()),
+        r.getThresholdOrNil(monitorEntity.GetWarningThreshold()),
+        r.getThresholdOrNil(monitorEntity.GetCriticalThreshold()),
         monitorEntity.GetCreatedAt(),
         monitorEntity.GetCreatedAt(),
     )
@@ -51,13 +52,13 @@ func (r *MonitorsWriterSqliteRepository) UpdateMonitorById(monitorEntity *entiti
             warning_threshold = ?, critical_threshold = ?, updated_at = ?
         WHERE 1=1
         AND id = %d
-        `, getBoolAsInt(monitorEntity.IsEnabled()), monitorEntity.GetIntervalSeconds(), monitorEntity.GetId())
+        `, r.getIsEnabledAsInt(monitorEntity.IsEnabled()), monitorEntity.GetIntervalSeconds(), monitorEntity.GetId())
     return r.Execute(sql,
-        getIdOrNil(monitorEntity.GetAgentId()),
+        r.getIdOrNil(monitorEntity.GetAgentId()),
         monitorEntity.GetMonitorName(),
         monitorEntity.GetConfigJson(),
-        getThresholdOrNil(monitorEntity.GetWarningThreshold()),
-        getThresholdOrNil(monitorEntity.GetCriticalThreshold()),
+        r.getThresholdOrNil(monitorEntity.GetWarningThreshold()),
+        r.getThresholdOrNil(monitorEntity.GetCriticalThreshold()),
         monitorEntity.GetUpdatedAt(),
     )
 }
@@ -72,21 +73,21 @@ func (r *MonitorsWriterSqliteRepository) DeleteMonitorById(monitorId int) (int, 
     return r.Execute(sql)
 }
 
-func getBoolAsInt(value bool) int {
-    if value {
+func (r *MonitorsWriterSqliteRepository) getIsEnabledAsInt(isEnabled bool) int {
+    if isEnabled {
         return 1
     }
     return 0
 }
 
-func getIdOrNil(id int) any {
+func (r *MonitorsWriterSqliteRepository) getIdOrNil(id int) any {
     if id == 0 {
         return nil
     }
     return id
 }
 
-func getThresholdOrNil(threshold *float64) any {
+func (r *MonitorsWriterSqliteRepository) getThresholdOrNil(threshold *float64) any {
     if threshold == nil {
         return nil
     }

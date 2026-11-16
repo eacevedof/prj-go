@@ -1,8 +1,8 @@
 import { AgentFieldsEnum } from "/js/Modules/Agents/Domain/Enums/AgentFieldsEnum.js";
 import { AgentsMessageEnum } from "/js/Modules/Agents/Domain/Enums/AgentsMessageEnum.js";
-import { AgentsException } from "/js/Modules/Agents/Domain/Exceptions/AgentsException.js";
 import { CreateAgentResultDto } from "/js/Modules/Agents/Application/CreateAgent/CreateAgentResultDto.js";
 import { AgentsWriterHttpRepository } from "/js/Modules/Agents/Infrastructure/Repositories/AgentsWriterHttpRepository.js";
+import { AgentsException } from "/js/Modules/Agents/Domain/Exceptions/AgentsException.js";
 
 /**
  * Alta de un agente (un host con siem-client) en un proyecto. La API devuelve su api_token una sola vez: de ella solo
@@ -36,8 +36,9 @@ export class CreateAgentService {
         if (!AgentFieldsEnum.AGENT_NAME_PATTERN.test(createAgentDto.getAgentName())) {
             errors.push(AgentsMessageEnum.AGENT_NAME_IS_NOT_VALID);
         }
-        const heartbeat = createAgentDto.getHeartbeatIntervalSeconds();
-        if (!Number.isInteger(heartbeat) || heartbeat < AgentFieldsEnum.HEARTBEAT_MIN_SECONDS || heartbeat > AgentFieldsEnum.HEARTBEAT_MAX_SECONDS) {
+        const heartbeatIntervalSeconds = createAgentDto.getHeartbeatIntervalSeconds();
+        if (!Number.isInteger(heartbeatIntervalSeconds) || heartbeatIntervalSeconds < AgentFieldsEnum.HEARTBEAT_MIN_SECONDS
+            || heartbeatIntervalSeconds > AgentFieldsEnum.HEARTBEAT_MAX_SECONDS) {
             errors.push(AgentsMessageEnum.HEARTBEAT_INTERVAL_MUST_BE_10_TO_86400);
         }
         if (errors.length) {
@@ -46,7 +47,7 @@ export class CreateAgentService {
 
         const apiResponse = await this.#agentsWriterHttpRepository.createAgentInProject(
             createAgentDto.getProjectUuid(),
-            { agent_name: createAgentDto.getAgentName(), heartbeat_interval_seconds: heartbeat },
+            { agent_name: createAgentDto.getAgentName(), heartbeat_interval_seconds: heartbeatIntervalSeconds },
             createAgentDto.getDashboardToken()
         );
         if (!apiResponse.status) {

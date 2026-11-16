@@ -12,8 +12,9 @@ var EventsFilterFieldEnum = struct {
     SOURCE_NAME  string
     MONITOR_UUID string
 
-    VALUES     []string
-    NOT_PREFIX string
+    VALUES           []string
+    NOT_PREFIX       string
+    VALUES_SEPARATOR string
     // valores por campo en una peticion: de sobra para el panel y acota el IN (...)
     MAX_VALUES_PER_FIELD int
 }{
@@ -27,15 +28,30 @@ var EventsFilterFieldEnum = struct {
 
     VALUES:               []string{"project_uuid", "agent_uuid", "severity", "event_type", "source_type", "source_name", "monitor_uuid"},
     NOT_PREFIX:           "not_",
+    VALUES_SEPARATOR:     ",",
     MAX_VALUES_PER_FIELD: 20,
 }
 
 // EventsFacetFieldEnum los campos del panel lateral (top de valores con su recuento). agent_name y project_name se
 // muestran por nombre; el front filtra por su uuid.
 var EventsFacetFieldEnum = struct {
+    SEVERITY     string
+    EVENT_TYPE   string
+    SOURCE_TYPE  string
+    SOURCE_NAME  string
+    AGENT_NAME   string
+    PROJECT_NAME string
+
     VALUES []string
     TOP    int
 }{
+    SEVERITY:     "severity",
+    EVENT_TYPE:   "event_type",
+    SOURCE_TYPE:  "source_type",
+    SOURCE_NAME:  "source_name",
+    AGENT_NAME:   "agent_name",
+    PROJECT_NAME: "project_name",
+
     VALUES: []string{"severity", "event_type", "source_type", "source_name", "agent_name", "project_name"},
     TOP:    10,
 }

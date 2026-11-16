@@ -1,8 +1,10 @@
 const SECONDS_PER_MINUTE = 60;
 const SECONDS_PER_HOUR = 3600;
 const SECONDS_PER_DAY = 86400;
+const MILLISECONDS_PER_SECOND = 1000;
 const EMPTY_VALUE = "—";
 const NEVER = "nunca";
+const TIME_AGO_PREFIX = "hace";
 const UTC_DATE_TIME_PATTERN = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/;
 
 /**
@@ -61,8 +63,8 @@ export class DateTimer {
      */
     getTimeAgo(utcDateTime, nowUtcDateTime) {
         if (!utcDateTime) return NEVER;
-        const seconds = Math.max(0, Math.round((this.#getDate(nowUtcDateTime) - this.#getDate(utcDateTime)) / 1000));
-        return `hace ${this.getDuration(seconds)}`;
+        const seconds = Math.max(0, Math.round((this.#getDate(nowUtcDateTime) - this.#getDate(utcDateTime)) / MILLISECONDS_PER_SECOND));
+        return `${TIME_AGO_PREFIX} ${this.getDuration(seconds)}`;
     }
 
     /**

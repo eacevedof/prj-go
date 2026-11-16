@@ -26,11 +26,11 @@ var EventTypeEnum = struct {
 // SourceTypeByEventType a que tipo de source va cada tipo de evento: por contenedor, el estado y los eventos del daemon
 // comparten source (docker); recursos y logs van aparte para que su ultimo valor no tape el estado.
 var SourceTypeByEventType = map[string]string{
-    "log_line":       "file",
-    "command_result": "command",
-    "docker_state":   "docker",
-    "docker_event":   "docker",
-    "docker_stats":   "docker_stats",
-    "docker_log":     "docker_log",
-    "host_metric":    "metric",
+    EventTypeEnum.LOG_LINE:       SourceTypeEnum.FILE,
+    EventTypeEnum.COMMAND_RESULT: SourceTypeEnum.COMMAND,
+    EventTypeEnum.DOCKER_STATE:   SourceTypeEnum.DOCKER,
+    EventTypeEnum.DOCKER_EVENT:   SourceTypeEnum.DOCKER,
+    EventTypeEnum.DOCKER_STATS:   SourceTypeEnum.DOCKER_STATS,
+    EventTypeEnum.DOCKER_LOG:     SourceTypeEnum.DOCKER_LOG,
+    EventTypeEnum.HOST_METRIC:    SourceTypeEnum.METRIC,
 }

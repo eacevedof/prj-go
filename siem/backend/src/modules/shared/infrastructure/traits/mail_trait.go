@@ -5,8 +5,8 @@ import (
     "runtime/debug"
     "strings"
 
-    "siem-backend/src/modules/mailer/application/sendalertemail"
     "siem-backend/src/modules/mailer/domain/enums"
+    "siem-backend/src/modules/mailer/application/sendalertemail"
 )
 
 // MailTrait emails de alerta desde un controller o un command. Se llama desde su rama de error: por eso aqui SI se

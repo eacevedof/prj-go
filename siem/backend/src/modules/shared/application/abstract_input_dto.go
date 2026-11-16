@@ -16,16 +16,16 @@ type AbstractInputDto struct {
 }
 
 func NewAbstractInputDto(primitives map[string]any) AbstractInputDto {
-    userLanguageCode := GetTrimmedString(primitives, "userLanguageCode")
+    userLanguageCode := GetTrimmedString(primitives, enums.RequestMetadataKeyEnum.USER_LANGUAGE_CODE)
     if userLanguageCode == "" {
         userLanguageCode = enums.LanguageCodeEnum.EN
     }
     return AbstractInputDto{
-        userIpAddress:      GetTrimmedString(primitives, "userIpAddress"),
-        userBrowser:        GetTrimmedString(primitives, "userBrowser"),
-        userBrowserVersion: GetTrimmedString(primitives, "userBrowserVersion"),
-        userOs:             GetTrimmedString(primitives, "userOs"),
-        userTimeZone:       GetTrimmedString(primitives, "userTimeZone"),
+        userIpAddress:      GetTrimmedString(primitives, enums.RequestMetadataKeyEnum.USER_IP_ADDRESS),
+        userBrowser:        GetTrimmedString(primitives, enums.RequestMetadataKeyEnum.USER_BROWSER),
+        userBrowserVersion: GetTrimmedString(primitives, enums.RequestMetadataKeyEnum.USER_BROWSER_VERSION),
+        userOs:             GetTrimmedString(primitives, enums.RequestMetadataKeyEnum.USER_OS),
+        userTimeZone:       GetTrimmedString(primitives, enums.RequestMetadataKeyEnum.USER_TIME_ZONE),
         userLanguageCode:   userLanguageCode,
     }
 }

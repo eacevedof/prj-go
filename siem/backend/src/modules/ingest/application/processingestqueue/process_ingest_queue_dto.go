@@ -1,8 +1,10 @@
 package processingestqueue
 
-import "siem-backend/src/modules/shared/application"
+import (
+    "siem-backend/src/modules/shared/application"
 
-const MAX_BATCHES_DEFAULT = 100
+    "siem-backend/src/modules/ingest/domain/enums"
+)
 
 type ProcessIngestQueueDto struct {
     application.AbstractInputDto
@@ -10,7 +12,7 @@ type ProcessIngestQueueDto struct {
 }
 
 func ProcessIngestQueueDtoFromPrimitives(primitives map[string]any) *ProcessIngestQueueDto {
-    maxBatches := MAX_BATCHES_DEFAULT
+    maxBatches := enums.IngestLimitEnum.MAX_BATCHES_DEFAULT
     // "" (opcion de consola sin pasar) cuenta como ausente
     if application.GetTrimmedString(primitives, "maxBatches") != "" {
         maxBatches = application.GetInt(primitives, "maxBatches")

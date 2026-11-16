@@ -4,11 +4,14 @@ import (
     "errors"
     "html"
 
-    "siem-backend/src/modules/mailer/domain/enums"
+    "siem-backend/src/core/config"
+
     "siem-backend/src/modules/shared/infrastructure/components/datetimer"
     "siem-backend/src/modules/shared/infrastructure/components/mailer"
     "siem-backend/src/modules/shared/infrastructure/components/server"
     "siem-backend/src/modules/shared/infrastructure/repositories/configuration"
+
+    "siem-backend/src/modules/mailer/domain/enums"
 )
 
 // SendAlertEmailService email de alerta al equipo (error, amenaza de seguridad, warning, notice) a APP_EMAIL_TO.
@@ -66,10 +69,10 @@ func (s *SendAlertEmailService) Invoke(sendAlertEmailDto *SendAlertEmailDto) (*S
 func (s *SendAlertEmailService) failIfWrongInput() error {
     alertType := s.sendAlertEmailDto.GetAlertType()
     if _, isKnown := enums.AlertEmailTypeEnum.SUBJECT_TAGS[alertType]; !isKnown {
-        return errors.New("SendAlertEmail: unknown alert type \"" + alertType + "\"")
+        return errors.New(config.Tr(enums.MailerMessageEnum.UNKNOWN_ALERT_TYPE_X, alertType))
     }
     if s.sendAlertEmailDto.GetSubject() == "" {
-        return errors.New("SendAlertEmail: subject is required")
+        return errors.New(enums.MailerMessageEnum.SUBJECT_IS_REQUIRED)
     }
     return nil
 }

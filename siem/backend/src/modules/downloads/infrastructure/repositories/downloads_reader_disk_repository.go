@@ -7,6 +7,8 @@ import (
     "os"
     "path/filepath"
     "sort"
+
+    "siem-backend/src/modules/downloads/domain/enums"
 )
 
 // DownloadsReaderDiskRepository los binarios del siem-client que deja "make dist" del cliente en public/downloads/
@@ -42,13 +44,13 @@ func (r *DownloadsReaderDiskRepository) GetDownloadFiles(pathDownloads string) (
             continue
         }
         downloadFiles = append(downloadFiles, map[string]any{
-            "file_name":  dirEntry.Name(),
-            "size_bytes": int(fileInfo.Size()),
-            "sha256":     fileSha256,
+            enums.DownloadsKeyEnum.FILE_NAME:  dirEntry.Name(),
+            enums.DownloadsKeyEnum.SIZE_BYTES: int(fileInfo.Size()),
+            enums.DownloadsKeyEnum.SHA256:     fileSha256,
         })
     }
     sort.Slice(downloadFiles, func(i int, j int) bool {
-        return downloadFiles[i]["file_name"].(string) < downloadFiles[j]["file_name"].(string)
+        return downloadFiles[i][enums.DownloadsKeyEnum.FILE_NAME].(string) < downloadFiles[j][enums.DownloadsKeyEnum.FILE_NAME].(string)
     })
     return downloadFiles, nil
 }

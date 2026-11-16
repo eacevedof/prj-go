@@ -11,12 +11,12 @@ import { NavigationView } from "/js/Modules/Shared/Infrastructure/Views/Navigati
 import { SessionEventEnum } from "/js/Modules/Session/Domain/Enums/SessionEventEnum.js";
 
 import { DashboardEventEnum } from "/js/Modules/Dashboard/Domain/Enums/DashboardEventEnum.js";
+import { DashboardKeyEnum } from "/js/Modules/Dashboard/Domain/Enums/DashboardKeyEnum.js";
 import { DashboardMessageEnum } from "/js/Modules/Dashboard/Domain/Enums/DashboardMessageEnum.js";
 import { GetProjectDetailDto } from "/js/Modules/Dashboard/Application/GetProjectDetail/GetProjectDetailDto.js";
 import { GetProjectDetailService } from "/js/Modules/Dashboard/Application/GetProjectDetail/GetProjectDetailService.js";
 import { ProjectDetailView } from "/js/Modules/Dashboard/Infrastructure/Views/ProjectDetailView.js";
 import { DashboardException } from "/js/Modules/Dashboard/Domain/Exceptions/DashboardException.js";
-
 
 /**
  * Detalle de un proyecto (#/projects/<project_uuid>): su cabecera y las migas con su nombre; los agentes (con sus
@@ -67,7 +67,7 @@ export class GetProjectDetailController {
             this.#projectDetailView.renderProject(project);
             this.#navigationView.renderBreadcrumbs([
                 { label: BreadcrumbsTextEnum.PROJECTS, hash: RouteHashEnum.PROJECTS },
-                { label: String(project.project_name ?? "") },
+                { label: String(project[DashboardKeyEnum.PROJECT_NAME] ?? "") },
             ]);
             this.#dispatcher.dispatch(DashboardEventEnum.PROJECT_DETAIL_RENDERED, {
                 project,

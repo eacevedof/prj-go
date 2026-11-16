@@ -20,12 +20,12 @@ func ProjectFieldsValidatorGetInstance() *ProjectFieldsValidator {
 func (v *ProjectFieldsValidator) GetErrors(projectName string, projectDescription string) []string {
     errors := []string{}
     projectNameLength := utf8.RuneCountInString(projectName)
-    if projectNameLength < 3 || projectNameLength > 100 {
+    if projectNameLength < enums.ProjectFieldsLimitEnum.PROJECT_NAME_MIN_LENGTH || projectNameLength > enums.ProjectFieldsLimitEnum.PROJECT_NAME_MAX_LENGTH {
         errors = append(errors, enums.ProjectsMessageEnum.PROJECT_NAME_LENGTH_MUST_BE_3_TO_100)
     } else if !projectNamePattern.MatchString(projectName) {
         errors = append(errors, enums.ProjectsMessageEnum.PROJECT_NAME_HAS_INVALID_CHARS)
     }
-    if utf8.RuneCountInString(projectDescription) > 500 {
+    if utf8.RuneCountInString(projectDescription) > enums.ProjectFieldsLimitEnum.PROJECT_DESCRIPTION_MAX_LENGTH {
         errors = append(errors, enums.ProjectsMessageEnum.PROJECT_DESCRIPTION_MAX_LENGTH_IS_500)
     }
     return errors

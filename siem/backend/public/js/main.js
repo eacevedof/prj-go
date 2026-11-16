@@ -1,5 +1,5 @@
-import { SessionStorer } from "/js/Modules/Shared/Infrastructure/Components/SessionStorer.js";
 import { Dispatcher } from "/js/Modules/Shared/Infrastructure/Components/Dispatcher.js";
+import { SessionStorer } from "/js/Modules/Shared/Infrastructure/Components/SessionStorer.js";
 import { RefreshScreenController } from "/js/Modules/Shared/Infrastructure/Controllers/RefreshScreenController.js";
 import { CopyView } from "/js/Modules/Shared/Infrastructure/Views/CopyView.js";
 import { NavigationView } from "/js/Modules/Shared/Infrastructure/Views/NavigationView.js";
@@ -45,13 +45,15 @@ import { CreateInstallAgentController } from "/js/Modules/Downloads/Infrastructu
 import { GetDownloadsController } from "/js/Modules/Downloads/Infrastructure/Controllers/GetDownloadsController.js";
 import { DownloadsView } from "/js/Modules/Downloads/Infrastructure/Views/DownloadsView.js";
 
+const CSS_HIDDEN = "hidden";
+
 /**
  * Arranque de la SPA (patron task-js, sin build ni dependencias): vistas (DOM) -> controllers (suscritos a sus
  * eventos) -> sesion. El token guardado en la pestaña se revalida contra la API; sin token, pantalla de entrada.
  * Es el punto de entrada: captura lo que no tenga a nadie mas que lo capture.
  */
 const start = async function () {
-    document.getElementById("p-app-loading")?.classList.add("hidden");
+    document.getElementById("p-app-loading")?.classList.add(CSS_HIDDEN);
     [
         NavigationView, CopyView, AuthView, SessionView,
         DashboardView, ProjectDetailView, ProjectsTableView, ProjectFormView, ProjectDeleteDialogView, ProjectDeletedView, AgentsTableView, AgentFormView, MonitorsView,

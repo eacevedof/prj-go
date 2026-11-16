@@ -8,6 +8,7 @@ import (
     "sync"
     "time"
 
+    "siem-backend/src/modules/shared/infrastructure/components/datetimer"
     "siem-backend/src/modules/shared/infrastructure/repositories/configuration"
 )
 
@@ -39,23 +40,23 @@ func (l *Logger) WriteLog(filePath string, content string, logsPath string) {
         return
     }
     logFilePath := filepath.Join(logsFolderPath, filePath)
-    finalDir := filepath.Dir(logFilePath)
-    _ = os.MkdirAll(finalDir, 0o777)
+    finalDirectoryPath := filepath.Dir(logFilePath)
+    _ = os.MkdirAll(finalDirectoryPath, 0o777)
 
-    ext := strings.TrimPrefix(filepath.Ext(logFilePath), ".")
+    fileExtension := strings.TrimPrefix(filepath.Ext(logFilePath), ".")
     fileName := strings.TrimSuffix(filepath.Base(logFilePath), filepath.Ext(logFilePath))
-    if ext == "" {
-        ext = "log"
+    if fileExtension == "" {
+        fileExtension = "log"
     }
     if strings.Contains(filePath, "sql") {
-        ext = "sql"
+        fileExtension = "sql"
     }
 
     // la app trabaja en UTC (date_default_timezone_set("UTC") en task-php)
     now := time.Now().UTC()
-    logFilePath = filepath.Join(finalDir, now.Format("2006-01-02")+"-"+fileName+"."+ext)
+    logFilePath = filepath.Join(finalDirectoryPath, now.Format(datetimer.FORMAT_ONLY_DATE)+"-"+fileName+"."+fileExtension)
     content = strings.TrimSpace(content)
-    if ext == "sql" {
+    if fileExtension == "sql" {
         content = l.getNormalizedMarginForSql(content)
     }
 
@@ -68,7 +69,7 @@ func (l *Logger) WriteLog(filePath string, content string, logsPath string) {
         return
     }
     defer logFile.Close()
-    _, _ = logFile.WriteString("\n[" + now.Format("2006-01-02 15:04:05") + "]\n" + content)
+    _, _ = logFile.WriteString("\n[" + now.Format(datetimer.FORMAT_FULL_DT) + "]\n" + content)
     if isNewFile {
         _ = os.Chmod(logFilePath, 0o666)
     }

@@ -7,6 +7,7 @@ import (
     "time"
 
     "siem-backend/src/core/boot"
+    "siem-backend/src/modules/shared/infrastructure/components/datetimer"
     "siem-backend/src/modules/shared/infrastructure/components/httprequester"
     "siem-backend/src/modules/shared/infrastructure/components/logger"
     "siem-backend/src/modules/shared/infrastructure/components/server"
@@ -61,25 +62,25 @@ func (t LogTrait) LogDebugCli(mixed any, title string) {
         return
     }
 
-    now := time.Now().UTC().Format("2006-01-02 15:04:05")
-    print := getMixedAsString(mixed)
-    logger.GetInstance().WriteLog("debug", "["+now+"]["+title+"]\n"+print, boot.BootPathsEnum.PATH_LOGS)
-    fmt.Println("\033[97m[" + now + "]\033[0m\033[93m[" + title + "]\033[0m\n\033[92m" + print + "\033[0m")
+    now := time.Now().UTC().Format(datetimer.FORMAT_FULL_DT)
+    mixedAsString := t.getMixedAsString(mixed)
+    logger.GetInstance().WriteLog("debug", "["+now+"]["+title+"]\n"+mixedAsString, boot.BootPathsEnum.PATH_LOGS)
+    fmt.Println("\033[97m[" + now + "]\033[0m\033[93m[" + title + "]\033[0m\n\033[92m" + mixedAsString + "\033[0m")
 }
 
 func (t LogTrait) writeLevelLog(fileName string, level string, mixed any, title string) {
     // en task-php es ["host_ip" => ip] y el implode se queda solo con el valor
-    content := []string{t.getRemoteClientIP()}
+    content := []string{t.getRemoteClientIp()}
     if title != "" {
         content = append(content, title)
     }
-    content = append(content, getMixedAsString(mixed))
+    content = append(content, t.getMixedAsString(mixed))
 
     logger.GetInstance().WriteLog(fileName, "["+level+"] "+strings.Join(content, "\n"), boot.BootPathsEnum.PATH_LOGS)
 }
 
-// getRemoteClientIP la misma ip que llega a los dtos (HttpRequester.GetClientIp).
-func (t LogTrait) getRemoteClientIP() string {
+// getRemoteClientIp la misma ip que llega a los dtos (HttpRequester.GetClientIp).
+func (t LogTrait) getRemoteClientIp() string {
     if boot.IsCli() {
         return "cli-" + server.GetInstance().GetServerIp()
     }
@@ -92,7 +93,7 @@ func (t LogTrait) getRemoteClientIP() string {
     return "unknown"
 }
 
-func getMixedAsString(mixed any) string {
+func (t LogTrait) getMixedAsString(mixed any) string {
     if text, isString := mixed.(string); isString {
         return text
     }

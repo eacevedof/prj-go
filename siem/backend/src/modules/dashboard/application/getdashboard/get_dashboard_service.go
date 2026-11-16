@@ -1,36 +1,39 @@
 package getdashboard
 
 import (
-    agentsentities "siem-backend/src/modules/agents/domain/entities"
-    agentsenums "siem-backend/src/modules/agents/domain/enums"
-    agentsservices "siem-backend/src/modules/agents/domain/services"
-    agentsrepositories "siem-backend/src/modules/agents/infrastructure/repositories"
-    "siem-backend/src/modules/dashboard/domain/enums"
-    "siem-backend/src/modules/dashboard/domain/exceptions"
-    "siem-backend/src/modules/dashboard/domain/services"
-    "siem-backend/src/modules/dashboard/infrastructure/repositories"
-    eventsenums "siem-backend/src/modules/events/domain/enums"
-    ingestenums "siem-backend/src/modules/ingest/domain/enums"
-    projectsentities "siem-backend/src/modules/projects/domain/entities"
-    projectsrepositories "siem-backend/src/modules/projects/infrastructure/repositories"
     "siem-backend/src/modules/shared/application"
     "siem-backend/src/modules/shared/infrastructure/components/datetimer"
     "siem-backend/src/modules/shared/infrastructure/repositories/configuration"
-)
 
-const last24hSeconds = 86400
+    projectsentities "siem-backend/src/modules/projects/domain/entities"
+    projectsrepositories "siem-backend/src/modules/projects/infrastructure/repositories"
+
+    agentsenums "siem-backend/src/modules/agents/domain/enums"
+    agentsentities "siem-backend/src/modules/agents/domain/entities"
+    agentsservices "siem-backend/src/modules/agents/domain/services"
+    agentsrepositories "siem-backend/src/modules/agents/infrastructure/repositories"
+
+    eventsenums "siem-backend/src/modules/events/domain/enums"
+
+    ingestenums "siem-backend/src/modules/ingest/domain/enums"
+
+    "siem-backend/src/modules/dashboard/domain/enums"
+    "siem-backend/src/modules/dashboard/domain/services"
+    "siem-backend/src/modules/dashboard/infrastructure/repositories"
+    "siem-backend/src/modules/dashboard/domain/exceptions"
+)
 
 // GetDashboardService la portada del front: el estado del servidor (cola, BD, uptime) y un semaforo por proyecto
 // con sus agentes online y sus eventos de las ultimas 24 h.
 type GetDashboardService struct {
     dateTimer                       *datetimer.DateTimer
     environmentReaderRawRepository  *configuration.EnvironmentReaderRawRepository
-    agentStatusResolver             *agentsservices.AgentStatusResolver
-    projectHealthResolver           *services.ProjectHealthResolver
-    eventsStatsCounter              *services.EventsStatsCounter
     projectsReaderSqliteRepository  *projectsrepositories.ProjectsReaderSqliteRepository
     agentsReaderSqliteRepository    *agentsrepositories.AgentsReaderSqliteRepository
     dashboardReaderSqliteRepository *repositories.DashboardReaderSqliteRepository
+    agentStatusResolver             *agentsservices.AgentStatusResolver
+    projectHealthResolver           *services.ProjectHealthResolver
+    eventsStatsCounter              *services.EventsStatsCounter
 
     getDashboardDto *GetDashboardDto
     nowDt           string
@@ -40,12 +43,12 @@ func GetDashboardServiceGetInstance() *GetDashboardService {
     return &GetDashboardService{
         dateTimer:                       datetimer.GetInstance(),
         environmentReaderRawRepository:  configuration.GetInstance(),
-        agentStatusResolver:             agentsservices.AgentStatusResolverGetInstance(),
-        projectHealthResolver:           services.ProjectHealthResolverGetInstance(),
-        eventsStatsCounter:              services.EventsStatsCounterGetInstance(),
         projectsReaderSqliteRepository:  projectsrepositories.ProjectsReaderSqliteRepositoryGetInstance(),
         agentsReaderSqliteRepository:    agentsrepositories.AgentsReaderSqliteRepositoryGetInstance(),
         dashboardReaderSqliteRepository: repositories.DashboardReaderSqliteRepositoryGetInstance(),
+        agentStatusResolver:             agentsservices.AgentStatusResolverGetInstance(),
+        projectHealthResolver:           services.ProjectHealthResolverGetInstance(),
+        eventsStatsCounter:              services.EventsStatsCounterGetInstance(),
     }
 }
 
@@ -108,13 +111,13 @@ func (s *GetDashboardService) getServer() (map[string]any, error) {
         enums.DashboardKeyEnum.QUEUE_OLDEST_PENDING_AT: "",
     }
     for _, queueStats := range queueStatsByStatus {
-        switch application.ToString(queueStats["queue_status"]) {
+        switch application.ToString(queueStats[enums.DashboardKeyEnum.QUEUE_STATUS]) {
         case ingestenums.QueueStatusEnum.PENDING:
-            server[enums.DashboardKeyEnum.QUEUE_PENDING_BATCHES] = application.ToInt(queueStats["n_batches"])
-            server[enums.DashboardKeyEnum.QUEUE_PENDING_EVENTS] = application.ToInt(queueStats["n_events"])
-            server[enums.DashboardKeyEnum.QUEUE_OLDEST_PENDING_AT] = application.ToString(queueStats["oldest_received_at"])
+            server[enums.DashboardKeyEnum.QUEUE_PENDING_BATCHES] = application.ToInt(queueStats[enums.DashboardKeyEnum.N_BATCHES])
+            server[enums.DashboardKeyEnum.QUEUE_PENDING_EVENTS] = application.ToInt(queueStats[enums.DashboardKeyEnum.N_EVENTS])
+            server[enums.DashboardKeyEnum.QUEUE_OLDEST_PENDING_AT] = application.ToString(queueStats[enums.DashboardKeyEnum.OLDEST_RECEIVED_AT])
         case ingestenums.QueueStatusEnum.FAILED:
-            server[enums.DashboardKeyEnum.QUEUE_FAILED_BATCHES] = application.ToInt(queueStats["n_batches"])
+            server[enums.DashboardKeyEnum.QUEUE_FAILED_BATCHES] = application.ToInt(queueStats[enums.DashboardKeyEnum.N_BATCHES])
         }
     }
     return server, nil
@@ -188,14 +191,14 @@ func (s *GetDashboardService) getProject(projectEntity *projectsentities.Project
 
 func (s *GetDashboardService) getEventsCountBySeverity(projectId int) (map[string]int, error) {
     eventsStats, err := s.dashboardReaderSqliteRepository.GetEventsStatsByProjectIdSince(
-        projectId, s.dateTimer.GetNowDtMinusSeconds(last24hSeconds),
+        projectId, s.dateTimer.GetNowDtMinusSeconds(enums.DashboardConstantsEnum.LAST_24H_SECONDS),
     )
     if err != nil {
         return nil, err
     }
     eventsCountBySeverity := map[string]int{}
     for _, severityStats := range eventsStats {
-        eventsCountBySeverity[application.ToString(severityStats["severity"])] = application.ToInt(severityStats["n_events"])
+        eventsCountBySeverity[application.ToString(severityStats[eventsenums.EventsKeyEnum.SEVERITY])] = application.ToInt(severityStats[enums.DashboardKeyEnum.N_EVENTS])
     }
     return eventsCountBySeverity, nil
 }

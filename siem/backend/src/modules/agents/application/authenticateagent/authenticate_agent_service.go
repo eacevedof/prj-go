@@ -2,10 +2,12 @@ package authenticateagent
 
 import (
     "siem-backend/src/core/config"
-    "siem-backend/src/modules/agents/domain/enums"
-    "siem-backend/src/modules/agents/domain/exceptions"
-    "siem-backend/src/modules/agents/infrastructure/repositories"
+
     "siem-backend/src/modules/shared/infrastructure/components/token"
+
+    "siem-backend/src/modules/agents/domain/enums"
+    "siem-backend/src/modules/agents/infrastructure/repositories"
+    "siem-backend/src/modules/agents/domain/exceptions"
 )
 
 // AuthenticateAgentService el Bearer de un siem-client -> su agente. Mismo 401 para todo fallo (sin token, token

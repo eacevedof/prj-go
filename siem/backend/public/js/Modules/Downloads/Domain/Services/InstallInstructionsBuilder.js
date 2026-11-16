@@ -1,8 +1,7 @@
-export const API_TOKEN_PLACEHOLDER = "<API_TOKEN>";
+import { DownloadsKeyEnum } from "/js/Modules/Downloads/Domain/Enums/DownloadsKeyEnum.js";
+import { DownloadsOsEnum } from "/js/Modules/Downloads/Domain/Enums/DownloadsOsEnum.js";
 
-const OS_LINUX = "linux";
-const OS_WINDOWS = "windows";
-const OS_MACOS = "macos";
+const API_TOKEN_PLACEHOLDER = "<API_TOKEN>";
 const LINUX_FOLDER = "/opt/siem-client";
 const WINDOWS_FOLDER = "C:\\programs\\siem-client";
 const MACOS_FOLDER = "/usr/local/siem-client";
@@ -31,18 +30,18 @@ export class InstallInstructionsBuilder {
      */
     getSteps(download, origin, endpointUrl, apiToken = "") {
         const context = {
-            fileName: String(download.file_name ?? ""),
-            sha256: String(download.sha256 ?? ""),
-            downloadUrl: `${origin}${download.url ?? ""}`,
+            fileName: String(download[DownloadsKeyEnum.FILE_NAME] ?? ""),
+            sha256: String(download[DownloadsKeyEnum.SHA256] ?? ""),
+            downloadUrl: `${origin}${download[DownloadsKeyEnum.URL] ?? ""}`,
             endpointUrl,
             apiToken: apiToken.trim() || API_TOKEN_PLACEHOLDER,
         };
-        switch (download.os) {
-            case OS_LINUX:
+        switch (download[DownloadsKeyEnum.OS]) {
+            case DownloadsOsEnum.LINUX:
                 return this.#getLinuxSteps(context);
-            case OS_WINDOWS:
+            case DownloadsOsEnum.WINDOWS:
                 return this.#getWindowsSteps(context);
-            case OS_MACOS:
+            case DownloadsOsEnum.MACOS:
                 return this.#getMacosSteps(context);
             default:
                 return [];
@@ -59,7 +58,7 @@ export class InstallInstructionsBuilder {
      */
     getInstallerCommand(os, origin, apiToken = "") {
         const token = apiToken.trim();
-        if (os === OS_WINDOWS) {
+        if (os === DownloadsOsEnum.WINDOWS) {
             const tokenArgument = token ? ` -Token "${token}"` : "";
             return {
                 language: "PowerShell como administrador",
@@ -69,7 +68,7 @@ export class InstallInstructionsBuilder {
         }
         const tokenArgument = token ? ` --token "${token}"` : "";
         return {
-            language: os === OS_MACOS ? "zsh" : "bash",
+            language: os === DownloadsOsEnum.MACOS ? "zsh" : "bash",
             code: `curl -fsSL "${origin}/downloads/install.sh" | sudo sh -s -- --url "${origin}"${tokenArgument}`,
         };
     }

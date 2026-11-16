@@ -4,10 +4,10 @@ package enums
 // EventSeverityResolver (el resto de attributes se guarda tal cual).
 var DockerAttributeEnum = struct {
     // docker_state
-    CHANGE_KIND  string
-    STATUS       string
-    HEALTH       string
-    EXIT_CODE    string
+    CHANGE_KIND   string
+    STATUS        string
+    HEALTH        string
+    EXIT_CODE     string
     IS_OOM_KILLED string
 
     // docker_stats
@@ -27,6 +27,32 @@ var DockerAttributeEnum = struct {
     MEMORY_PERCENT: "memory_percent",
 
     ACTION: "action",
+}
+
+// DockerAttributeValueEnum valores de attributes de Docker que cambian la gravedad (EventSeverityResolver): estado y
+// health de un contenedor, tipo de cambio y acciones del daemon.
+var DockerAttributeValueEnum = struct {
+    STATUS_EXITED     string
+    STATUS_DEAD       string
+    STATUS_RESTARTING string
+    HEALTH_UNHEALTHY  string
+    CHANGE_RESTARTED  string
+
+    ACTION_OOM                  string
+    ACTION_DIE                  string
+    ACTION_KILL                 string
+    ACTION_HEALTH_STATUS_PREFIX string
+}{
+    STATUS_EXITED:     "exited",
+    STATUS_DEAD:       "dead",
+    STATUS_RESTARTING: "restarting",
+    HEALTH_UNHEALTHY:  "unhealthy",
+    CHANGE_RESTARTED:  "restarted",
+
+    ACTION_OOM:                  "oom",
+    ACTION_DIE:                  "die",
+    ACTION_KILL:                 "kill",
+    ACTION_HEALTH_STATUS_PREFIX: "health_status",
 }
 
 // DockerThresholdEnum umbrales de recursos (en %): por debajo, una muestra es debug (no ensucia los contadores).

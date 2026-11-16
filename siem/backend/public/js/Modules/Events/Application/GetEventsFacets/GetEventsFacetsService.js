@@ -1,8 +1,8 @@
 import { EventsKeyEnum } from "/js/Modules/Events/Domain/Enums/EventsKeyEnum.js";
-import { EventsException } from "/js/Modules/Events/Domain/Exceptions/EventsException.js";
 import { EventsQueryParser } from "/js/Modules/Events/Domain/Services/EventsQueryParser.js";
 import { GetEventsFacetsResultDto } from "/js/Modules/Events/Application/GetEventsFacets/GetEventsFacetsResultDto.js";
 import { EventsReaderHttpRepository } from "/js/Modules/Events/Infrastructure/Repositories/EventsReaderHttpRepository.js";
+import { EventsException } from "/js/Modules/Events/Domain/Exceptions/EventsException.js";
 
 /**
  * Los valores mas repetidos de cada campo con los filtros del visor: el panel lateral de campos, desde el que se

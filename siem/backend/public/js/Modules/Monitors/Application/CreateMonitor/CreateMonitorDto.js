@@ -35,9 +35,9 @@ export class CreateMonitorDto {
         const isMetric = METRIC_MONITOR_TYPES.includes(this.#monitorType);
         const rawInterval = String(primitives.intervalSeconds ?? "").trim();
         this.#intervalSeconds = rawInterval === "" || !isMetric ? MonitorDefaultEnum.INTERVAL_SECONDS : Number(rawInterval);
-        this.#warningThreshold = isMetric ? CreateMonitorDto.#getThreshold(primitives.warningThreshold) : null;
-        this.#criticalThreshold = isMetric ? CreateMonitorDto.#getThreshold(primitives.criticalThreshold) : null;
-        this.#config = CreateMonitorDto.#getConfig(this.#monitorType, primitives);
+        this.#warningThreshold = isMetric ? this.#getThreshold(primitives.warningThreshold) : null;
+        this.#criticalThreshold = isMetric ? this.#getThreshold(primitives.criticalThreshold) : null;
+        this.#config = this.#getConfig(this.#monitorType, primitives);
     }
 
     /**
@@ -48,12 +48,12 @@ export class CreateMonitorDto {
         return new CreateMonitorDto(primitives);
     }
 
-    static #getThreshold(rawThreshold) {
+    #getThreshold(rawThreshold) {
         const text = String(rawThreshold ?? "").trim().replace(",", ".");
         return text === "" ? null : Number(text);
     }
 
-    static #getConfig(monitorType, primitives) {
+    #getConfig(monitorType, primitives) {
         const path = String(primitives.path ?? "").trim();
         const pattern = String(primitives.pattern ?? "").trim() || MonitorDefaultEnum.FILE_PATTERN;
         const isRecursive = primitives.isRecursive === true;

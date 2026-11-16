@@ -23,6 +23,10 @@ import { SearchEventsService } from "/js/Modules/Events/Application/SearchEvents
 import { EventsView } from "/js/Modules/Events/Infrastructure/Views/EventsView.js";
 import { EventsException } from "/js/Modules/Events/Domain/Exceptions/EventsException.js";
 
+// estados de Promise.allSettled
+const PROMISE_FULFILLED = "fulfilled";
+const PROMISE_REJECTED = "rejected";
+
 /**
  * Visor de eventos (#/events?...): todo su estado (texto, rango, filtros, pagina, refresco) sale del hash. Pide a la
  * vez la pagina de eventos, el histograma y las facetas con los mismos filtros; si una de las tres falla, las otras
@@ -90,13 +94,12 @@ export class SearchEventsController {
         ]);
         if (requestNumber !== this.#lastRequestNumber) return;
 
-        const results = [eventsResult, histogramResult, facetsResult];
-        if (results.some((result) => this.#isUnauthorized(result))) {
+        if ([eventsResult, histogramResult, facetsResult].some((result) => this.#isUnauthorized(result))) {
             this.#dispatcher.dispatch(SessionEventEnum.SESSION_EXPIRED);
             return;
         }
 
-        if (eventsResult.status === "fulfilled") {
+        if (eventsResult.status === PROMISE_FULFILLED) {
             this.#eventsView.renderEvents({
                 events: eventsResult.value.getEvents(),
                 page: eventsResult.value.getPage(),
@@ -108,7 +111,7 @@ export class SearchEventsController {
             this.#eventsView.renderErrors(this.#getErrors(eventsResult.reason, "events"));
         }
 
-        if (histogramResult.status === "fulfilled") {
+        if (histogramResult.status === PROMISE_FULFILLED) {
             this.#eventsView.renderHistogram({
                 bucketSeconds: histogramResult.value.getBucketSeconds(),
                 buckets: histogramResult.value.getBuckets(),
@@ -118,7 +121,7 @@ export class SearchEventsController {
             this.#eventsView.renderHistogramErrors(this.#getErrors(histogramResult.reason, "histogram"));
         }
 
-        if (facetsResult.status === "fulfilled") {
+        if (facetsResult.status === PROMISE_FULFILLED) {
             this.#eventsView.renderFacets(facetsResult.value.getFacets());
         }
         else {
@@ -152,7 +155,7 @@ export class SearchEventsController {
     }
 
     #isUnauthorized(result) {
-        return result.status === "rejected" && result.reason instanceof EventsException
+        return result.status === PROMISE_REJECTED && result.reason instanceof EventsException
             && result.reason.getCode() === HttpCodeEnum.UNAUTHORIZED;
     }
 

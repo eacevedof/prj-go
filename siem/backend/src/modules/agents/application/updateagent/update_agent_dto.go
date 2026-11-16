@@ -1,8 +1,9 @@
 package updateagent
 
 import (
-    "siem-backend/src/modules/agents/domain/entities"
     "siem-backend/src/modules/shared/application"
+
+    "siem-backend/src/modules/agents/domain/entities"
 )
 
 // UpdateAgentDto PUT /api/v1/agents/:agent_uuid {agent_name, heartbeat_interval_seconds, is_enabled}. is_enabled

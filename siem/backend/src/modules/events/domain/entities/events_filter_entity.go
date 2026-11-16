@@ -1,10 +1,12 @@
 package entities
 
 import (
+    "slices"
     "strings"
 
-    "siem-backend/src/modules/events/domain/enums"
     "siem-backend/src/modules/shared/application"
+
+    "siem-backend/src/modules/events/domain/enums"
 )
 
 // EventsFilterEntity los filtros de la busqueda de eventos, los mismos para la lista, el histograma y las facetas:
@@ -21,23 +23,15 @@ type EventsFilterEntity struct {
 // EventsFilterEntityFromPrimitives primitives: los parametros de la query tal cual (claves de la API). Un campo admite
 // varios valores separados por coma (severity=error,critical); "not_<campo>" los excluye.
 func EventsFilterEntityFromPrimitives(primitives map[string]any) *EventsFilterEntity {
-    includedValuesByField := map[string][]string{}
-    excludedValuesByField := map[string][]string{}
-    for _, field := range enums.EventsFilterFieldEnum.VALUES {
-        if values := getValues(application.GetTrimmedString(primitives, field)); len(values) > 0 {
-            includedValuesByField[field] = values
-        }
-        if values := getValues(application.GetTrimmedString(primitives, enums.EventsFilterFieldEnum.NOT_PREFIX+field)); len(values) > 0 {
-            excludedValuesByField[field] = values
-        }
-    }
-    return &EventsFilterEntity{
+    eventsFilterEntity := &EventsFilterEntity{
         from:                  application.GetTrimmedString(primitives, enums.EventsKeyEnum.FROM),
         to:                    application.GetTrimmedString(primitives, enums.EventsKeyEnum.TO),
         search:                application.GetTrimmedString(primitives, enums.EventsKeyEnum.SEARCH),
-        includedValuesByField: includedValuesByField,
-        excludedValuesByField: excludedValuesByField,
+        includedValuesByField: map[string][]string{},
+        excludedValuesByField: map[string][]string{},
     }
+    eventsFilterEntity.loadValuesByField(primitives)
+    return eventsFilterEntity
 }
 
 // GetFrom "" = sin limite inferior.
@@ -70,24 +64,27 @@ func (e *EventsFilterEntity) GetWithRange(from string, to string) *EventsFilterE
     return &eventsFilterEntity
 }
 
+// loadValuesByField por cada campo filtrable, los valores a incluir (<campo>) y a excluir (not_<campo>).
+func (e *EventsFilterEntity) loadValuesByField(primitives map[string]any) {
+    for _, field := range enums.EventsFilterFieldEnum.VALUES {
+        if values := e.getValues(application.GetTrimmedString(primitives, field)); len(values) > 0 {
+            e.includedValuesByField[field] = values
+        }
+        if values := e.getValues(application.GetTrimmedString(primitives, enums.EventsFilterFieldEnum.NOT_PREFIX+field)); len(values) > 0 {
+            e.excludedValuesByField[field] = values
+        }
+    }
+}
+
 // getValues "error, critical,," -> ["error", "critical"] (sin vacios ni repetidos).
-func getValues(rawValues string) []string {
+func (e *EventsFilterEntity) getValues(rawValues string) []string {
     values := []string{}
-    for _, rawValue := range strings.Split(rawValues, ",") {
+    for _, rawValue := range strings.Split(rawValues, enums.EventsFilterFieldEnum.VALUES_SEPARATOR) {
         value := strings.TrimSpace(rawValue)
-        if value == "" || containsValue(values, value) {
+        if value == "" || slices.Contains(values, value) {
             continue
         }
         values = append(values, value)
     }
     return values
-}
-
-func containsValue(values []string, value string) bool {
-    for _, existingValue := range values {
-        if existingValue == value {
-            return true
-        }
-    }
-    return false
 }

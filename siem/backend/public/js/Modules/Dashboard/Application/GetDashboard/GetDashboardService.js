@@ -1,7 +1,7 @@
 import { DashboardKeyEnum } from "/js/Modules/Dashboard/Domain/Enums/DashboardKeyEnum.js";
-import { DashboardException } from "/js/Modules/Dashboard/Domain/Exceptions/DashboardException.js";
 import { GetDashboardResultDto } from "/js/Modules/Dashboard/Application/GetDashboard/GetDashboardResultDto.js";
 import { DashboardReaderHttpRepository } from "/js/Modules/Dashboard/Infrastructure/Repositories/DashboardReaderHttpRepository.js";
+import { DashboardException } from "/js/Modules/Dashboard/Domain/Exceptions/DashboardException.js";
 
 /**
  * La portada: estado del servidor y un resumen por proyecto. Los estados (salud, agentes online) los calcula la API:

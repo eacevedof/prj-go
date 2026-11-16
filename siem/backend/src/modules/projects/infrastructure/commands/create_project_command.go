@@ -3,11 +3,12 @@ package commands
 import (
     "errors"
 
-    "siem-backend/src/modules/projects/application/createproject"
-    "siem-backend/src/modules/projects/domain/enums"
-    "siem-backend/src/modules/projects/domain/exceptions"
     sharedcommands "siem-backend/src/modules/shared/infrastructure/commands"
     sharedexceptions "siem-backend/src/modules/shared/infrastructure/exceptions"
+
+    "siem-backend/src/modules/projects/domain/enums"
+    "siem-backend/src/modules/projects/application/createproject"
+    "siem-backend/src/modules/projects/domain/exceptions"
 )
 
 // CreateProjectCommand ./console project-create --project_name="Mi app" --project_description="prod"

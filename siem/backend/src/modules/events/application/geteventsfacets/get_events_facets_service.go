@@ -4,15 +4,18 @@ import (
     "time"
 
     "siem-backend/src/core/config"
+
+    sharedenums "siem-backend/src/modules/shared/domain/enums"
+    "siem-backend/src/modules/shared/application"
+    "siem-backend/src/modules/shared/infrastructure/traits"
+    sharedexceptions "siem-backend/src/modules/shared/infrastructure/exceptions"
+
     dashboardexceptions "siem-backend/src/modules/dashboard/domain/exceptions"
-    "siem-backend/src/modules/events/domain/entities"
+
     "siem-backend/src/modules/events/domain/enums"
+    "siem-backend/src/modules/events/domain/entities"
     "siem-backend/src/modules/events/domain/services"
     "siem-backend/src/modules/events/infrastructure/repositories"
-    "siem-backend/src/modules/shared/application"
-    sharedenums "siem-backend/src/modules/shared/domain/enums"
-    sharedexceptions "siem-backend/src/modules/shared/infrastructure/exceptions"
-    "siem-backend/src/modules/shared/infrastructure/traits"
 )
 
 // GetEventsFacetsService por cada campo del panel lateral del visor (gravedad, tipo, fuente, agente, proyecto), sus
@@ -60,10 +63,10 @@ func (s *GetEventsFacetsService) Invoke(getEventsFacetsDto *GetEventsFacetsDto) 
         facetValues := make([]FacetValuePrimitives, 0, len(rows))
         for _, row := range rows {
             facetValues = append(facetValues, FacetValuePrimitives{
-                Value:       application.GetTrimmedString(row, "facet_value"),
+                Value:       application.GetTrimmedString(row, enums.EventsKeyEnum.FACET_VALUE),
                 FilterField: s.eventsReaderSqliteRepository.GetFilterFieldByFacetField(facetField),
-                FilterValue: application.GetTrimmedString(row, "filter_value"),
-                Count: application.GetInt(row, "n_events"),
+                FilterValue: application.GetTrimmedString(row, enums.EventsKeyEnum.FILTER_VALUE),
+                Count:       application.GetInt(row, enums.EventsKeyEnum.EVENTS_COUNT),
             })
         }
         facets[facetField] = facetValues

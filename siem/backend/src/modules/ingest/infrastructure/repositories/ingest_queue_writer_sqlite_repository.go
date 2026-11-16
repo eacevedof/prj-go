@@ -3,11 +3,10 @@ package repositories
 import (
     "fmt"
 
-    "siem-backend/src/modules/ingest/domain/enums"
     sharedrepositories "siem-backend/src/modules/shared/infrastructure/repositories"
-)
 
-const errorMessageMaxLength = 500
+    "siem-backend/src/modules/ingest/domain/enums"
+)
 
 type IngestQueueWriterSqliteRepository struct {
     sharedrepositories.AbstractSqliteRepository
@@ -47,8 +46,8 @@ func (r *IngestQueueWriterSqliteRepository) UpdatePendingBatchAsDoneById(batchId
 // UpdateBatchAfterFailureById un intento fallido mas: queueStatus sigue pending (se reintenta) o pasa a failed.
 func (r *IngestQueueWriterSqliteRepository) UpdateBatchAfterFailureById(batchId int, queueStatus string, errorMessage string, processedAt string) (int, error) {
     errorMessageRunes := []rune(errorMessage)
-    if len(errorMessageRunes) > errorMessageMaxLength {
-        errorMessageRunes = errorMessageRunes[:errorMessageMaxLength]
+    if len(errorMessageRunes) > enums.IngestLimitEnum.ERROR_MESSAGE_MAX_LENGTH {
+        errorMessageRunes = errorMessageRunes[:enums.IngestLimitEnum.ERROR_MESSAGE_MAX_LENGTH]
     }
     sql := fmt.Sprintf(`
         -- updateBatchAfterFailureById

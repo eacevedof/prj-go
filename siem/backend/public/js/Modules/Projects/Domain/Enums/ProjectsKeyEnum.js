@@ -10,4 +10,6 @@ export const ProjectsKeyEnum = Object.freeze({
     WARNINGS_24H: "warnings_24h",
     ERRORS_24H: "errors_24h",
     CRITICALS_24H: "criticals_24h",
+    // DELETE /api/v1/projects/:project_uuid: los agentes que tenia el proyecto borrado
+    AGENTS: "agents",
 });

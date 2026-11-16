@@ -2,9 +2,10 @@ package deleteagent
 
 import (
     "siem-backend/src/core/config"
+
     "siem-backend/src/modules/agents/domain/enums"
-    "siem-backend/src/modules/agents/domain/exceptions"
     "siem-backend/src/modules/agents/infrastructure/repositories"
+    "siem-backend/src/modules/agents/domain/exceptions"
 )
 
 // DeleteAgentService baja de un agente desde el panel: su token deja de valer en el acto (el siem-client de ese host

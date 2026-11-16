@@ -4,8 +4,10 @@ import (
     "strings"
     "testing"
 
-    "siem-backend/src/modules/events/domain/services"
     "siem-backend/tests"
+
+    "siem-backend/src/modules/events/domain/enums"
+    "siem-backend/src/modules/events/domain/services"
 )
 
 const receivedAt = "2026-11-15 10:00:00"
@@ -42,9 +44,9 @@ func TestOccurredAtFallsBackToReceivedAt(t *testing.T) {
 
 func TestLongMessageIsTruncated(t *testing.T) {
     eventEntity := services.EventNormalizerGetInstance().GetEventEntityOrNil(
-        map[string]any{"event_type": "log_line", "source_name": "app", "message": strings.Repeat("ñ", services.MESSAGE_MAX_LENGTH+10)}, 1, 1, receivedAt,
+        map[string]any{"event_type": "log_line", "source_name": "app", "message": strings.Repeat("ñ", enums.EventsLimitEnum.MESSAGE_MAX_LENGTH+10)}, 1, 1, receivedAt,
     )
-    tests.AssertEquals(t, services.MESSAGE_MAX_LENGTH, len([]rune(eventEntity.GetMessage())))
+    tests.AssertEquals(t, enums.EventsLimitEnum.MESSAGE_MAX_LENGTH, len([]rune(eventEntity.GetMessage())))
 }
 
 func TestDockerEventsGetTheirSourceTypeAndAttributes(t *testing.T) {
@@ -70,7 +72,7 @@ func TestAttributesThatAreNotAnObjectOrTooBigAreIgnored(t *testing.T) {
 
     tooBig := eventNormalizer.GetEventEntityOrNil(map[string]any{
         "event_type": "docker_state", "source_name": "c", "message": "m",
-        "attributes": map[string]any{"blob": strings.Repeat("x", services.ATTRIBUTES_MAX_BYTES)},
+        "attributes": map[string]any{"blob": strings.Repeat("x", enums.EventsLimitEnum.ATTRIBUTES_MAX_BYTES)},
     }, 1, 1, receivedAt)
     tests.AssertEquals(t, "", tooBig.GetAttributes())
 }

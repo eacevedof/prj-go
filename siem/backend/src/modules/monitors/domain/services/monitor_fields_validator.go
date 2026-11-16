@@ -7,16 +7,12 @@ import (
     "strings"
 
     "siem-backend/src/core/config"
-    eventsenums "siem-backend/src/modules/events/domain/enums"
-    "siem-backend/src/modules/monitors/domain/enums"
-    "siem-backend/src/modules/shared/application"
-)
 
-const (
-    INTERVAL_SECONDS_MIN  = 10
-    INTERVAL_SECONDS_MAX  = 86400
-    DEFAULT_DISK_PATH     = "/"
-    DEFAULT_FILES_PATTERN = "*"
+    "siem-backend/src/modules/shared/application"
+
+    eventsenums "siem-backend/src/modules/events/domain/enums"
+
+    "siem-backend/src/modules/monitors/domain/enums"
 )
 
 var (
@@ -42,7 +38,7 @@ func (v *MonitorFieldsValidator) GetErrors(monitorName string, monitorType strin
     if !slices.Contains(enums.MonitorTypeEnum.VALUES, monitorType) {
         return append(errors, enums.MonitorsMessageEnum.MONITOR_TYPE_IS_NOT_VALID)
     }
-    if intervalSeconds < INTERVAL_SECONDS_MIN || intervalSeconds > INTERVAL_SECONDS_MAX {
+    if intervalSeconds < enums.MonitorFieldsLimitEnum.INTERVAL_SECONDS_MIN || intervalSeconds > enums.MonitorFieldsLimitEnum.INTERVAL_SECONDS_MAX {
         errors = append(errors, enums.MonitorsMessageEnum.INTERVAL_SECONDS_MUST_BE_10_TO_86400)
     }
     errors = append(errors, v.getThresholdsErrors(monitorType, warningThreshold, criticalThreshold)...)
@@ -55,7 +51,7 @@ func (v *MonitorFieldsValidator) GetNormalizedConfig(monitorType string, monitor
     switch monitorType {
     case enums.MonitorTypeEnum.DISK:
         return map[string]any{
-            enums.MonitorsKeyEnum.PATH: getStringOrDefault(monitorConfig, enums.MonitorsKeyEnum.PATH, DEFAULT_DISK_PATH),
+            enums.MonitorsKeyEnum.PATH: v.getStringOrDefault(monitorConfig, enums.MonitorsKeyEnum.PATH, enums.MonitorFieldsLimitEnum.DEFAULT_DISK_PATH),
         }
     case enums.MonitorTypeEnum.NETWORK:
         return map[string]any{
@@ -64,7 +60,7 @@ func (v *MonitorFieldsValidator) GetNormalizedConfig(monitorType string, monitor
     case enums.MonitorTypeEnum.FOLDER, enums.MonitorTypeEnum.LOG_PATTERN:
         normalizedConfig := map[string]any{
             enums.MonitorsKeyEnum.PATH:         application.GetTrimmedString(monitorConfig, enums.MonitorsKeyEnum.PATH),
-            enums.MonitorsKeyEnum.PATTERN:      getStringOrDefault(monitorConfig, enums.MonitorsKeyEnum.PATTERN, DEFAULT_FILES_PATTERN),
+            enums.MonitorsKeyEnum.PATTERN:      v.getStringOrDefault(monitorConfig, enums.MonitorsKeyEnum.PATTERN, enums.MonitorFieldsLimitEnum.DEFAULT_FILES_PATTERN),
             enums.MonitorsKeyEnum.IS_RECURSIVE: application.GetInt(monitorConfig, enums.MonitorsKeyEnum.IS_RECURSIVE) == 1,
         }
         if monitorType == enums.MonitorTypeEnum.LOG_PATTERN {
@@ -98,7 +94,7 @@ func (v *MonitorFieldsValidator) getThresholdsErrors(monitorType string, warning
         if threshold.value == nil {
             continue
         }
-        if isPercent && (*threshold.value < 0 || *threshold.value > 100) {
+        if isPercent && (*threshold.value < enums.MonitorFieldsLimitEnum.PERCENT_THRESHOLD_MIN || *threshold.value > enums.MonitorFieldsLimitEnum.PERCENT_THRESHOLD_MAX) {
             errors = append(errors, config.Tr(enums.MonitorsMessageEnum.X_MUST_BE_BETWEEN_0_AND_100, threshold.key))
         }
         if !isPercent && *threshold.value <= 0 {
@@ -126,7 +122,7 @@ func (v *MonitorFieldsValidator) getConfigErrors(monitorType string, normalizedC
         if !absolutePathPattern.MatchString(application.GetTrimmedString(normalizedConfig, enums.MonitorsKeyEnum.PATH)) {
             errors = append(errors, config.Tr(enums.MonitorsMessageEnum.CONFIG_X_MUST_BE_AN_ABSOLUTE_PATH, enums.MonitorsKeyEnum.PATH))
         }
-        if _, err := path.Match(application.GetTrimmedString(normalizedConfig, enums.MonitorsKeyEnum.PATTERN), "probe"); err != nil {
+        if _, err := path.Match(application.GetTrimmedString(normalizedConfig, enums.MonitorsKeyEnum.PATTERN), enums.MonitorFieldsLimitEnum.GLOB_PROBE_FILE_NAME); err != nil {
             errors = append(errors, enums.MonitorsMessageEnum.CONFIG_PATTERN_IS_NOT_A_VALID_GLOB)
         }
         if monitorType == enums.MonitorTypeEnum.LOG_PATTERN {
@@ -152,7 +148,7 @@ func (v *MonitorFieldsValidator) getLogPatternErrors(normalizedConfig map[string
     return errors
 }
 
-func getStringOrDefault(primitives map[string]any, key string, defaultValue string) string {
+func (v *MonitorFieldsValidator) getStringOrDefault(primitives map[string]any, key string, defaultValue string) string {
     if value := application.GetTrimmedString(primitives, key); value != "" {
         return value
     }

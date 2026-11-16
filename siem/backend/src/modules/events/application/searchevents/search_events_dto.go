@@ -1,8 +1,9 @@
 package searchevents
 
 import (
-    "siem-backend/src/modules/events/domain/services"
     "siem-backend/src/modules/shared/application"
+
+    "siem-backend/src/modules/events/domain/enums"
 )
 
 type SearchEventsDto struct {
@@ -23,8 +24,8 @@ func SearchEventsDtoFromPrimitives(primitives map[string]any) *SearchEventsDto {
         AbstractInputDto:         application.NewAbstractInputDto(primitives),
         isDashboardAuthenticated: application.GetInt(primitives, "isDashboardAuthenticated") == 1,
         filters:                  filters,
-        page:                     getIntOrDefaultIfEmpty(primitives, "page", 1),
-        pageSize:                 getIntOrDefaultIfEmpty(primitives, "pageSize", services.PAGE_SIZE_DEFAULT),
+        page:                     getIntOrDefaultIfEmpty(primitives, "page", enums.EventsLimitEnum.PAGE_DEFAULT),
+        pageSize:                 getIntOrDefaultIfEmpty(primitives, "pageSize", enums.EventsLimitEnum.PAGE_SIZE_DEFAULT),
     }
 }
 

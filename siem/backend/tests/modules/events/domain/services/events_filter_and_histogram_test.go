@@ -5,9 +5,10 @@ import (
     "testing"
     "time"
 
+    "siem-backend/tests"
+
     "siem-backend/src/modules/events/domain/entities"
     "siem-backend/src/modules/events/domain/services"
-    "siem-backend/tests"
 )
 
 func TestHostMetricSeverityByMonitorThresholds(t *testing.T) {

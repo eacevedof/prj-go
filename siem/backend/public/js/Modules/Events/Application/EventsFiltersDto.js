@@ -21,11 +21,11 @@ export class EventsFiltersDto {
         this.#from = String(primitives.from ?? "").trim();
         this.#to = String(primitives.to ?? "").trim();
         this.#search = String(primitives.search ?? "").trim();
-        this.#include = EventsFiltersDto.#getValuesByField(primitives.include);
-        this.#exclude = EventsFiltersDto.#getValuesByField(primitives.exclude);
+        this.#include = this.#getValuesByField(primitives.include);
+        this.#exclude = this.#getValuesByField(primitives.exclude);
     }
 
-    static #getValuesByField(rawValuesByField) {
+    #getValuesByField(rawValuesByField) {
         const valuesByField = {};
         EVENT_FILTER_FIELDS.forEach((field) => {
             const rawValues = rawValuesByField?.[field];

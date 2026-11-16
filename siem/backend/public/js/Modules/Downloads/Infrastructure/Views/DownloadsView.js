@@ -3,6 +3,7 @@ import { Htmler } from "/js/Modules/Shared/Infrastructure/Components/Htmler.js";
 import { NumberFormatter } from "/js/Modules/Shared/Infrastructure/Components/NumberFormatter.js";
 
 import { DownloadsEventEnum } from "/js/Modules/Downloads/Domain/Enums/DownloadsEventEnum.js";
+import { DownloadsOsEnum } from "/js/Modules/Downloads/Domain/Enums/DownloadsOsEnum.js";
 import { DownloadsTextEnum } from "/js/Modules/Downloads/Domain/Enums/DownloadsTextEnum.js";
 import { InstallInstructionsBuilder } from "/js/Modules/Downloads/Domain/Services/InstallInstructionsBuilder.js";
 
@@ -10,18 +11,7 @@ const CSS_HIDDEN = "hidden";
 const PATH_INGEST = "/api/v1/ingest-batches";
 const AGENT_MODE_NEW = "new";
 const AGENT_MODE_EXISTING = "existing";
-const OS_LINUX = "linux";
-const OS_WINDOWS = "windows";
-const OS_MACOS = "macos";
 const MACOS_SHELL = "zsh";
-const OS_LABELS = Object.freeze({ linux: "Linux", windows: "Windows", macos: "macOS" });
-// lo que hace el instalador asistido, para que se sepa antes de lanzarlo
-const INSTALLER_DOES = Object.freeze([
-    "pide lo que falte (dirección del panel, token)",
-    "descarga el binario de este panel y comprueba su sha256",
-    "escribe el .env y prueba la conexión con el panel",
-    "lo deja arrancando con el sistema (systemd en Linux, tarea programada en Windows)",
-]);
 
 /**
  * Descargas: asistente para instalar un agente en 3 pasos. 1 - sistema del servidor (Linux, Windows, macOS);
@@ -41,7 +31,7 @@ export class DownloadsView {
     #endpointUrl = "";
     #downloads = [];
     #installers = [];
-    #selectedOs = OS_LINUX;
+    #selectedOs = DownloadsOsEnum.LINUX;
     #agentMode = AGENT_MODE_NEW;
     // el token del agente creado en este asistente (y su nombre): manda sobre el campo de pegar
     #createdAgent = null;
@@ -119,7 +109,7 @@ export class DownloadsView {
         const selectedProjectUuid = this.#elements.selectDownloadsProject.value;
         this.#elements.selectDownloadsProject.innerHTML = projects.length
             ? projects.map((project) => `<option value="${h.getEscaped(project.project_uuid)}">${h.getEscaped(project.project_name)}</option>`).join("")
-            : `<option value="">(no hay proyectos: créalo en Proyectos)</option>`;
+            : `<option value="">${h.getEscaped(DownloadsTextEnum.NO_PROJECTS)}</option>`;
         if (projects.some((project) => project.project_uuid === selectedProjectUuid)) {
             this.#elements.selectDownloadsProject.value = selectedProjectUuid;
         }
@@ -224,10 +214,10 @@ export class DownloadsView {
             return;
         }
         if (this.#getApiToken()) {
-            status.innerHTML = `<p class="status status-ok">Token listo: va en los comandos del paso 3.</p>`;
+            status.innerHTML = `<p class="status status-ok">${h.getEscaped(DownloadsTextEnum.TOKEN_READY)}</p>`;
             return;
         }
-        status.innerHTML = `<p class="status">Sin token todavía: el instalador lo pedirá al ejecutarlo.</p>`;
+        status.innerHTML = `<p class="status">${h.getEscaped(DownloadsTextEnum.TOKEN_MISSING)}</p>`;
     }
 
     /**
@@ -262,7 +252,7 @@ export class DownloadsView {
         this.#elements.divDownloadsOs.innerHTML = this.#downloads.map((download) => {
             const isSelected = download.os === this.#selectedOs;
             return `<button type="button" class="segment" role="radio" aria-checked="${isSelected}" data-os="${h.getEscaped(download.os)}">
-                ${h.getEscaped(OS_LABELS[download.os] ?? download.os)} <span class="segment-sub">${h.getEscaped(download.arch)}</span></button>`;
+                ${h.getEscaped(DownloadsOsEnum.LABELS[download.os] ?? download.os)} <span class="segment-sub">${h.getEscaped(download.arch)}</span></button>`;
         }).join("");
     }
 
@@ -284,10 +274,10 @@ export class DownloadsView {
         this.#elements.divDownloadsInstall.innerHTML = `
             <section class="panel install-panel">
                 <h3>3.1 Instalación asistida <span class="badge badge-ok">recomendada</span></h3>
-                <p>Copia y pega en el servidor${download.os === OS_WINDOWS ? ", en un PowerShell abierto como administrador" : ""}:</p>
+                <p>Copia y pega en el servidor${download.os === DownloadsOsEnum.WINDOWS ? ", en un PowerShell abierto como administrador" : ""}:</p>
                 ${h.getCodeBlock(installer.code, installer.language)}
-                <ol class="does">${INSTALLER_DOES.map((item) => `<li>${h.getEscaped(item)}</li>`).join("")}</ol>
-                ${installerFiles.length ? `<p class="muted">O descarga ${download.os === OS_WINDOWS
+                <ol class="does">${DownloadsTextEnum.INSTALLER_DOES.map((item) => `<li>${h.getEscaped(item)}</li>`).join("")}</ol>
+                ${installerFiles.length ? `<p class="muted">O descarga ${download.os === DownloadsOsEnum.WINDOWS
                     ? "los dos ficheros, déjalos juntos y haz doble clic en <code>install.bat</code>"
                     : "el instalador y lánzalo con <code>sudo sh install.sh</code>"}:
                     ${installerFiles.map((item) => `<a href="${h.getEscaped(item.url)}" download>${h.getEscaped(item.file_name)}</a>`).join(" · ")}</p>` : ""}
@@ -314,7 +304,7 @@ export class DownloadsView {
                     ${h.getCodeBlock(step.code, step.language)}
                 </li>`).join("")}</ol>
             </details>
-            ${download.os === OS_MACOS ? this.#getHtmlMacosTroubleshooting() : ""}`;
+            ${download.os === DownloadsOsEnum.MACOS ? this.#getHtmlMacosTroubleshooting() : ""}`;
     }
 
     // macOS: binario compilado sin Mac, sin firmar ni probar en uno: los fallos esperables, a la vista

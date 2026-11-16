@@ -4,16 +4,14 @@ import (
     "os"
     "path/filepath"
     "slices"
-    "strconv"
 
     "siem-backend/src/core/boot"
-    "siem-backend/src/modules/devops/infrastructure/repositories"
-    "siem-backend/src/modules/shared/application"
-)
+    "siem-backend/src/core/config"
 
-const (
-    MIGRATIONS_TABLE             = "migrations"
-    CREATE_MIGRATIONS_TABLE_FILE = "0000-create-migrations-table.sql"
+    "siem-backend/src/modules/shared/application"
+
+    "siem-backend/src/modules/devops/domain/enums"
+    "siem-backend/src/modules/devops/infrastructure/repositories"
 )
 
 // RunMigrationsService ejecuta, en orden de nombre, los .sql de database/migrations que no esten en la tabla
@@ -48,7 +46,7 @@ func (s *RunMigrationsService) Invoke(runMigrationsDto *RunMigrationsDto) (*RunM
         return nil, err
     }
     if len(s.sqlMigrationsFiles) == 0 {
-        s.addMessage("No migrations files found")
+        s.addMessage(enums.MigrationsMessageEnum.NO_MIGRATIONS_FILES_FOUND)
         return RunMigrationsResultDtoFromPrimitives(map[string]any{"messages": s.messages}), nil
     }
 
@@ -56,7 +54,7 @@ func (s *RunMigrationsService) Invoke(runMigrationsDto *RunMigrationsDto) (*RunM
         return nil, err
     }
     if len(s.sqlFilesToBeRan) == 0 {
-        s.addMessage("No migrations files to be ran")
+        s.addMessage(enums.MigrationsMessageEnum.NO_MIGRATIONS_FILES_TO_BE_RAN)
         return RunMigrationsResultDtoFromPrimitives(map[string]any{"messages": s.messages}), nil
     }
 
@@ -67,16 +65,16 @@ func (s *RunMigrationsService) Invoke(runMigrationsDto *RunMigrationsDto) (*RunM
 }
 
 func (s *RunMigrationsService) createMigrationsTableIfDoesNotExist() error {
-    doesMigrationsTableExist, err := s.runMigrationsReaderSqliteRepository.DoesMigrationsTableExist(MIGRATIONS_TABLE)
+    doesMigrationsTableExist, err := s.runMigrationsReaderSqliteRepository.DoesMigrationsTableExist(enums.MigrationsEnum.MIGRATIONS_TABLE)
     if err != nil {
         return err
     }
     if doesMigrationsTableExist {
-        s.addMessage("migrations table wont be created, already exists")
+        s.addMessage(enums.MigrationsMessageEnum.MIGRATIONS_TABLE_ALREADY_EXISTS)
         return nil
     }
-    s.addMessage("creating migrations table")
-    return s.runMigrationsWriterSqliteRepository.RunSqlFile(s.getPathSqlFile(CREATE_MIGRATIONS_TABLE_FILE))
+    s.addMessage(enums.MigrationsMessageEnum.CREATING_MIGRATIONS_TABLE)
+    return s.runMigrationsWriterSqliteRepository.RunSqlFile(s.getPathSqlFile(enums.MigrationsEnum.CREATE_MIGRATIONS_TABLE_FILE))
 }
 
 func (s *RunMigrationsService) loadMigrationsFiles() error {
@@ -88,7 +86,7 @@ func (s *RunMigrationsService) loadMigrationsFiles() error {
     var sqlFiles []string
     for _, dirEntry := range dirEntries {
         fileName := dirEntry.Name()
-        if dirEntry.IsDir() || filepath.Ext(fileName) != ".sql" || fileName == CREATE_MIGRATIONS_TABLE_FILE {
+        if dirEntry.IsDir() || filepath.Ext(fileName) != enums.MigrationsEnum.SQL_FILE_EXTENSION || fileName == enums.MigrationsEnum.CREATE_MIGRATIONS_TABLE_FILE {
             continue
         }
         sqlFiles = append(sqlFiles, fileName)
@@ -105,7 +103,7 @@ func (s *RunMigrationsService) loadFilesToBeRan() error {
     }
     var ranFilesNames []string
     for _, ranMigrationsFile := range ranMigrationsFiles {
-        ranFilesNames = append(ranFilesNames, application.ToString(ranMigrationsFile["migration_file"]))
+        ranFilesNames = append(ranFilesNames, application.ToString(ranMigrationsFile[enums.MigrationsEnum.MIGRATION_FILE]))
     }
 
     for _, sqlFile := range s.sqlMigrationsFiles {
@@ -123,13 +121,13 @@ func (s *RunMigrationsService) runMigrations() error {
         return err
     }
     batch := maxBatch + 1
-    s.addMessage("running migrations batch: " + strconv.Itoa(batch))
+    s.addMessage(config.Tr(enums.MigrationsMessageEnum.RUNNING_MIGRATIONS_BATCH_X, batch))
     for _, sqlFile := range s.sqlFilesToBeRan {
-        s.addMessage("running migration: " + sqlFile)
+        s.addMessage(config.Tr(enums.MigrationsMessageEnum.RUNNING_MIGRATION_X, sqlFile))
         if err := s.runMigrationsWriterSqliteRepository.RunMigrationFileAndSave(s.getPathSqlFile(sqlFile), sqlFile, batch); err != nil {
             return err
         }
-        s.addMessage("saved migration: " + sqlFile)
+        s.addMessage(config.Tr(enums.MigrationsMessageEnum.SAVED_MIGRATION_X, sqlFile))
     }
     return nil
 }

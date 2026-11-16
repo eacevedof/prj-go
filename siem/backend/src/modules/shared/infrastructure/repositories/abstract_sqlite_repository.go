@@ -9,9 +9,9 @@ import (
     "strings"
 
     "siem-backend/src/modules/shared/application"
+    "siem-backend/src/modules/shared/infrastructure/traits"
     "siem-backend/src/modules/shared/infrastructure/factories"
     "siem-backend/src/modules/shared/infrastructure/repositories/configuration"
-    "siem-backend/src/modules/shared/infrastructure/traits"
 )
 
 var (
@@ -90,8 +90,8 @@ func (r *AbstractSqliteRepository) Execute(sqlQuery string, params ...any) (int,
         return 0, err
     }
     r.lastInsertId, _ = result.LastInsertId()
-    affected, err := result.RowsAffected()
-    return int(affected), err
+    affectedRows, err := result.RowsAffected()
+    return int(affectedRows), err
 }
 
 // ExecuteRaw varias sentencias de golpe (p.ej. un fichero .sql). Sin parametros: solo SQL de confianza.
@@ -107,19 +107,19 @@ func (r *AbstractSqliteRepository) GetLastInsertId() int {
 }
 
 // RunInTransaction todo lo que haga fn va en una transaccion: si devuelve error se deshace entera.
-func (r *AbstractSqliteRepository) RunInTransaction(fn func() error) error {
-    tx, err := r.db.Begin()
+func (r *AbstractSqliteRepository) RunInTransaction(transactionBody func() error) error {
+    transaction, err := r.db.Begin()
     if err != nil {
         return err
     }
-    r.sqlExecutor = tx
+    r.sqlExecutor = transaction
     defer func() { r.sqlExecutor = r.db }()
 
-    if err := fn(); err != nil {
-        _ = tx.Rollback()
+    if err := transactionBody(); err != nil {
+        _ = transaction.Rollback()
         return err
     }
-    return tx.Commit()
+    return transaction.Commit()
 }
 
 func (r *AbstractSqliteRepository) DoesTableExist(tableName string) (bool, error) {
@@ -155,11 +155,11 @@ func (r *AbstractSqliteRepository) getSqlForLog(sqlQuery string, params []any) s
         }
         param := params[position]
         position++
-        return getParamForLog(param)
+        return r.getParamForLog(param)
     })
 }
 
-func getParamForLog(param any) string {
+func (r *AbstractSqliteRepository) getParamForLog(param any) string {
     switch typedParam := param.(type) {
     case nil:
         return "NULL"
@@ -184,14 +184,14 @@ func getParamForLog(param any) string {
 
 // RunInSharedTransaction como RunInTransaction, pero la transaccion la comparten tambien joinedRepositories: con una
 // sola conexion abierta (DbFactory), un repositorio que no este en la lista se quedaria esperando a que acabe.
-func (r *AbstractSqliteRepository) RunInSharedTransaction(fn func() error, joinedRepositories ...*AbstractSqliteRepository) error {
-    tx, err := r.db.Begin()
+func (r *AbstractSqliteRepository) RunInSharedTransaction(transactionBody func() error, joinedRepositories ...*AbstractSqliteRepository) error {
+    transaction, err := r.db.Begin()
     if err != nil {
         return err
     }
     allRepositories := append([]*AbstractSqliteRepository{r}, joinedRepositories...)
     for _, repository := range allRepositories {
-        repository.sqlExecutor = tx
+        repository.sqlExecutor = transaction
     }
     defer func() {
         for _, repository := range allRepositories {
@@ -199,11 +199,11 @@ func (r *AbstractSqliteRepository) RunInSharedTransaction(fn func() error, joine
         }
     }()
 
-    if err := fn(); err != nil {
-        _ = tx.Rollback()
+    if err := transactionBody(); err != nil {
+        _ = transaction.Rollback()
         return err
     }
-    return tx.Commit()
+    return transaction.Commit()
 }
 
 func (r *AbstractSqliteRepository) logSqlIfDebug(sqlQuery string, params []any) {

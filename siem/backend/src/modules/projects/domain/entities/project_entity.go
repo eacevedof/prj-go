@@ -1,8 +1,9 @@
 package entities
 
 import (
-    "siem-backend/src/modules/projects/domain/enums"
     "siem-backend/src/modules/shared/application"
+
+    "siem-backend/src/modules/projects/domain/enums"
 )
 
 const PROJECT_UUID_PREFIX = "project-"

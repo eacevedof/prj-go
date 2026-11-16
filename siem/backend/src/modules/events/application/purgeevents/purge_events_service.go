@@ -2,20 +2,17 @@ package purgeevents
 
 import (
     "siem-backend/src/core/config"
-    "siem-backend/src/modules/events/domain/enums"
-    "siem-backend/src/modules/events/infrastructure/repositories"
-    ingestrepositories "siem-backend/src/modules/ingest/infrastructure/repositories"
+
     sharedenums "siem-backend/src/modules/shared/domain/enums"
     "siem-backend/src/modules/shared/infrastructure/components/datetimer"
-    sharedexceptions "siem-backend/src/modules/shared/infrastructure/exceptions"
-    "siem-backend/src/modules/shared/infrastructure/repositories/configuration"
     "siem-backend/src/modules/shared/infrastructure/traits"
-)
+    "siem-backend/src/modules/shared/infrastructure/repositories/configuration"
+    sharedexceptions "siem-backend/src/modules/shared/infrastructure/exceptions"
 
-const (
-    secondsPerDay = 86400
-    // un lote ya procesado se guarda 24 h solo para reconocer un reenvio del cliente
-    doneBatchesRetentionSeconds = secondsPerDay
+    ingestrepositories "siem-backend/src/modules/ingest/infrastructure/repositories"
+
+    "siem-backend/src/modules/events/domain/enums"
+    "siem-backend/src/modules/events/infrastructure/repositories"
 )
 
 // PurgeEventsService retencion: borra los eventos con mas de N dias y los lotes ya procesados de la cola. Es lo que
@@ -50,13 +47,13 @@ func (s *PurgeEventsService) Invoke(purgeEventsDto *PurgeEventsDto) (*PurgeEvent
         return nil, err
     }
 
-    deletedBefore := s.dateTimer.GetNowDtMinusSeconds(s.retentionDays * secondsPerDay)
+    deletedBefore := s.dateTimer.GetNowDtMinusSeconds(s.retentionDays * enums.EventsLimitEnum.SECONDS_PER_DAY)
     deletedEvents, err := s.eventsWriterSqliteRepository.DeleteEventsReceivedBefore(deletedBefore)
     if err != nil {
         return nil, err
     }
     deletedBatches, err := s.ingestQueueWriterSqliteRepository.DeleteDoneBatchesProcessedBefore(
-        s.dateTimer.GetNowDtMinusSeconds(doneBatchesRetentionSeconds),
+        s.dateTimer.GetNowDtMinusSeconds(enums.EventsLimitEnum.DONE_BATCHES_RETENTION_SECONDS),
     )
     if err != nil {
         return nil, err
@@ -78,7 +75,7 @@ func (s *PurgeEventsService) loadRetentionDays() {
 }
 
 func (s *PurgeEventsService) failIfWrongInput() error {
-    if s.retentionDays >= 1 && s.retentionDays <= 3650 {
+    if s.retentionDays >= enums.EventsLimitEnum.RETENTION_DAYS_MIN && s.retentionDays <= enums.EventsLimitEnum.RETENTION_DAYS_MAX {
         return nil
     }
     return sharedexceptions.FieldsExceptionBadRequestCustom(

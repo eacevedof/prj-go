@@ -1,8 +1,9 @@
 package exceptions
 
 import (
-    "siem-backend/src/modules/dashboard/domain/enums"
     sharedenums "siem-backend/src/modules/shared/domain/enums"
+
+    "siem-backend/src/modules/dashboard/domain/enums"
 )
 
 // DashboardException error de dominio del dashboard con su codigo HTTP equivalente (401, 404).

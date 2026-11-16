@@ -2,34 +2,37 @@ package getprojectdetail
 
 import (
     "siem-backend/src/core/config"
-    agentsentities "siem-backend/src/modules/agents/domain/entities"
-    agentsenums "siem-backend/src/modules/agents/domain/enums"
-    agentsservices "siem-backend/src/modules/agents/domain/services"
-    agentsrepositories "siem-backend/src/modules/agents/infrastructure/repositories"
-    "siem-backend/src/modules/dashboard/domain/enums"
-    "siem-backend/src/modules/dashboard/domain/exceptions"
-    "siem-backend/src/modules/dashboard/domain/services"
-    "siem-backend/src/modules/dashboard/infrastructure/repositories"
-    eventsenums "siem-backend/src/modules/events/domain/enums"
-    eventsrepositories "siem-backend/src/modules/events/infrastructure/repositories"
-    projectsentities "siem-backend/src/modules/projects/domain/entities"
-    projectsrepositories "siem-backend/src/modules/projects/infrastructure/repositories"
+
     "siem-backend/src/modules/shared/application"
     "siem-backend/src/modules/shared/infrastructure/components/datetimer"
-)
 
-const last24hSeconds = 86400
+    projectsentities "siem-backend/src/modules/projects/domain/entities"
+    projectsrepositories "siem-backend/src/modules/projects/infrastructure/repositories"
+
+    agentsenums "siem-backend/src/modules/agents/domain/enums"
+    agentsentities "siem-backend/src/modules/agents/domain/entities"
+    agentsservices "siem-backend/src/modules/agents/domain/services"
+    agentsrepositories "siem-backend/src/modules/agents/infrastructure/repositories"
+
+    eventsenums "siem-backend/src/modules/events/domain/enums"
+    eventsrepositories "siem-backend/src/modules/events/infrastructure/repositories"
+
+    "siem-backend/src/modules/dashboard/domain/enums"
+    "siem-backend/src/modules/dashboard/domain/services"
+    "siem-backend/src/modules/dashboard/infrastructure/repositories"
+    "siem-backend/src/modules/dashboard/domain/exceptions"
+)
 
 // GetProjectDetailService el detalle de un proyecto para el front: sus agentes (estado, host, contadores de 24 h) y,
 // por agente, sus sources (cada carpeta vigilada y cada comando) con su ultimo estado.
 type GetProjectDetailService struct {
     dateTimer                       *datetimer.DateTimer
-    agentStatusResolver             *agentsservices.AgentStatusResolver
-    eventsStatsCounter              *services.EventsStatsCounter
     projectsReaderSqliteRepository  *projectsrepositories.ProjectsReaderSqliteRepository
     agentsReaderSqliteRepository    *agentsrepositories.AgentsReaderSqliteRepository
     sourcesReaderSqliteRepository   *eventsrepositories.SourcesReaderSqliteRepository
     dashboardReaderSqliteRepository *repositories.DashboardReaderSqliteRepository
+    agentStatusResolver             *agentsservices.AgentStatusResolver
+    eventsStatsCounter              *services.EventsStatsCounter
 
     getProjectDetailDto *GetProjectDetailDto
     projectEntity       *projectsentities.ProjectEntity
@@ -39,12 +42,12 @@ type GetProjectDetailService struct {
 func GetProjectDetailServiceGetInstance() *GetProjectDetailService {
     return &GetProjectDetailService{
         dateTimer:                       datetimer.GetInstance(),
-        agentStatusResolver:             agentsservices.AgentStatusResolverGetInstance(),
-        eventsStatsCounter:              services.EventsStatsCounterGetInstance(),
         projectsReaderSqliteRepository:  projectsrepositories.ProjectsReaderSqliteRepositoryGetInstance(),
         agentsReaderSqliteRepository:    agentsrepositories.AgentsReaderSqliteRepositoryGetInstance(),
         sourcesReaderSqliteRepository:   eventsrepositories.SourcesReaderSqliteRepositoryGetInstance(),
         dashboardReaderSqliteRepository: repositories.DashboardReaderSqliteRepositoryGetInstance(),
+        agentStatusResolver:             agentsservices.AgentStatusResolverGetInstance(),
+        eventsStatsCounter:              services.EventsStatsCounterGetInstance(),
     }
 }
 
@@ -120,14 +123,14 @@ func (s *GetProjectDetailService) getSourcesByAgentId() (map[int][]map[string]an
 
 func (s *GetProjectDetailService) getAgent(agentEntity *agentsentities.AgentEntity, sources []map[string]any) (map[string]any, error) {
     eventsStats, err := s.dashboardReaderSqliteRepository.GetEventsStatsByAgentIdSince(
-        agentEntity.GetId(), s.dateTimer.GetNowDtMinusSeconds(last24hSeconds),
+        agentEntity.GetId(), s.dateTimer.GetNowDtMinusSeconds(enums.DashboardConstantsEnum.LAST_24H_SECONDS),
     )
     if err != nil {
         return nil, err
     }
     eventsCountBySeverity := map[string]int{}
     for _, severityStats := range eventsStats {
-        eventsCountBySeverity[application.ToString(severityStats["severity"])] = application.ToInt(severityStats["n_events"])
+        eventsCountBySeverity[application.ToString(severityStats[eventsenums.EventsKeyEnum.SEVERITY])] = application.ToInt(severityStats[enums.DashboardKeyEnum.N_EVENTS])
     }
     if sources == nil {
         sources = []map[string]any{}

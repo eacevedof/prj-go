@@ -9,8 +9,8 @@ import (
 
     "siem-backend/src/core/config"
     "siem-backend/src/modules/shared/domain/enums"
-    "siem-backend/src/modules/shared/infrastructure/exceptions"
     "siem-backend/src/modules/shared/infrastructure/traits"
+    "siem-backend/src/modules/shared/infrastructure/exceptions"
 )
 
 const (
@@ -51,17 +51,17 @@ func (c *AbstractConsoleCommand) GetOptionValue(optionName string) string {
 }
 
 // PrintResult JSON_PRETTY_PRINT (4 espacios) sin escapar unicode ni barras.
-func (c *AbstractConsoleCommand) PrintResult(result any) {
+func (c *AbstractConsoleCommand) PrintResult(resultDto any) {
     var jsonBuffer bytes.Buffer
     jsonEncoder := json.NewEncoder(&jsonBuffer)
     jsonEncoder.SetEscapeHTML(false)
     jsonEncoder.SetIndent("", "    ")
-    _ = jsonEncoder.Encode(result)
+    _ = jsonEncoder.Encode(resultDto)
     fmt.Print(jsonBuffer.String())
 }
 
-func (c *AbstractConsoleCommand) ExitWithDomainError(ex exceptions.InterfaceException) {
-    c.printErrors(ex.GetCode(), []string{ex.Error()})
+func (c *AbstractConsoleCommand) ExitWithDomainError(controlledException exceptions.InterfaceException) {
+    c.printErrors(controlledException.GetCode(), []string{controlledException.Error()})
     os.Exit(EXIT_CODE_DOMAIN_ERROR)
 }
 
@@ -79,9 +79,9 @@ func (c *AbstractConsoleCommand) ExitWithUnexpectedError(err error, logTitle str
 }
 
 // printErrors code el mismo que daria la API (404, 409, 400...), para que consola y HTTP se lean igual.
-func (c *AbstractConsoleCommand) printErrors(code int, errors []string) {
+func (c *AbstractConsoleCommand) printErrors(code int, errorMessages []string) {
     fmt.Fprintln(os.Stderr, c.GetRed(fmt.Sprintf("Error (%d):", code)))
-    for _, errorMessage := range errors {
+    for _, errorMessage := range errorMessages {
         fmt.Fprintln(os.Stderr, c.GetRed("  - "+errorMessage))
     }
 }

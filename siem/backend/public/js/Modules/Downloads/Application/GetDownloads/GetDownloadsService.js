@@ -1,6 +1,7 @@
-import { DownloadsException } from "/js/Modules/Downloads/Domain/Exceptions/DownloadsException.js";
+import { DownloadsKeyEnum } from "/js/Modules/Downloads/Domain/Enums/DownloadsKeyEnum.js";
 import { GetDownloadsResultDto } from "/js/Modules/Downloads/Application/GetDownloads/GetDownloadsResultDto.js";
 import { DownloadsReaderHttpRepository } from "/js/Modules/Downloads/Infrastructure/Repositories/DownloadsReaderHttpRepository.js";
+import { DownloadsException } from "/js/Modules/Downloads/Domain/Exceptions/DownloadsException.js";
 
 /**
  * Los binarios del agente disponibles para descargar (los deja `make dist` del client en el backend).
@@ -31,11 +32,11 @@ export class GetDownloadsService {
             DownloadsException.fromApiResponse(apiResponse);
         }
 
-        const data = apiResponse.data ?? {};
+        const downloadsCatalog = apiResponse.data ?? {};
         return GetDownloadsResultDto.fromPrimitives({
-            endpointUrl: data.endpoint_url,
-            downloads: data.downloads,
-            installers: data.installers,
+            endpointUrl: downloadsCatalog[DownloadsKeyEnum.ENDPOINT_URL],
+            downloads: downloadsCatalog[DownloadsKeyEnum.DOWNLOADS],
+            installers: downloadsCatalog[DownloadsKeyEnum.INSTALLERS],
         });
     }
 }

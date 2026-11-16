@@ -1,7 +1,7 @@
 import { SessionMessageEnum } from "/js/Modules/Session/Domain/Enums/SessionMessageEnum.js";
-import { SessionException } from "/js/Modules/Session/Domain/Exceptions/SessionException.js";
 import { LogInResultDto } from "/js/Modules/Session/Application/LogIn/LogInResultDto.js";
 import { SessionReaderHttpRepository } from "/js/Modules/Session/Infrastructure/Repositories/SessionReaderHttpRepository.js";
+import { SessionException } from "/js/Modules/Session/Domain/Exceptions/SessionException.js";
 
 /**
  * Entrar con el token del dashboard: no hay usuarios ni login en la API, asi que el token se comprueba con una

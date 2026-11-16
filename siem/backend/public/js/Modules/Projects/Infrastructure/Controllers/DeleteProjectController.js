@@ -19,7 +19,6 @@ import { ProjectFormView } from "/js/Modules/Projects/Infrastructure/Views/Proje
 import { ProjectsTableView } from "/js/Modules/Projects/Infrastructure/Views/ProjectsTableView.js";
 import { ProjectsException } from "/js/Modules/Projects/Domain/Exceptions/ProjectsException.js";
 
-
 /**
  * Baja de un proyecto, venga de la tabla de la portada o de la cabecera de su detalle: el modal pide el nombre, se
  * borra y se vuelve a la portada con el aviso de los siem-client que siguen instalados (servidor, ruta y comando para

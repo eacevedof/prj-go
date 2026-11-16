@@ -1,8 +1,9 @@
 package createmonitor
 
 import (
-    "siem-backend/src/modules/monitors/application/monitorinput"
     "siem-backend/src/modules/shared/application"
+
+    "siem-backend/src/modules/monitors/application/monitorinput"
 )
 
 // CreateMonitorDto POST /api/v1/projects/:project_uuid/monitors

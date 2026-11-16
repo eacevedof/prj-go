@@ -1,11 +1,11 @@
 package monitorinput
 
 import (
-    "siem-backend/src/modules/monitors/domain/entities"
     "siem-backend/src/modules/shared/application"
-)
 
-const DEFAULT_INTERVAL_SECONDS = 60
+    "siem-backend/src/modules/monitors/domain/enums"
+    "siem-backend/src/modules/monitors/domain/entities"
+)
 
 // MonitorInput los campos editables de un monitor, comunes al alta y a la edicion: los embeben CreateMonitorDto y
 // UpdateMonitorDto. Solo primitivos. is_enabled ausente = activo; interval_seconds ausente = 60.
@@ -34,7 +34,7 @@ func MonitorInputFromPrimitives(primitives map[string]any) MonitorInput {
         monitorType:       application.GetTrimmedString(primitives, "monitorType"),
         monitorName:       application.GetTrimmedString(primitives, "monitorName"),
         isEnabled:         isEnabled,
-        intervalSeconds:   application.GetIntOrDefault(primitives, "intervalSeconds", DEFAULT_INTERVAL_SECONDS),
+        intervalSeconds:   application.GetIntOrDefault(primitives, "intervalSeconds", enums.MonitorFieldsLimitEnum.INTERVAL_SECONDS_DEFAULT),
         monitorConfig:     monitorConfig,
         warningThreshold:  entities.GetFloatOrNil(primitives["warningThreshold"]),
         criticalThreshold: entities.GetFloatOrNil(primitives["criticalThreshold"]),

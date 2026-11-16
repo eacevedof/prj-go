@@ -1,8 +1,8 @@
 import { EventsKeyEnum } from "/js/Modules/Events/Domain/Enums/EventsKeyEnum.js";
-import { EventsException } from "/js/Modules/Events/Domain/Exceptions/EventsException.js";
 import { EventsQueryParser } from "/js/Modules/Events/Domain/Services/EventsQueryParser.js";
 import { SearchEventsResultDto } from "/js/Modules/Events/Application/SearchEvents/SearchEventsResultDto.js";
 import { EventsReaderHttpRepository } from "/js/Modules/Events/Infrastructure/Repositories/EventsReaderHttpRepository.js";
+import { EventsException } from "/js/Modules/Events/Domain/Exceptions/EventsException.js";
 
 /**
  * Una pagina de eventos con los filtros del visor (rango, texto, incluir y excluir por campo). Filtrar, ordenar y

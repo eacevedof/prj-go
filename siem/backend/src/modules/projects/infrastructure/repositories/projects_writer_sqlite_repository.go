@@ -3,8 +3,9 @@ package repositories
 import (
     "fmt"
 
-    "siem-backend/src/modules/projects/domain/entities"
     sharedrepositories "siem-backend/src/modules/shared/infrastructure/repositories"
+
+    "siem-backend/src/modules/projects/domain/entities"
 )
 
 type ProjectsWriterSqliteRepository struct {

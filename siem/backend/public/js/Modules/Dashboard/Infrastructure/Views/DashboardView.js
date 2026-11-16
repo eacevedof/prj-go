@@ -1,6 +1,9 @@
 import { DateTimer } from "/js/Modules/Shared/Infrastructure/Components/DateTimer.js";
 import { Htmler } from "/js/Modules/Shared/Infrastructure/Components/Htmler.js";
 import { NumberFormatter } from "/js/Modules/Shared/Infrastructure/Components/NumberFormatter.js";
+import { TextFormatter } from "/js/Modules/Shared/Infrastructure/Components/TextFormatter.js";
+
+import { DashboardTextEnum } from "/js/Modules/Dashboard/Domain/Enums/DashboardTextEnum.js";
 
 const CSS_HIDDEN = "hidden";
 
@@ -16,12 +19,14 @@ export class DashboardView {
     #dateTimer;
     #htmler;
     #numberFormatter;
+    #textFormatter;
     #elements = {};
 
     constructor() {
         this.#dateTimer = DateTimer.getInstance();
         this.#htmler = Htmler.getInstance();
         this.#numberFormatter = NumberFormatter.getInstance();
+        this.#textFormatter = TextFormatter.getInstance();
     }
 
     /**
@@ -57,18 +62,20 @@ export class DashboardView {
 
     #getServerHtml(server) {
         const h = this.#htmler;
-        const n = this.#numberFormatter;
+        const numberFormatter = this.#numberFormatter;
         const isWorkerOff = server.queue_worker_interval_seconds === 0;
         const stats = [
-            ["1.1 Versión", `${h.getEscaped(server.app_version)} · ${h.getEscaped(server.app_env)}`, false],
-            ["1.2 Hora del servidor (UTC)", h.getEscaped(this.#dateTimer.getUtcDateTime(server.now)), false],
-            ["1.3 Arrancado (UTC)", `${h.getEscaped(this.#dateTimer.getUtcDateTime(server.started_at))} · ${this.#dateTimer.getDuration(server.uptime_seconds)}`, false],
-            ["1.4 Eventos guardados", n.getNumber(server.events_total), false],
-            ["1.5 Tamaño de la BD", n.getBytes(server.db_size_bytes), false],
-            ["1.6 Cola: lotes pendientes", `${n.getNumber(server.queue_pending_batches)} (${n.getNumber(server.queue_pending_events)} ev.)`, false],
-            ["1.7 Cola: lotes fallidos", n.getNumber(server.queue_failed_batches), server.queue_failed_batches > 0],
-            ["1.8 Retención", `${n.getNumber(server.events_retention_days)} días`, false],
-            ["1.9 Worker", isWorkerOff ? "apagado" : `cada ${n.getNumber(server.queue_worker_interval_seconds)} s`, isWorkerOff],
+            [DashboardTextEnum.SERVER_VERSION, `${h.getEscaped(server.app_version)} · ${h.getEscaped(server.app_env)}`, false],
+            [DashboardTextEnum.SERVER_NOW, h.getEscaped(this.#dateTimer.getUtcDateTime(server.now)), false],
+            [DashboardTextEnum.SERVER_STARTED_AT, `${h.getEscaped(this.#dateTimer.getUtcDateTime(server.started_at))} · ${this.#dateTimer.getDuration(server.uptime_seconds)}`, false],
+            [DashboardTextEnum.EVENTS_TOTAL, numberFormatter.getNumber(server.events_total), false],
+            [DashboardTextEnum.DB_SIZE, numberFormatter.getBytes(server.db_size_bytes), false],
+            [DashboardTextEnum.QUEUE_PENDING, `${numberFormatter.getNumber(server.queue_pending_batches)} ${this.#textFormatter.getFormatted(DashboardTextEnum.QUEUE_PENDING_EVENTS, numberFormatter.getNumber(server.queue_pending_events))}`, false],
+            [DashboardTextEnum.QUEUE_FAILED, numberFormatter.getNumber(server.queue_failed_batches), server.queue_failed_batches > 0],
+            [DashboardTextEnum.EVENTS_RETENTION, this.#textFormatter.getFormatted(DashboardTextEnum.RETENTION_DAYS, numberFormatter.getNumber(server.events_retention_days)), false],
+            [DashboardTextEnum.QUEUE_WORKER, isWorkerOff
+                ? DashboardTextEnum.WORKER_OFF
+                : this.#textFormatter.getFormatted(DashboardTextEnum.WORKER_EVERY, numberFormatter.getNumber(server.queue_worker_interval_seconds)), isWorkerOff],
         ];
         return `<div class="stats">${stats.map(([label, value, isBad]) => `
             <div class="stat${isBad ? " is-bad" : ""}">

@@ -5,8 +5,9 @@ import (
     "slices"
     "strings"
 
-    "siem-backend/src/modules/events/domain/enums"
     "siem-backend/src/modules/shared/application"
+
+    "siem-backend/src/modules/events/domain/enums"
 )
 
 // de mas grave a menos: gana el primero que case. \b: "terror" o "panicked_at" no cuentan como palabra suelta.
@@ -15,14 +16,6 @@ var (
     errorPattern    = regexp.MustCompile(`(?i)\b(error|err|exception|failed|failure|denied|refused|unauthorized)\b`)
     warningPattern  = regexp.MustCompile(`(?i)\b(warning|warn|deprecated|timeout|timed out|retry|retrying)\b`)
     debugPattern    = regexp.MustCompile(`(?i)\b(debug|trace)\b`)
-)
-
-const (
-    dockerStatusExited     = "exited"
-    dockerStatusDead       = "dead"
-    dockerStatusRestarting = "restarting"
-    dockerHealthUnhealthy  = "unhealthy"
-    dockerChangeRestarted  = "restarted"
 )
 
 // EventSeverityResolver gravedad de un evento cuando el cliente no la declara (la regla vive solo aqui):
@@ -67,7 +60,7 @@ func (r *EventSeverityResolver) getHostMetricSeverity(attributes map[string]any)
     if application.ToInt(attributes[enums.MonitorAttributeEnum.IS_UNAVAILABLE]) == 1 {
         return enums.EventSeverityEnum.WARNING
     }
-    value := getFloat(attributes, enums.MonitorAttributeEnum.VALUE)
+    value := r.getFloat(attributes, enums.MonitorAttributeEnum.VALUE)
     if criticalThreshold, hasThreshold := attributes[enums.MonitorAttributeEnum.CRITICAL_THRESHOLD].(float64); hasThreshold && value >= criticalThreshold {
         return enums.EventSeverityEnum.CRITICAL
     }
@@ -82,15 +75,15 @@ func (r *EventSeverityResolver) getHostMetricSeverity(attributes map[string]any)
 func (r *EventSeverityResolver) getDockerStateSeverity(attributes map[string]any) string {
     status := application.GetTrimmedString(attributes, enums.DockerAttributeEnum.STATUS)
     switch {
-    case application.ToInt(attributes[enums.DockerAttributeEnum.IS_OOM_KILLED]) == 1 || status == dockerStatusDead:
+    case application.ToInt(attributes[enums.DockerAttributeEnum.IS_OOM_KILLED]) == 1 || status == enums.DockerAttributeValueEnum.STATUS_DEAD:
         return enums.EventSeverityEnum.CRITICAL
-    case status == dockerStatusExited && application.GetInt(attributes, enums.DockerAttributeEnum.EXIT_CODE) != 0:
+    case status == enums.DockerAttributeValueEnum.STATUS_EXITED && application.GetInt(attributes, enums.DockerAttributeEnum.EXIT_CODE) != 0:
         return enums.EventSeverityEnum.ERROR
-    case application.GetTrimmedString(attributes, enums.DockerAttributeEnum.HEALTH) == dockerHealthUnhealthy:
+    case application.GetTrimmedString(attributes, enums.DockerAttributeEnum.HEALTH) == enums.DockerAttributeValueEnum.HEALTH_UNHEALTHY:
         return enums.EventSeverityEnum.ERROR
-    case status == dockerStatusExited || status == dockerStatusRestarting:
+    case status == enums.DockerAttributeValueEnum.STATUS_EXITED || status == enums.DockerAttributeValueEnum.STATUS_RESTARTING:
         return enums.EventSeverityEnum.WARNING
-    case application.GetTrimmedString(attributes, enums.DockerAttributeEnum.CHANGE_KIND) == dockerChangeRestarted:
+    case application.GetTrimmedString(attributes, enums.DockerAttributeEnum.CHANGE_KIND) == enums.DockerAttributeValueEnum.CHANGE_RESTARTED:
         return enums.EventSeverityEnum.WARNING
     }
     return enums.EventSeverityEnum.INFO
@@ -99,8 +92,8 @@ func (r *EventSeverityResolver) getDockerStateSeverity(attributes map[string]any
 // getDockerStatsSeverity por debajo de los umbrales es debug: una muestra cada minuto por contenedor no debe inflar
 // los contadores de la portada.
 func (r *EventSeverityResolver) getDockerStatsSeverity(attributes map[string]any) string {
-    memoryPercent := getFloat(attributes, enums.DockerAttributeEnum.MEMORY_PERCENT)
-    cpuPercent := getFloat(attributes, enums.DockerAttributeEnum.CPU_PERCENT)
+    memoryPercent := r.getFloat(attributes, enums.DockerAttributeEnum.MEMORY_PERCENT)
+    cpuPercent := r.getFloat(attributes, enums.DockerAttributeEnum.CPU_PERCENT)
     switch {
     case memoryPercent >= enums.DockerThresholdEnum.MEMORY_ERROR_PERCENT:
         return enums.EventSeverityEnum.ERROR
@@ -117,13 +110,13 @@ func (r *EventSeverityResolver) getDockerStatsSeverity(attributes map[string]any
 func (r *EventSeverityResolver) getDockerEventSeverity(attributes map[string]any) string {
     action := application.GetTrimmedString(attributes, enums.DockerAttributeEnum.ACTION)
     switch {
-    case action == "oom":
+    case action == enums.DockerAttributeValueEnum.ACTION_OOM:
         return enums.EventSeverityEnum.CRITICAL
-    case action == "die" && application.GetInt(attributes, enums.DockerAttributeEnum.EXIT_CODE) != 0:
+    case action == enums.DockerAttributeValueEnum.ACTION_DIE && application.GetInt(attributes, enums.DockerAttributeEnum.EXIT_CODE) != 0:
         return enums.EventSeverityEnum.ERROR
-    case strings.HasPrefix(action, "health_status") && strings.Contains(action, dockerHealthUnhealthy):
+    case strings.HasPrefix(action, enums.DockerAttributeValueEnum.ACTION_HEALTH_STATUS_PREFIX) && strings.Contains(action, enums.DockerAttributeValueEnum.HEALTH_UNHEALTHY):
         return enums.EventSeverityEnum.ERROR
-    case action == "kill":
+    case action == enums.DockerAttributeValueEnum.ACTION_KILL:
         return enums.EventSeverityEnum.WARNING
     }
     return enums.EventSeverityEnum.INFO
@@ -144,7 +137,7 @@ func (r *EventSeverityResolver) getSeverityByKeywords(message string) string {
 }
 
 // getFloat los numeros del JSON llegan como float64; un valor ausente o no numerico cuenta como 0.
-func getFloat(primitives map[string]any, key string) float64 {
+func (r *EventSeverityResolver) getFloat(primitives map[string]any, key string) float64 {
     switch value := primitives[key].(type) {
     case float64:
         return value

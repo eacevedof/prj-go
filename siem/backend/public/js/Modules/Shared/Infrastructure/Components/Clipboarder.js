@@ -1,3 +1,6 @@
+const OFFSCREEN_LEFT = "-9999px";
+const COMMAND_COPY = "copy";
+
 /**
  * Copia texto al portapapeles: la API moderna (pide contexto seguro: https o localhost) y, si no esta o falla, el
  * metodo antiguo con un textarea fuera de pantalla. No captura mas alla de ese reintento: devuelve si se copio.
@@ -33,12 +36,12 @@ export class Clipboarder {
         textarea.value = text;
         textarea.setAttribute("readonly", "");
         textarea.style.position = "fixed";
-        textarea.style.left = "-9999px";
+        textarea.style.left = OFFSCREEN_LEFT;
         document.body.append(textarea);
         textarea.select();
         let isCopied = false;
         try {
-            isCopied = document.execCommand("copy");
+            isCopied = document.execCommand(COMMAND_COPY);
         }
         catch (error) {
             isCopied = false;

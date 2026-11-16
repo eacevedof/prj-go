@@ -3,8 +3,9 @@ package services
 import (
     "testing"
 
-    "siem-backend/src/modules/monitors/domain/services"
     "siem-backend/tests"
+
+    "siem-backend/src/modules/monitors/domain/services"
 )
 
 func getResourceKey(monitorType string, monitorConfig map[string]any) string {

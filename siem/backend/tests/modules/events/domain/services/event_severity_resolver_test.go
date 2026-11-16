@@ -3,8 +3,9 @@ package services
 import (
     "testing"
 
-    "siem-backend/src/modules/events/domain/services"
     "siem-backend/tests"
+
+    "siem-backend/src/modules/events/domain/services"
 )
 
 func TestDeclaredSeverityWins(t *testing.T) {

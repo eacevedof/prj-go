@@ -1,10 +1,11 @@
+import { RouteHashEnum } from "/js/Modules/Shared/Domain/Enums/RouteHashEnum.js";
+
 import { EVENT_FILTER_FIELDS } from "/js/Modules/Events/Domain/Enums/EventFilterFieldEnum.js";
 import { EventsKeyEnum } from "/js/Modules/Events/Domain/Enums/EventsKeyEnum.js";
 import { EventsPaginationEnum } from "/js/Modules/Events/Domain/Enums/EventsPaginationEnum.js";
 import { EVENTS_REFRESH_VALUES, EventsRefreshEnum } from "/js/Modules/Events/Domain/Enums/EventsRefreshEnum.js";
 import { TIME_RANGE_SECONDS, TimeRangeEnum } from "/js/Modules/Events/Domain/Enums/TimeRangeEnum.js";
 
-const EVENTS_HASH = "#/events";
 const UTC_DATE_TIME_PATTERN = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/;
 const VALUES_SEPARATOR = ",";
 
@@ -89,7 +90,7 @@ export class EventsQueryParser {
      */
     getHash(state) {
         const queryString = new URLSearchParams(this.getQuery(state)).toString();
-        return queryString ? `${EVENTS_HASH}?${queryString}` : EVENTS_HASH;
+        return queryString ? `${RouteHashEnum.EVENTS}?${queryString}` : RouteHashEnum.EVENTS;
     }
 
     /**

@@ -1,8 +1,8 @@
 import { MonitorsMessageEnum } from "/js/Modules/Monitors/Domain/Enums/MonitorsMessageEnum.js";
-import { MonitorsException } from "/js/Modules/Monitors/Domain/Exceptions/MonitorsException.js";
 import { MonitorValidator } from "/js/Modules/Monitors/Domain/Services/MonitorValidator.js";
 import { CreateMonitorResultDto } from "/js/Modules/Monitors/Application/CreateMonitor/CreateMonitorResultDto.js";
 import { MonitorsWriterHttpRepository } from "/js/Modules/Monitors/Infrastructure/Repositories/MonitorsWriterHttpRepository.js";
+import { MonitorsException } from "/js/Modules/Monitors/Domain/Exceptions/MonitorsException.js";
 
 /**
  * Alta de un monitor (recurso a vigilar) en un proyecto. Los agentes del proyecto lo descargan solos en su siguiente

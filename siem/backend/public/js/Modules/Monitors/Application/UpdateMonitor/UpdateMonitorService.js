@@ -1,8 +1,8 @@
 import { MonitorsMessageEnum } from "/js/Modules/Monitors/Domain/Enums/MonitorsMessageEnum.js";
-import { MonitorsException } from "/js/Modules/Monitors/Domain/Exceptions/MonitorsException.js";
 import { MonitorValidator } from "/js/Modules/Monitors/Domain/Services/MonitorValidator.js";
 import { UpdateMonitorResultDto } from "/js/Modules/Monitors/Application/UpdateMonitor/UpdateMonitorResultDto.js";
 import { MonitorsWriterHttpRepository } from "/js/Modules/Monitors/Infrastructure/Repositories/MonitorsWriterHttpRepository.js";
+import { MonitorsException } from "/js/Modules/Monitors/Domain/Exceptions/MonitorsException.js";
 
 /**
  * Cambia un monitor (nombre, ambito, intervalo, umbrales, config, activo). El PUT lleva el monitor entero.

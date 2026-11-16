@@ -4,12 +4,12 @@ import (
     "fmt"
     "time"
 
-    "siem-backend/src/modules/ingest/application/processingestqueue"
-    "siem-backend/src/modules/shared/infrastructure/repositories/configuration"
     "siem-backend/src/modules/shared/infrastructure/traits"
-)
+    "siem-backend/src/modules/shared/infrastructure/repositories/configuration"
 
-const maxBatchesPerRound = 50
+    "siem-backend/src/modules/ingest/domain/enums"
+    "siem-backend/src/modules/ingest/application/processingestqueue"
+)
 
 // ProcessIngestQueueWorker el "controller" de la cola dentro de la API: no entra por HTTP ni por consola, lo dispara
 // el reloj. Cada APP_QUEUE_WORKER_INTERVAL_SECONDS llama a ProcessIngestQueueService hasta dejar la cola vacia.
@@ -36,12 +36,12 @@ func (w *ProcessIngestQueueWorker) Run() {
     ticker := time.NewTicker(time.Duration(w.intervalSeconds) * time.Second)
     defer ticker.Stop()
     for range ticker.C {
-        w.processUntilQueueIsEmpty()
+        w.emptyQueue()
     }
 }
 
-func (w *ProcessIngestQueueWorker) processUntilQueueIsEmpty() {
-    const logTitle = "ProcessIngestQueueWorker.processUntilQueueIsEmpty"
+func (w *ProcessIngestQueueWorker) emptyQueue() {
+    const logTitle = "ProcessIngestQueueWorker.emptyQueue"
     defer func() {
         if recovered := recover(); recovered != nil {
             w.LogException(fmt.Errorf("%v", recovered), logTitle)
@@ -50,7 +50,7 @@ func (w *ProcessIngestQueueWorker) processUntilQueueIsEmpty() {
 
     for {
         processIngestQueueResultDto, err := processingestqueue.ProcessIngestQueueServiceGetInstance().Invoke(
-            processingestqueue.ProcessIngestQueueDtoFromPrimitives(map[string]any{"maxBatches": maxBatchesPerRound}),
+            processingestqueue.ProcessIngestQueueDtoFromPrimitives(map[string]any{"maxBatches": enums.IngestLimitEnum.MAX_BATCHES_PER_WORKER_ROUND}),
         )
         if err != nil {
             w.LogException(err, logTitle)
@@ -60,7 +60,7 @@ func (w *ProcessIngestQueueWorker) processUntilQueueIsEmpty() {
             w.LogWarning(processIngestQueueResultDto.ToArray(), logTitle+" failed batches")
         }
         // menos lotes que el maximo, o alguno fallido (seguira pending): la cola queda para la siguiente pasada
-        if processIngestQueueResultDto.GetProcessedBatches() < maxBatchesPerRound {
+        if processIngestQueueResultDto.GetProcessedBatches() < enums.IngestLimitEnum.MAX_BATCHES_PER_WORKER_ROUND {
             return
         }
     }

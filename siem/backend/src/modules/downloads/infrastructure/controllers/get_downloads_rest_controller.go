@@ -1,11 +1,12 @@
 package controllers
 
 import (
-    "siem-backend/src/modules/downloads/application/getdownloads"
     "siem-backend/src/modules/shared/application"
     "siem-backend/src/modules/shared/infrastructure/components/httprequester"
     "siem-backend/src/modules/shared/infrastructure/components/httpresponder"
     sharedcontrollers "siem-backend/src/modules/shared/infrastructure/controllers"
+
+    "siem-backend/src/modules/downloads/application/getdownloads"
 )
 
 // GetDownloadsRestController GET /api/v1/downloads (Bearer del dashboard)

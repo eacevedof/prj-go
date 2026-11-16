@@ -6,24 +6,24 @@ import (
     "slices"
 
     "siem-backend/src/core/config"
-    eventsentities "siem-backend/src/modules/events/domain/entities"
-    eventsenums "siem-backend/src/modules/events/domain/enums"
-    eventsservices "siem-backend/src/modules/events/domain/services"
-    eventsrepositories "siem-backend/src/modules/events/infrastructure/repositories"
-    "siem-backend/src/modules/ingest/domain/enums"
-    "siem-backend/src/modules/ingest/infrastructure/repositories"
+
+    sharedenums "siem-backend/src/modules/shared/domain/enums"
+    "siem-backend/src/modules/shared/application"
+    "siem-backend/src/modules/shared/infrastructure/components/datetimer"
+    "siem-backend/src/modules/shared/infrastructure/traits"
+    sharedexceptions "siem-backend/src/modules/shared/infrastructure/exceptions"
+
     monitorsentities "siem-backend/src/modules/monitors/domain/entities"
     monitorsrepositories "siem-backend/src/modules/monitors/infrastructure/repositories"
-    "siem-backend/src/modules/shared/application"
-    sharedenums "siem-backend/src/modules/shared/domain/enums"
-    "siem-backend/src/modules/shared/infrastructure/components/datetimer"
-    sharedexceptions "siem-backend/src/modules/shared/infrastructure/exceptions"
-    "siem-backend/src/modules/shared/infrastructure/traits"
-)
 
-// un lote que falla se reintenta en las siguientes pasadas; al tercer fallo queda como failed (visible en el
-// dashboard) y deja de bloquear la cola
-const maxAttempts = 3
+    eventsenums "siem-backend/src/modules/events/domain/enums"
+    eventsentities "siem-backend/src/modules/events/domain/entities"
+    eventsservices "siem-backend/src/modules/events/domain/services"
+    eventsrepositories "siem-backend/src/modules/events/infrastructure/repositories"
+
+    "siem-backend/src/modules/ingest/domain/enums"
+    "siem-backend/src/modules/ingest/infrastructure/repositories"
+)
 
 // ProcessIngestQueueService vacia ingest_queue: cada lote pendiente (FIFO) se normaliza y pasa a events, con su
 // source al dia. Lo llaman el worker de la API (cada APP_QUEUE_WORKER_INTERVAL_SECONDS) y
@@ -75,7 +75,7 @@ func (s *ProcessIngestQueueService) Invoke(processIngestQueueDto *ProcessIngestQ
         return nil, err
     }
     for _, pendingBatch := range pendingBatches {
-        if err := s.processBatchOrMarkAsFailed(pendingBatch); err != nil {
+        if err := s.moveBatchToEventsOrMarkAsFailed(pendingBatch); err != nil {
             return nil, err
         }
     }
@@ -90,7 +90,7 @@ func (s *ProcessIngestQueueService) Invoke(processIngestQueueDto *ProcessIngestQ
 
 func (s *ProcessIngestQueueService) failIfWrongInput() error {
     maxBatches := s.processIngestQueueDto.GetMaxBatches()
-    if maxBatches >= 1 && maxBatches <= 1000 {
+    if maxBatches >= enums.IngestLimitEnum.MAX_BATCHES_MIN && maxBatches <= enums.IngestLimitEnum.MAX_BATCHES_MAX {
         return nil
     }
     return sharedexceptions.FieldsExceptionBadRequestCustom(
@@ -101,16 +101,16 @@ func (s *ProcessIngestQueueService) failIfWrongInput() error {
     )
 }
 
-// processBatchOrMarkAsFailed solo devuelve error si ni siquiera se puede anotar el fallo (la BD no responde).
-func (s *ProcessIngestQueueService) processBatchOrMarkAsFailed(pendingBatch map[string]any) error {
-    batchError := s.processBatch(pendingBatch)
+// moveBatchToEventsOrMarkAsFailed solo devuelve error si ni siquiera se puede anotar el fallo (la BD no responde).
+func (s *ProcessIngestQueueService) moveBatchToEventsOrMarkAsFailed(pendingBatch map[string]any) error {
+    batchError := s.moveBatchToEvents(pendingBatch)
     if batchError == nil {
         return nil
     }
 
     s.failedBatches++
     queueStatus := enums.QueueStatusEnum.PENDING
-    if application.GetInt(pendingBatch, enums.IngestKeyEnum.ATTEMPTS)+1 >= maxAttempts {
+    if application.GetInt(pendingBatch, enums.IngestKeyEnum.ATTEMPTS)+1 >= enums.IngestLimitEnum.MAX_ATTEMPTS {
         queueStatus = enums.QueueStatusEnum.FAILED
     }
     _, err := s.ingestQueueWriterSqliteRepository.UpdateBatchAfterFailureById(
@@ -122,7 +122,7 @@ func (s *ProcessIngestQueueService) processBatchOrMarkAsFailed(pendingBatch map[
     return err
 }
 
-func (s *ProcessIngestQueueService) processBatch(pendingBatch map[string]any) error {
+func (s *ProcessIngestQueueService) moveBatchToEvents(pendingBatch map[string]any) error {
     rawEvents := []map[string]any{}
     payload := application.ToString(pendingBatch[enums.IngestKeyEnum.PAYLOAD])
     if err := json.Unmarshal([]byte(payload), &rawEvents); err != nil {

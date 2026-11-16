@@ -1,10 +1,9 @@
+import { ProjectsKeyEnum } from "/js/Modules/Projects/Domain/Enums/ProjectsKeyEnum.js";
+import { ProjectsLimitEnum } from "/js/Modules/Projects/Domain/Enums/ProjectsLimitEnum.js";
 import { ProjectsMessageEnum } from "/js/Modules/Projects/Domain/Enums/ProjectsMessageEnum.js";
-import { ProjectsException } from "/js/Modules/Projects/Domain/Exceptions/ProjectsException.js";
 import { CreateProjectResultDto } from "/js/Modules/Projects/Application/CreateProject/CreateProjectResultDto.js";
 import { ProjectsWriterHttpRepository } from "/js/Modules/Projects/Infrastructure/Repositories/ProjectsWriterHttpRepository.js";
-
-const PROJECT_NAME_MAX_LENGTH = 100;
-const PROJECT_DESCRIPTION_MAX_LENGTH = 500;
+import { ProjectsException } from "/js/Modules/Projects/Domain/Exceptions/ProjectsException.js";
 
 /**
  * Alta de un proyecto desde el panel. Aqui solo lo evidente (nombre obligatorio y su longitud): el resto de reglas
@@ -34,15 +33,18 @@ export class CreateProjectService {
         if (!createProjectDto.getProjectName()) {
             ProjectsException.badRequestCustom([ProjectsMessageEnum.PROJECT_NAME_IS_REQUIRED]);
         }
-        if (createProjectDto.getProjectName().length > PROJECT_NAME_MAX_LENGTH) {
+        if (createProjectDto.getProjectName().length > ProjectsLimitEnum.PROJECT_NAME_MAX_LENGTH) {
             ProjectsException.badRequestCustom([ProjectsMessageEnum.PROJECT_NAME_MAX_LENGTH_IS_100]);
         }
-        if (createProjectDto.getProjectDescription().length > PROJECT_DESCRIPTION_MAX_LENGTH) {
+        if (createProjectDto.getProjectDescription().length > ProjectsLimitEnum.PROJECT_DESCRIPTION_MAX_LENGTH) {
             ProjectsException.badRequestCustom([ProjectsMessageEnum.PROJECT_DESCRIPTION_MAX_LENGTH_IS_500]);
         }
 
         const apiResponse = await this.#projectsWriterHttpRepository.createProject(
-            { project_name: createProjectDto.getProjectName(), project_description: createProjectDto.getProjectDescription() },
+            {
+                [ProjectsKeyEnum.PROJECT_NAME]: createProjectDto.getProjectName(),
+                [ProjectsKeyEnum.PROJECT_DESCRIPTION]: createProjectDto.getProjectDescription(),
+            },
             createProjectDto.getDashboardToken()
         );
         if (!apiResponse.status) {
@@ -51,8 +53,8 @@ export class CreateProjectService {
 
         const project = apiResponse.data ?? {};
         return CreateProjectResultDto.fromPrimitives({
-            projectUuid: project.project_uuid,
-            projectName: project.project_name,
+            projectUuid: project[ProjectsKeyEnum.PROJECT_UUID],
+            projectName: project[ProjectsKeyEnum.PROJECT_NAME],
         });
     }
 }

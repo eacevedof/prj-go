@@ -5,9 +5,10 @@ import (
     "fmt"
     "strings"
 
-    "siem-backend/src/modules/events/domain/entities"
-    "siem-backend/src/modules/events/domain/enums"
     sharedrepositories "siem-backend/src/modules/shared/infrastructure/repositories"
+
+    "siem-backend/src/modules/events/domain/enums"
+    "siem-backend/src/modules/events/domain/entities"
 )
 
 // tablas que usan los filtros y las facetas: events + su proyecto, su agente y su source
@@ -21,13 +22,13 @@ const eventsFromSql = `
 // columna salen SOLO de estos mapas, nunca de la peticion.
 var (
     columnsByFilterField = map[string]string{
-        "project_uuid": "p.project_uuid",
-        "agent_uuid":   "a.agent_uuid",
-        "severity":     "e.severity",
-        "event_type":   "e.event_type",
-        "source_type":  "s.source_type",
-        "source_name":  "s.source_name",
-        "monitor_uuid": "e.monitor_uuid",
+        enums.EventsFilterFieldEnum.PROJECT_UUID: "p.project_uuid",
+        enums.EventsFilterFieldEnum.AGENT_UUID:   "a.agent_uuid",
+        enums.EventsFilterFieldEnum.SEVERITY:     "e.severity",
+        enums.EventsFilterFieldEnum.EVENT_TYPE:   "e.event_type",
+        enums.EventsFilterFieldEnum.SOURCE_TYPE:  "s.source_type",
+        enums.EventsFilterFieldEnum.SOURCE_NAME:  "s.source_name",
+        enums.EventsFilterFieldEnum.MONITOR_UUID: "e.monitor_uuid",
     }
     // columnas que pueden ir a NULL (los eventos que no son de un monitor): al excluir hay que conservarlos, porque
     // NULL NOT IN (...) no es verdadero y "excluir el monitor X" los quitaria todos
@@ -36,12 +37,12 @@ var (
     }
     // faceta -> columna que se muestra y columna por la que se filtra (agente y proyecto: se ven por nombre, se filtran por uuid)
     columnsByFacetField = map[string][2]string{
-        "severity":     {"e.severity", "e.severity"},
-        "event_type":   {"e.event_type", "e.event_type"},
-        "source_type":  {"s.source_type", "s.source_type"},
-        "source_name":  {"s.source_name", "s.source_name"},
-        "agent_name":   {"a.agent_name", "a.agent_uuid"},
-        "project_name": {"p.project_name", "p.project_uuid"},
+        enums.EventsFacetFieldEnum.SEVERITY:     {"e.severity", "e.severity"},
+        enums.EventsFacetFieldEnum.EVENT_TYPE:   {"e.event_type", "e.event_type"},
+        enums.EventsFacetFieldEnum.SOURCE_TYPE:  {"s.source_type", "s.source_type"},
+        enums.EventsFacetFieldEnum.SOURCE_NAME:  {"s.source_name", "s.source_name"},
+        enums.EventsFacetFieldEnum.AGENT_NAME:   {"a.agent_name", "a.agent_uuid"},
+        enums.EventsFacetFieldEnum.PROJECT_NAME: {"p.project_name", "p.project_uuid"},
     }
 )
 

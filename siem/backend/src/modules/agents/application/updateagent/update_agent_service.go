@@ -2,15 +2,17 @@ package updateagent
 
 import (
     "siem-backend/src/core/config"
-    "siem-backend/src/modules/agents/domain/entities"
-    "siem-backend/src/modules/agents/domain/enums"
-    "siem-backend/src/modules/agents/domain/exceptions"
-    "siem-backend/src/modules/agents/domain/services"
-    "siem-backend/src/modules/agents/infrastructure/repositories"
+
     sharedenums "siem-backend/src/modules/shared/domain/enums"
     "siem-backend/src/modules/shared/infrastructure/components/datetimer"
-    sharedexceptions "siem-backend/src/modules/shared/infrastructure/exceptions"
     "siem-backend/src/modules/shared/infrastructure/traits"
+    sharedexceptions "siem-backend/src/modules/shared/infrastructure/exceptions"
+
+    "siem-backend/src/modules/agents/domain/enums"
+    "siem-backend/src/modules/agents/domain/entities"
+    "siem-backend/src/modules/agents/domain/services"
+    "siem-backend/src/modules/agents/infrastructure/repositories"
+    "siem-backend/src/modules/agents/domain/exceptions"
 )
 
 // UpdateAgentService cambia nombre, latido y si esta activo un agente desde el panel. El token no cambia. Desactivado,

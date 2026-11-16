@@ -3,11 +3,11 @@ package repositories
 import (
     "fmt"
 
-    "siem-backend/src/modules/events/domain/entities"
     sharedrepositories "siem-backend/src/modules/shared/infrastructure/repositories"
-)
 
-const lastMessageMaxLength = 500
+    "siem-backend/src/modules/events/domain/enums"
+    "siem-backend/src/modules/events/domain/entities"
+)
 
 type SourcesWriterSqliteRepository struct {
     sharedrepositories.AbstractSqliteRepository
@@ -40,8 +40,8 @@ func (r *SourcesWriterSqliteRepository) UpdateLastEventById(sourceId int, lastEv
         lastExitCode = lastEventEntity.GetExitCode()
     }
     lastMessage := []rune(lastEventEntity.GetMessage())
-    if len(lastMessage) > lastMessageMaxLength {
-        lastMessage = lastMessage[:lastMessageMaxLength]
+    if len(lastMessage) > enums.EventsLimitEnum.LAST_MESSAGE_MAX_LENGTH {
+        lastMessage = lastMessage[:enums.EventsLimitEnum.LAST_MESSAGE_MAX_LENGTH]
     }
 
     sql := fmt.Sprintf(`

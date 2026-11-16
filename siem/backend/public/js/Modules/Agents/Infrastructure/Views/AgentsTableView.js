@@ -1,3 +1,4 @@
+import { RouteHashEnum } from "/js/Modules/Shared/Domain/Enums/RouteHashEnum.js";
 import { DateTimer } from "/js/Modules/Shared/Infrastructure/Components/DateTimer.js";
 import { Dispatcher } from "/js/Modules/Shared/Infrastructure/Components/Dispatcher.js";
 import { Htmler } from "/js/Modules/Shared/Infrastructure/Components/Htmler.js";
@@ -19,7 +20,6 @@ const ACTION_CANCEL_DELETE = "cancel-delete";
 // el buscador no repinta en cada tecla
 const TEXT_FILTER_DEBOUNCE_MS = 300;
 const COLUMNS_COUNT = 7;
-const EVENTS_HASH = "#/events";
 // color de cada contador de 24 h segun su gravedad (gris si es 0); las mismas clases que la tabla de proyectos
 const COUNT_CSS_WARNING = "count-warning";
 const COUNT_CSS_ERROR = "count-error";
@@ -301,23 +301,21 @@ export class AgentsTableView {
      */
     #getHtmlAgentDetail(agent) {
         const h = this.#htmler;
-        const n = this.#numberFormatter;
-        const eventsUrl = `${EVENTS_HASH}?project_uuid=${encodeURIComponent(this.#projectUuid)}&agent_uuid=${encodeURIComponent(agent[AgentsKeyEnum.AGENT_UUID] ?? "")}`;
+        const eventsUrl = `${RouteHashEnum.EVENTS}?project_uuid=${encodeURIComponent(this.#projectUuid)}&agent_uuid=${encodeURIComponent(agent[AgentsKeyEnum.AGENT_UUID] ?? "")}`;
         return `
             <dl class="facts">
                 <dt>Último latido (UTC)</dt><dd>${h.getEscaped(this.#dateTimer.getUtcDateTime(agent[AgentsKeyEnum.LAST_SEEN_AT]))}
                     <span class="muted">${this.#dateTimer.getTimeAgo(agent[AgentsKeyEnum.LAST_SEEN_AT], this.#serverNow)}</span></dd>
-                <dt>Latido esperado</dt><dd>cada ${n.getNumber(agent[AgentsKeyEnum.HEARTBEAT_INTERVAL_SECONDS])} s</dd>
+                <dt>Latido esperado</dt><dd>cada ${this.#numberFormatter.getNumber(agent[AgentsKeyEnum.HEARTBEAT_INTERVAL_SECONDS])} s</dd>
                 <dt>Host</dt><dd>${h.getEscaped(this.#getHostText(agent))}</dd>
                 <dt>Cliente</dt><dd>${h.getEscaped(agent[AgentsKeyEnum.CLIENT_VERSION] || "?")}</dd>
-                <dt>24 h</dt><dd>${n.getNumber(agent[AgentsKeyEnum.EVENTS_24H])} eventos · <a href="${eventsUrl}">${h.getEscaped(AgentsTextEnum.EVENTS)}</a></dd>
+                <dt>24 h</dt><dd>${this.#numberFormatter.getNumber(agent[AgentsKeyEnum.EVENTS_24H])} eventos · <a href="${eventsUrl}">${h.getEscaped(AgentsTextEnum.EVENTS)}</a></dd>
             </dl>
             ${this.#getHtmlSources(agent[AgentsKeyEnum.SOURCES] ?? [], eventsUrl)}`;
     }
 
     #getHtmlSources(sources, agentEventsUrl) {
         const h = this.#htmler;
-        const n = this.#numberFormatter;
         if (sources.length === 0) {
             return `<p class="empty">${h.getEscaped(AgentsTextEnum.NO_SOURCES)}</p>`;
         }
@@ -330,7 +328,7 @@ export class AgentsTableView {
                 <td class="num">${index + 1}</td>
                 <td class="mono">${h.getEscaped(source.source_type)}</td>
                 <td><a href="${agentEventsUrl}&source_name=${encodeURIComponent(source.source_name)}">${h.getEscaped(source.source_name)}</a></td>
-                <td class="num">${n.getNumber(source.events_count)}</td>
+                <td class="num">${this.#numberFormatter.getNumber(source.events_count)}</td>
                 <td class="nowrap mono">${h.getEscaped(this.#dateTimer.getUtcDateTime(source.last_event_at))}<br>
                     <span class="muted">${this.#dateTimer.getTimeAgo(source.last_event_at, this.#serverNow)}</span></td>
                 <td>${source.last_severity ? h.getBadge(source.last_severity) : ""}</td>

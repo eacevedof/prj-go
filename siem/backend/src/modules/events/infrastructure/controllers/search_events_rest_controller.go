@@ -1,15 +1,16 @@
 package controllers
 
 import (
-    "siem-backend/src/modules/events/application/geteventsfacets"
-    "siem-backend/src/modules/events/application/geteventsfilteroptions"
-    "siem-backend/src/modules/events/application/geteventshistogram"
-    "siem-backend/src/modules/events/application/searchevents"
-    "siem-backend/src/modules/events/domain/enums"
     "siem-backend/src/modules/shared/application"
     "siem-backend/src/modules/shared/infrastructure/components/httprequester"
     "siem-backend/src/modules/shared/infrastructure/components/httpresponder"
     sharedcontrollers "siem-backend/src/modules/shared/infrastructure/controllers"
+
+    "siem-backend/src/modules/events/domain/enums"
+    "siem-backend/src/modules/events/application/geteventsfacets"
+    "siem-backend/src/modules/events/application/geteventsfilteroptions"
+    "siem-backend/src/modules/events/application/geteventshistogram"
+    "siem-backend/src/modules/events/application/searchevents"
 )
 
 // Los tres controllers REST de busqueda del visor de eventos (Bearer del dashboard) comparten los mismos parametros:

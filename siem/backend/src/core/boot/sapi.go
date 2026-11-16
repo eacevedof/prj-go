@@ -1,6 +1,10 @@
 package boot
 
-import "time"
+import (
+    "time"
+
+    "siem-backend/src/modules/shared/infrastructure/components/datetimer"
+)
 
 // Equivalente a php_sapi_name(): "server" para la API y "cli" para la consola. Lo fija el main de cada
 // binario al arrancar (cmd/console llama a SetSapiNameCli) y es de solo lectura despues.
@@ -24,7 +28,7 @@ func IsCli() bool {
 }
 
 // arranque del proceso (UTC): lo lee EnvironmentReaderRawRepository.GetAppStartedAt para el uptime del dashboard
-var appStartedAt = time.Now().UTC().Format("2006-01-02 15:04:05")
+var appStartedAt = time.Now().UTC().Format(datetimer.FORMAT_FULL_DT)
 
 func GetAppStartedAt() string {
     return appStartedAt

@@ -7,6 +7,7 @@ import (
 
     _ "modernc.org/sqlite"
 
+    "siem-backend/src/modules/shared/domain/enums"
     "siem-backend/src/modules/shared/infrastructure/repositories/configuration"
 )
 
@@ -28,7 +29,7 @@ func GetInstance() *DbFactory {
 func (f *DbFactory) GetSqlitePdoByEnvConfiguration() (*sql.DB, error) {
     pathSqlite := configuration.GetInstance().GetSqlitePath()
     if pathSqlite == "" {
-        return nil, errors.New("missing env APP_SQLITE_PATH")
+        return nil, errors.New(enums.SharedMessageEnum.MISSING_ENV_SQLITE_PATH)
     }
 
     sqliteDbsMutex.Lock()

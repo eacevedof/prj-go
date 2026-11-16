@@ -5,6 +5,7 @@ const HTML_ENTITIES = Object.freeze({
     "\"": "&quot;",
     "'": "&#39;",
 });
+const COPY_LABEL = "Copiar";
 
 /**
  * Todo texto que viene de la API o del usuario se escapa antes de entrar en innerHTML (XSS). Tambien monta las piezas
@@ -43,7 +44,7 @@ export class Htmler {
      * @param {string} label
      * @returns {string}
      */
-    getCopyButton(text, label = "Copiar") {
+    getCopyButton(text, label = COPY_LABEL) {
         return `<button type="button" class="button button-small button-copy" data-copy="${this.getEscaped(text)}">${this.getEscaped(label)}</button>`;
     }
 

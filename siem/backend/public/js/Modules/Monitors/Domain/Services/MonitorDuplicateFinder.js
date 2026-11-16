@@ -1,14 +1,12 @@
+import { MonitorDuplicateReasonEnum } from "/js/Modules/Monitors/Domain/Enums/MonitorDuplicateReasonEnum.js";
 import { MonitorDefaultEnum, MonitorTypeEnum } from "/js/Modules/Monitors/Domain/Enums/MonitorTypeEnum.js";
 
 const WINDOWS_PATH_PATTERN = /^[A-Za-z]:[\\/]/;
+const TRAILING_SEPARATOR_PATTERN = /[\\/]$/;
 const UNIX_ROOT_LENGTH = 1;
 // "C:\"
 const WINDOWS_ROOT_LENGTH = 3;
-
-export const DuplicateReasonEnum = Object.freeze({
-    NAME: "name",
-    RESOURCE: "resource",
-});
+const RESOURCE_KEY_SEPARATOR = "|";
 
 /**
  * El monitor del proyecto con el que chocaria uno nuevo o editado, para avisar en el modal antes de enviarlo:
@@ -38,14 +36,14 @@ export class MonitorDuplicateFinder {
         const candidateName = candidate.monitorName.trim().toLowerCase();
         const sameNameMonitor = otherMonitors.find((monitor) => String(monitor.monitor_name).toLowerCase() === candidateName);
         if (candidateName !== "" && sameNameMonitor) {
-            return { monitor: sameNameMonitor, reason: DuplicateReasonEnum.NAME };
+            return { monitor: sameNameMonitor, reason: MonitorDuplicateReasonEnum.NAME };
         }
 
         const resourceKey = this.getResourceKey(candidate.monitorType, candidate.config);
         const sameResourceMonitor = otherMonitors.find((monitor) => monitor.monitor_type === candidate.monitorType
             && this.#isSameScope(candidate.agentUuid, monitor.agent_uuid ?? "")
             && this.getResourceKey(monitor.monitor_type, monitor.config ?? {}) === resourceKey);
-        return sameResourceMonitor ? { monitor: sameResourceMonitor, reason: DuplicateReasonEnum.RESOURCE } : null;
+        return sameResourceMonitor ? { monitor: sameResourceMonitor, reason: MonitorDuplicateReasonEnum.RESOURCE } : null;
     }
 
     /**
@@ -70,7 +68,7 @@ export class MonitorDuplicateFinder {
                 keyParts.push(this.#getComparablePath(config.path), this.#getFilesPattern(config), String(config.match ?? ""));
                 break;
         }
-        return keyParts.join("|");
+        return keyParts.join(RESOURCE_KEY_SEPARATOR);
     }
 
     #isSameScope(candidateAgentUuid, monitorAgentUuid) {
@@ -89,7 +87,7 @@ export class MonitorDuplicateFinder {
         let comparablePath = String(rawPath ?? "").trim();
         const isWindowsPath = WINDOWS_PATH_PATTERN.test(comparablePath);
         const rootLength = isWindowsPath ? WINDOWS_ROOT_LENGTH : UNIX_ROOT_LENGTH;
-        while (comparablePath.length > rootLength && /[\\/]$/.test(comparablePath)) {
+        while (comparablePath.length > rootLength && TRAILING_SEPARATOR_PATTERN.test(comparablePath)) {
             comparablePath = comparablePath.slice(0, -1);
         }
         return isWindowsPath ? comparablePath.toLowerCase() : comparablePath;

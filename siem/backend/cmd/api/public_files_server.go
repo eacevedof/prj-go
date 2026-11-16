@@ -13,6 +13,7 @@ import (
     "time"
 
     "siem-backend/src/core/boot"
+    "siem-backend/src/modules/shared/domain/enums"
 )
 
 const (
@@ -61,10 +62,10 @@ func (s *PublicFilesServer) ServeHTTP(responseWriter http.ResponseWriter, reques
     // el front son ~130 modulos sin build ni hash en el nombre: sin esto el navegador decide por su cuenta cuanto
     // los da por buenos y, tras actualizar, mezcla modulos nuevos con viejos. no-cache = guardalos, pero pregunta
     // siempre si han cambiado (304 si no): nunca se sirve una version antigua.
-    responseWriter.Header().Set("Cache-Control", "no-cache")
+    responseWriter.Header().Set(enums.HttpEnum.HEADER_CACHE_CONTROL, "no-cache")
     if urlPath == indexUrlPath {
         if indexHtml := s.getIndexHtmlWithModulePreloads(pathFile); indexHtml != nil {
-            responseWriter.Header().Set("Content-Type", "text/html; charset=utf-8")
+            responseWriter.Header().Set(enums.HttpEnum.HEADER_CONTENT_TYPE, enums.HttpEnum.CONTENT_TYPE_HTML)
             _, _ = responseWriter.Write(indexHtml)
             return
         }

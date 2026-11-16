@@ -3,9 +3,10 @@ package repositories
 import (
     "fmt"
 
-    "siem-backend/src/modules/agents/domain/entities"
     "siem-backend/src/modules/shared/application"
     sharedrepositories "siem-backend/src/modules/shared/infrastructure/repositories"
+
+    "siem-backend/src/modules/agents/domain/entities"
 )
 
 const agentColumns = `

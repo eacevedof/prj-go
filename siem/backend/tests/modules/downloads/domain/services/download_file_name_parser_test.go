@@ -14,9 +14,9 @@ func TestBinaryNamesAreParsed(t *testing.T) {
         "siem-client-windows-0.3.0.exe": {"windows", "amd64", "0.3.0"},
         "siem-client-macos-1.12.4":      {"macos", "arm64", "1.12.4"},
     } {
-        os, arch, version, isBinary := downloadFileNameParser.GetOsArchAndVersion(fileName)
+        osName, architecture, version, isBinary := downloadFileNameParser.GetOsArchAndVersion(fileName)
         tests.AssertEquals(t, true, isBinary, fileName)
-        tests.AssertEquals(t, expected, [3]string{os, arch, version}, fileName)
+        tests.AssertEquals(t, expected, [3]string{osName, architecture, version}, fileName)
     }
 }
 

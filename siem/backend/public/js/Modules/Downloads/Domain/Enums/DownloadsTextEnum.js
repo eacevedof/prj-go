@@ -2,6 +2,16 @@
  * Textos del camino feliz de Descargas (los ve una persona: en español).
  */
 export const DownloadsTextEnum = Object.freeze({
+    NO_PROJECTS: "(no hay proyectos: créalo en Proyectos)",
+    TOKEN_READY: "Token listo: va en los comandos del paso 3.",
+    TOKEN_MISSING: "Sin token todavía: el instalador lo pedirá al ejecutarlo.",
+    // lo que hace el instalador asistido, para que se sepa antes de lanzarlo
+    INSTALLER_DOES: Object.freeze([
+        "pide lo que falte (dirección del panel, token)",
+        "descarga el binario de este panel y comprueba su sha256",
+        "escribe el .env y prueba la conexión con el panel",
+        "lo deja arrancando con el sistema (systemd en Linux, tarea programada en Windows)",
+    ]),
     MACOS_TROUBLESHOOTING_TITLE: "Si falla en Mac",
     MACOS_TROUBLESHOOTING_INTRO: "El binario de macOS se compila desde Linux (Go lo permite sin un Mac), pero no está firmado por Apple ni se ha probado aún en un Mac de verdad. Estos son los fallos esperables y cómo salir de ellos. <ruta> es la carpeta del agente: /opt/siem-client con el instalador, /usr/local/siem-client siguiendo el paso a paso.",
     // {problem, fix, code?}: code = comando para copiar ("" = sin comando)

@@ -3,10 +3,11 @@ package commands
 import (
     "errors"
 
-    "siem-backend/src/modules/ingest/application/processingestqueue"
-    "siem-backend/src/modules/ingest/domain/enums"
     sharedcommands "siem-backend/src/modules/shared/infrastructure/commands"
     sharedexceptions "siem-backend/src/modules/shared/infrastructure/exceptions"
+
+    "siem-backend/src/modules/ingest/domain/enums"
+    "siem-backend/src/modules/ingest/application/processingestqueue"
 )
 
 // ProcessIngestQueueCommand ./console ingest-queue-process --max_batches=100

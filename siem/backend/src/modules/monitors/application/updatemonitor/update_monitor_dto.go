@@ -1,8 +1,9 @@
 package updatemonitor
 
 import (
-    "siem-backend/src/modules/monitors/application/monitorinput"
     "siem-backend/src/modules/shared/application"
+
+    "siem-backend/src/modules/monitors/application/monitorinput"
 )
 
 // UpdateMonitorDto PUT /api/v1/monitors/:monitor_uuid  (todos los campos editables; monitor_type no cambia)

@@ -1,5 +1,9 @@
 import { TIME_RANGE_SECONDS } from "/js/Modules/Events/Domain/Enums/TimeRangeEnum.js";
 
+const MILLISECONDS_PER_SECOND = 1000;
+// "YYYY-MM-DDTHH:MM:SS" de toISOString(), sin milisegundos ni Z
+const ISO_DATE_TIME_LENGTH = 19;
+
 /**
  * Del rango del visor (un atajo relativo o un rango a medida) al from/to UTC que entiende la API. El reloj se le pasa:
  * funciones puras. Fechas "YYYY-MM-DD HH:MM:SS" en UTC.
@@ -24,7 +28,7 @@ export class TimeRangeResolver {
             return { from: state.from, to: state.to };
         }
         return {
-            from: this.#getFormatted(new Date(now.getTime() - rangeSeconds * 1000)),
+            from: this.#getFormatted(new Date(now.getTime() - rangeSeconds * MILLISECONDS_PER_SECOND)),
             to: this.#getFormatted(now),
         };
     }
@@ -41,7 +45,7 @@ export class TimeRangeResolver {
         const seconds = Math.max(1, Number(bucketSeconds) || 1);
         return {
             from: this.#getFormatted(start),
-            to: this.#getFormatted(new Date(start.getTime() + (seconds - 1) * 1000)),
+            to: this.#getFormatted(new Date(start.getTime() + (seconds - 1) * MILLISECONDS_PER_SECOND)),
         };
     }
 
@@ -50,6 +54,6 @@ export class TimeRangeResolver {
     }
 
     #getFormatted(date) {
-        return date.toISOString().slice(0, 19).replace("T", " ");
+        return date.toISOString().slice(0, ISO_DATE_TIME_LENGTH).replace("T", " ");
     }
 }

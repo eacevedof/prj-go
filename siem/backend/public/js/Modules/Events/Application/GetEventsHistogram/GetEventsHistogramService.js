@@ -1,8 +1,8 @@
 import { EventsKeyEnum } from "/js/Modules/Events/Domain/Enums/EventsKeyEnum.js";
-import { EventsException } from "/js/Modules/Events/Domain/Exceptions/EventsException.js";
 import { EventsQueryParser } from "/js/Modules/Events/Domain/Services/EventsQueryParser.js";
 import { GetEventsHistogramResultDto } from "/js/Modules/Events/Application/GetEventsHistogram/GetEventsHistogramResultDto.js";
 import { EventsReaderHttpRepository } from "/js/Modules/Events/Infrastructure/Repositories/EventsReaderHttpRepository.js";
+import { EventsException } from "/js/Modules/Events/Domain/Exceptions/EventsException.js";
 
 /**
  * Cuantos eventos hay por tramo de tiempo y gravedad con los filtros del visor: los datos del histograma. Los tramos

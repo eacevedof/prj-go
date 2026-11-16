@@ -13,10 +13,9 @@ import (
     "strings"
     "time"
 
+    "siem-backend/src/modules/shared/domain/enums"
     "siem-backend/src/modules/shared/infrastructure/repositories/configuration"
 )
-
-const defaultSendmailPath = "/usr/sbin/sendmail -t -i"
 
 // FuncMailer el mail() de PHP: html y adjuntos opcionales, entregado al comando de APP_SENDMAIL_PATH (el
 // sendmail_path del php.ini). En local es el sendmail de busybox apuntando a Mailpit (docker/app/Dockerfile).
@@ -32,7 +31,7 @@ func GetInstance() *FuncMailer {
 
 func (m *FuncMailer) Send() error {
     if m.emailFrom == "" || len(m.emailsTo) == 0 {
-        return errors.New("FuncMailer: email from and at least one email to are required")
+        return errors.New(enums.SharedMessageEnum.MAILER_FROM_AND_TO_REQUIRED)
     }
 
     m.loadBoundary()
@@ -54,7 +53,7 @@ func (m *FuncMailer) Send() error {
 func (m *FuncMailer) sendmail(to string, subject string, content string, headers string) error {
     sendmailPath := configuration.GetInstance().GetSendmailPath()
     if sendmailPath == "" {
-        sendmailPath = defaultSendmailPath
+        sendmailPath = enums.AppEnvDefaultEnum.SENDMAIL_PATH
     }
     sendmailCommand := strings.Fields(sendmailPath)
 
@@ -64,7 +63,7 @@ func (m *FuncMailer) sendmail(to string, subject string, content string, headers
     var stderr bytes.Buffer
     command.Stderr = &stderr
     if err := command.Run(); err != nil {
-        return fmt.Errorf("FuncMailer: mail() failed. %w %s", err, strings.TrimSpace(stderr.String()))
+        return fmt.Errorf(enums.SharedMessageEnum.MAILER_SENDMAIL_FAILED, err, strings.TrimSpace(stderr.String()))
     }
     return nil
 }
@@ -132,29 +131,29 @@ func (m *FuncMailer) getAttachment(attachment MailAttachment) string {
         return ""
     }
 
-    mime := attachment.Mime
-    if mime == "" {
-        mime = "application/octet-stream"
+    mimeType := attachment.Mime
+    if mimeType == "" {
+        mimeType = "application/octet-stream"
     }
-    alias := attachment.FileName
-    if alias == "" {
-        alias = filepath.Base(attachment.Path)
+    attachmentFileName := attachment.FileName
+    if attachmentFileName == "" {
+        attachmentFileName = filepath.Base(attachment.Path)
     }
 
     return strings.Join([]string{
         "",
         "--" + m.boundary,
-        "Content-Type: " + mime + "; name=\"" + alias + "\"",
+        "Content-Type: " + mimeType + "; name=\"" + attachmentFileName + "\"",
         "Content-Transfer-Encoding: base64",
         "Content-Disposition: attachment; ",
-        chunkSplit(base64.StdEncoding.EncodeToString(content), 76),
+        m.getChunkSplit(base64.StdEncoding.EncodeToString(content), 76),
         "--" + m.boundary + "--",
         "",
     }, "\n")
 }
 
-// chunkSplit chunk_split(): trozos de chunkLength con "\r\n" detras de cada uno.
-func chunkSplit(text string, chunkLength int) string {
+// getChunkSplit chunk_split(): trozos de chunkLength con "\r\n" detras de cada uno.
+func (m *FuncMailer) getChunkSplit(text string, chunkLength int) string {
     var chunks strings.Builder
     for start := 0; start < len(text); start += chunkLength {
         end := min(start+chunkLength, len(text))

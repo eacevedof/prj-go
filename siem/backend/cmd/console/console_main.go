@@ -10,6 +10,7 @@ import (
     "siem-backend/src/console/application"
     "siem-backend/src/core/boot"
     "siem-backend/src/core/config"
+    "siem-backend/src/modules/shared/domain/enums"
     "siem-backend/src/modules/shared/infrastructure/components/uuid"
     "siem-backend/src/modules/shared/infrastructure/repositories/configuration"
 )
@@ -30,14 +31,14 @@ func (m *ConsoleMain) Exec() {
     defer func() {
         if recovered := recover(); recovered != nil {
             err := fmt.Errorf("%v", recovered)
-            debugError(err)
-            onError(err)
+            m.printDebugError(err)
+            m.logUnexpectedError(err)
         }
     }()
 
     if err := m.invokeConsoleServiceWithArgs(); err != nil {
-        debugError(err)
-        onError(err)
+        m.printDebugError(err)
+        m.logUnexpectedError(err)
     }
 }
 
@@ -62,16 +63,16 @@ func (m *ConsoleMain) invokeConsoleServiceWithArgs() error {
         commandConfig.Service(input).Run()
         return nil
     }
-    return errors.New("no class found for cmd " + alias)
+    return errors.New(config.Tr(enums.SharedMessageEnum.CONSOLE_COMMAND_NOT_FOUND, alias))
 }
 
-func onError(err error) {
+func (m *ConsoleMain) logUnexpectedError(err error) {
     errorUuid := uuid.GetInstance().GetUniqueIdWithPrefix("")
     config.Lgerr(err.Error(), "console-exception "+errorUuid, "error")
     config.Lgerr(string(debug.Stack()), "console-exception "+errorUuid+" TRACE", "error")
 }
 
-func debugError(err error) {
+func (m *ConsoleMain) printDebugError(err error) {
     environmentReaderRawRepository := configuration.GetInstance()
     if environmentReaderRawRepository.IsProduction() || !environmentReaderRawRepository.IsDebug() {
         return
@@ -79,8 +80,8 @@ func debugError(err error) {
     fmt.Printf("Exception: %s\nresponse: 500\n", err.Error())
 }
 
-// argvWithArgv0 os.Args con el alias en la posicion 1, como el $argv de PHP.
-func argvWithArgv0() []string {
+// getArgvWithArgv0 os.Args con el alias en la posicion 1, como el $argv de PHP.
+func getArgvWithArgv0() []string {
     if len(os.Args) == 0 {
         return []string{"console"}
     }

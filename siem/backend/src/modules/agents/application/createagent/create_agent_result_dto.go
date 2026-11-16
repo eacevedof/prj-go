@@ -1,8 +1,9 @@
 package createagent
 
 import (
-    "siem-backend/src/modules/agents/domain/entities"
     "siem-backend/src/modules/shared/application"
+
+    "siem-backend/src/modules/agents/domain/entities"
 )
 
 type CreateAgentResultDto struct {

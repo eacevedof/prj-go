@@ -2,12 +2,14 @@ import { HttpCodeEnum } from "/js/Modules/Shared/Domain/Enums/HttpCodeEnum.js";
 import { Dispatcher } from "/js/Modules/Shared/Infrastructure/Components/Dispatcher.js";
 import { SessionStorer } from "/js/Modules/Shared/Infrastructure/Components/SessionStorer.js";
 import { Subscriber } from "/js/Modules/Shared/Infrastructure/Components/Subscriber.js";
+import { TextFormatter } from "/js/Modules/Shared/Infrastructure/Components/TextFormatter.js";
 import { NavigationView } from "/js/Modules/Shared/Infrastructure/Views/NavigationView.js";
 
 import { SessionEventEnum } from "/js/Modules/Session/Domain/Enums/SessionEventEnum.js";
 
 import { MonitorsEventEnum } from "/js/Modules/Monitors/Domain/Enums/MonitorsEventEnum.js";
 import { MonitorsMessageEnum } from "/js/Modules/Monitors/Domain/Enums/MonitorsMessageEnum.js";
+import { MonitorsTextEnum } from "/js/Modules/Monitors/Domain/Enums/MonitorsTextEnum.js";
 import { UpdateMonitorDto } from "/js/Modules/Monitors/Application/UpdateMonitor/UpdateMonitorDto.js";
 import { UpdateMonitorService } from "/js/Modules/Monitors/Application/UpdateMonitor/UpdateMonitorService.js";
 import { MonitorsView } from "/js/Modules/Monitors/Infrastructure/Views/MonitorsView.js";
@@ -22,6 +24,7 @@ export class UpdateMonitorController {
     #dispatcher;
     #sessionStorer;
     #subscriber;
+    #textFormatter;
     #navigationView;
     #monitorsView;
 
@@ -29,6 +32,7 @@ export class UpdateMonitorController {
         this.#dispatcher = Dispatcher.getInstance();
         this.#sessionStorer = SessionStorer.getInstance();
         this.#subscriber = Subscriber.getInstance();
+        this.#textFormatter = TextFormatter.getInstance();
         this.#navigationView = NavigationView.getInstance();
         this.#monitorsView = MonitorsView.getInstance();
     }
@@ -55,7 +59,9 @@ export class UpdateMonitorController {
                 UpdateMonitorDto.fromPrimitives({ ...request, dashboardToken: this.#sessionStorer.getDashboardToken() })
             );
             if (!isFromTable) {
-                this.#monitorsView.renderSaved(`Monitor ${updateMonitorResultDto.getMonitorName()} guardado.`);
+                this.#monitorsView.renderSaved(
+                    this.#textFormatter.getFormatted(MonitorsTextEnum.MONITOR_UPDATED, updateMonitorResultDto.getMonitorName())
+                );
             }
             this.#navigationView.renderCurrentScreen();
         }

@@ -3,16 +3,19 @@ package controllers
 import (
     "strings"
 
-    "siem-backend/src/modules/agents/application/createagent"
-    "siem-backend/src/modules/agents/application/deleteagent"
-    "siem-backend/src/modules/agents/application/updateagent"
-    "siem-backend/src/modules/agents/domain/entities"
-    "siem-backend/src/modules/agents/domain/enums"
-    "siem-backend/src/modules/shared/infrastructure/repositories/configuration"
     "siem-backend/src/modules/shared/application"
     "siem-backend/src/modules/shared/infrastructure/components/httprequester"
     "siem-backend/src/modules/shared/infrastructure/components/httpresponder"
+    "siem-backend/src/modules/shared/infrastructure/repositories/configuration"
     sharedcontrollers "siem-backend/src/modules/shared/infrastructure/controllers"
+
+    downloadsenums "siem-backend/src/modules/downloads/domain/enums"
+
+    "siem-backend/src/modules/agents/domain/enums"
+    "siem-backend/src/modules/agents/domain/entities"
+    "siem-backend/src/modules/agents/application/createagent"
+    "siem-backend/src/modules/agents/application/deleteagent"
+    "siem-backend/src/modules/agents/application/updateagent"
 )
 
 // CreateAgentRestController POST /api/v1/projects/:project_uuid/agents (Bearer del dashboard)
@@ -48,11 +51,11 @@ func (c *CreateAgentRestController) Invoke(projectUuid string) *httpresponder.Ht
     // endpoint_url: lo que el panel pone en el .env que se copia junto al token (la misma url que da /downloads)
     return c.RespondCreated(createdAgentPrimitives{
         AgentWithApiTokenPrimitives: createAgentResultDto.ToArray(),
-        EndpointUrl:                 strings.TrimRight(configuration.GetInstance().GetBaseUrl(), "/") + ingestPath,
+        EndpointUrl:                 strings.TrimRight(
+            configuration.GetInstance().GetBaseUrl(), downloadsenums.DownloadsConstantsEnum.URL_SEPARATOR,
+        ) + downloadsenums.DownloadsConstantsEnum.INGEST_PATH,
     })
 }
-
-const ingestPath = "/api/v1/ingest-batches"
 
 // createdAgentPrimitives la respuesta del alta por REST: el agente, su api_token (una vez) y a donde tiene que enviar.
 type createdAgentPrimitives struct {
@@ -76,7 +79,6 @@ func (c *UpdateAgentRestController) Invoke(agentUuid string) *httpresponder.Http
         return c.RespondError(err, "UpdateAgentRestController.Invoke")
     }
     httpRequest := c.GetHttpRequest()
-    body := httpRequest.GetPost()
     updateAgentResultDto, err := updateagent.UpdateAgentServiceGetInstance().Invoke(
         updateagent.UpdateAgentDtoFromPrimitives(application.MergePrimitives(
             httpRequest.GetMetadata(), dashboardAuthPrimitives,
@@ -84,7 +86,7 @@ func (c *UpdateAgentRestController) Invoke(agentUuid string) *httpresponder.Http
                 "agentUuid":                agentUuid,
                 "agentName":                httpRequest.GetPostString(enums.AgentsKeyEnum.AGENT_NAME),
                 "heartbeatIntervalSeconds": httpRequest.GetPostString(enums.AgentsKeyEnum.HEARTBEAT_INTERVAL_SECONDS),
-                "isEnabled":                body[enums.AgentsKeyEnum.IS_ENABLED],
+                "isEnabled":                httpRequest.GetPost()[enums.AgentsKeyEnum.IS_ENABLED],
             },
         )),
     )

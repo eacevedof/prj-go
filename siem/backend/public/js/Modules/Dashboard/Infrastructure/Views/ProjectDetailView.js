@@ -1,4 +1,7 @@
+import { RouteHashEnum } from "/js/Modules/Shared/Domain/Enums/RouteHashEnum.js";
 import { Htmler } from "/js/Modules/Shared/Infrastructure/Components/Htmler.js";
+
+import { DashboardKeyEnum } from "/js/Modules/Dashboard/Domain/Enums/DashboardKeyEnum.js";
 
 const CSS_HIDDEN = "hidden";
 
@@ -43,7 +46,7 @@ export class ProjectDetailView {
         this.renderErrors([]);
         this.#elements.divProjectBody.classList.remove(CSS_HIDDEN);
         this.#elements.divProjectHeader.innerHTML = this.#getHeaderHtml(project);
-        this.#elements.aProjectEvents.href = `#/events?project_uuid=${encodeURIComponent(project.project_uuid ?? "")}`;
+        this.#elements.aProjectEvents.href = `${RouteHashEnum.EVENTS}?${DashboardKeyEnum.PROJECT_UUID}=${encodeURIComponent(project[DashboardKeyEnum.PROJECT_UUID] ?? "")}`;
     }
 
     /**
@@ -61,7 +64,7 @@ export class ProjectDetailView {
     #getHeaderHtml(project) {
         const h = this.#htmler;
         return `
-            <h1>1 - ${h.getEscaped(project.project_name)}</h1>
-            <p class="muted">${h.getEscaped(project.project_description)}</p>`;
+            <h1>1 - ${h.getEscaped(project[DashboardKeyEnum.PROJECT_NAME])}</h1>
+            <p class="muted">${h.getEscaped(project[DashboardKeyEnum.PROJECT_DESCRIPTION])}</p>`;
     }
 }

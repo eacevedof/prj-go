@@ -12,8 +12,8 @@ import (
     "siem-backend/src/modules/shared/infrastructure/components/httprequester"
     "siem-backend/src/modules/shared/infrastructure/components/httpresponder"
     "siem-backend/src/modules/shared/infrastructure/components/uuid"
-    "siem-backend/src/modules/shared/infrastructure/controllers"
     "siem-backend/src/modules/shared/infrastructure/repositories/configuration"
+    "siem-backend/src/modules/shared/infrastructure/controllers"
 )
 
 const maxRequestBodyBytes = 8 << 20
@@ -34,8 +34,8 @@ func (m *IndexMain) ServeHTTP(responseWriter http.ResponseWriter, request *http.
     defer func() {
         if recovered := recover(); recovered != nil {
             err := fmt.Errorf("%v", recovered)
-            debugError(httpRequester, err)
-            onError(httpRequester, err).EchoHeadersAndBody(responseWriter)
+            m.logDebugError(httpRequester, err)
+            m.getUnexpectedErrorResponse(httpRequester, err).EchoHeadersAndBody(responseWriter)
         }
     }()
 
@@ -44,63 +44,64 @@ func (m *IndexMain) ServeHTTP(responseWriter http.ResponseWriter, request *http.
 
 func (m *IndexMain) exec(httpRequester *httprequester.HttpRequester) *httpresponder.HttpResponder {
     requestMethod := httpRequester.GetRequestMethod()
-    if requestMethod == "options" {
-        return getWithCommonHeaders(httpRequester, httpresponder.NoContent())
+    if requestMethod == enums.HttpEnum.METHOD_OPTIONS {
+        return m.getWithCommonHeaders(httpRequester, httpresponder.NoContent())
     }
 
     runData := boot.ApiRouterGetInstance(m.routes).GetRunData(requestMethod, httpRequester.GetRequestUri())
     if runData.Route == nil && len(runData.Allowed) == 0 {
-        return getWithCommonHeaders(httpRequester, getErrorResponse(
+        return m.getWithCommonHeaders(httpRequester, m.getErrorResponse(
             enums.ExceptionEnum.CODE_NOT_FOUND,
-            "Resource not found",
+            config.Tr(enums.SharedMessageEnum.RESOURCE_NOT_FOUND),
             map[string]string{},
         ))
     }
 
     if runData.Route == nil {
-        return getWithCommonHeaders(httpRequester, getErrorResponse(
+        return m.getWithCommonHeaders(httpRequester, m.getErrorResponse(
             enums.ExceptionEnum.CODE_METHOD_NOT_ALLOWED,
-            "Method not allowed",
-            map[string]string{"Allow": strings.ToUpper(strings.Join(runData.Allowed, ", "))},
+            config.Tr(enums.SharedMessageEnum.METHOD_NOT_ALLOWED),
+            map[string]string{enums.HttpEnum.HEADER_ALLOW: strings.ToUpper(strings.Join(runData.Allowed, ", "))},
         ))
     }
 
     httpRequester.LoadJsonBodyIntoPost()
-    return getWithCommonHeaders(httpRequester, runData.Route.Controller(httpRequester, runData.Args))
+    return m.getWithCommonHeaders(httpRequester, runData.Route.Controller(httpRequester, runData.Args))
 }
 
 // getWithCommonHeaders toda respuesta sale por aqui: las cabeceras comunes se suman a las del HttpResponder y se
 // emiten juntas en EchoHeadersAndBody(), el unico punto que escribe la respuesta.
-func getWithCommonHeaders(httpRequester *httprequester.HttpRequester, httpResponder *httpresponder.HttpResponder) *httpresponder.HttpResponder {
-    commonHeaders := getCorsHeaders(httpRequester)
-    for key, value := range getSecurityHeaders() {
+func (m *IndexMain) getWithCommonHeaders(httpRequester *httprequester.HttpRequester, httpResponder *httpresponder.HttpResponder) *httpresponder.HttpResponder {
+    commonHeaders := m.getCorsHeaders(httpRequester)
+    for key, value := range m.getSecurityHeaders() {
         commonHeaders[key] = value
     }
     return httpResponder.GetWithHeaders(commonHeaders)
 }
 
-func getCorsHeaders(httpRequester *httprequester.HttpRequester) map[string]string {
+func (m *IndexMain) getCorsHeaders(httpRequester *httprequester.HttpRequester) map[string]string {
     corsHeaders := map[string]string{}
-    if origin := httpRequester.GetHeaderValueByKey("Origin"); origin != "" {
-        corsHeaders["Access-Control-Allow-Origin"] = origin
-        corsHeaders["Access-Control-Max-Age"] = "86400"
+    if origin := httpRequester.GetHeaderValueByKey(enums.HttpEnum.HEADER_ORIGIN); origin != "" {
+        corsHeaders[enums.HttpEnum.HEADER_ACCESS_CONTROL_ALLOW_ORIGIN] = origin
+        corsHeaders[enums.HttpEnum.HEADER_ACCESS_CONTROL_MAX_AGE] = "86400"
     }
-    if httpRequester.GetRequestMethod() == "options" {
-        corsHeaders["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
-        corsHeaders["Access-Control-Allow-Headers"] = "Content-Type, Accept, Accept-Language, Authorization, X-Time-Zone"
+    if httpRequester.GetRequestMethod() == enums.HttpEnum.METHOD_OPTIONS {
+        corsHeaders[enums.HttpEnum.HEADER_ACCESS_CONTROL_ALLOW_METHODS] = "GET, POST, PUT, DELETE, OPTIONS"
+        corsHeaders[enums.HttpEnum.HEADER_ACCESS_CONTROL_ALLOW_HEADERS] = "Content-Type, Accept, Accept-Language, Authorization, X-Time-Zone"
     }
     return corsHeaders
 }
 
-func getSecurityHeaders() map[string]string {
+func (m *IndexMain) getSecurityHeaders() map[string]string {
     return map[string]string{
-        "X-Content-Type-Options": "nosniff",
-        "Referrer-Policy":        "no-referrer",
+        enums.HttpEnum.HEADER_X_CONTENT_TYPE_OPTIONS: "nosniff",
+        enums.HttpEnum.HEADER_REFERRER_POLICY:        "no-referrer",
     }
 }
 
-// onError el panic que nadie ha tratado: se loguea con un id y el cliente recibe ese id en un 500 generico.
-func onError(httpRequester *httprequester.HttpRequester, err error) *httpresponder.HttpResponder {
+// getUnexpectedErrorResponse el panic que nadie ha tratado: se loguea con un id y el cliente recibe ese id en un 500
+// generico.
+func (m *IndexMain) getUnexpectedErrorResponse(httpRequester *httprequester.HttpRequester, err error) *httpresponder.HttpResponder {
     errorUuid := uuid.GetInstance().GetUniqueIdWithPrefix("")
     sensitiveDataMasker := boot.SensitiveDataMaskerGetInstance()
     if post := httpRequester.GetPost(); len(post) > 0 {
@@ -112,19 +113,14 @@ func onError(httpRequester *httprequester.HttpRequester, err error) *httprespond
     config.Lgerr(err.Error(), "index-exception "+errorUuid, "error")
     config.Lgerr(string(debug.Stack()), "index-exception "+errorUuid+" TRACE", "error")
 
-    return getWithCommonHeaders(httpRequester, httpresponder.Json(
-        controllers.GetJsonEncoded(controllers.JsonEnvelope{
-            Code:   enums.ExceptionEnum.CODE_INTERNAL_SERVER_ERROR,
-            Status: false,
-            Errors: []string{"Sorry! but some unexpected error occurred (" + errorUuid + ")"},
-            Data:   []any{},
-        }),
+    return m.getWithCommonHeaders(httpRequester, m.getErrorResponse(
         enums.ExceptionEnum.CODE_INTERNAL_SERVER_ERROR,
+        config.Tr(enums.SharedMessageEnum.UNEXPECTED_ERROR_WITH_ID, errorUuid),
         map[string]string{},
     ))
 }
 
-func debugError(httpRequester *httprequester.HttpRequester, err error) {
+func (m *IndexMain) logDebugError(httpRequester *httprequester.HttpRequester, err error) {
     environmentReaderRawRepository := configuration.GetInstance()
     if environmentReaderRawRepository.IsProduction() || !environmentReaderRawRepository.IsDebug() {
         return
@@ -137,7 +133,7 @@ func debugError(httpRequester *httprequester.HttpRequester, err error) {
     }, "index-debug", "debug")
 }
 
-func getErrorResponse(code int, errorMessage string, headers map[string]string) *httpresponder.HttpResponder {
+func (m *IndexMain) getErrorResponse(code int, errorMessage string, headers map[string]string) *httpresponder.HttpResponder {
     return httpresponder.Json(
         controllers.GetJsonEncoded(controllers.JsonEnvelope{
             Code:   code,

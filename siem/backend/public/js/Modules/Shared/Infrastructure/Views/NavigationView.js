@@ -4,9 +4,13 @@ import { ScreenEnum } from "/js/Modules/Shared/Domain/Enums/ScreenEnum.js";
 import { SharedEventEnum } from "/js/Modules/Shared/Domain/Enums/SharedEventEnum.js";
 import { Dispatcher } from "/js/Modules/Shared/Infrastructure/Components/Dispatcher.js";
 import { Htmler } from "/js/Modules/Shared/Infrastructure/Components/Htmler.js";
+import { TextFormatter } from "/js/Modules/Shared/Infrastructure/Components/TextFormatter.js";
 
 const CSS_HIDDEN = "hidden";
 const CSS_ACTIVE = "is-active";
+// pie de la barra: {0} = ultimo pintado (UTC), {1} = segundos entre repintados
+const REFRESH_INFO_AUTO = "{0} UTC · cada {1} s";
+const REFRESH_INFO_OFF = "{0} UTC · sin refresco";
 // migas de cada pantalla al entrar en ella (el detalle de un proyecto las completa con su nombre)
 const BREADCRUMBS_BY_SCREEN = Object.freeze({
     [ScreenEnum.DASHBOARD]: Object.freeze([{ label: BreadcrumbsTextEnum.PROJECTS }]),
@@ -38,6 +42,7 @@ export class NavigationView {
 
     #dispatcher;
     #htmler;
+    #textFormatter;
     #elements = {};
     #isVisible = false;
     // "pantalla/pathParam" de la ultima ruta pintada: el auto-refresco de la misma no resetea las migas
@@ -46,6 +51,7 @@ export class NavigationView {
     constructor() {
         this.#dispatcher = Dispatcher.getInstance();
         this.#htmler = Htmler.getInstance();
+        this.#textFormatter = TextFormatter.getInstance();
     }
 
     /**
@@ -139,8 +145,8 @@ export class NavigationView {
      */
     renderRefreshInfo(isAutoRefreshed, renderedAt, intervalSeconds) {
         this.#elements.spanRefreshInfo.textContent = isAutoRefreshed
-            ? `${renderedAt} UTC · cada ${intervalSeconds} s`
-            : `${renderedAt} UTC · sin refresco`;
+            ? this.#textFormatter.getFormatted(REFRESH_INFO_AUTO, renderedAt, intervalSeconds)
+            : this.#textFormatter.getFormatted(REFRESH_INFO_OFF, renderedAt);
     }
 
     /**

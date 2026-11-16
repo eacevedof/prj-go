@@ -30,6 +30,11 @@ La versión es `APP_VERSION` en `src/modules/shared/infrastructure/repositories/
    igualmente»), «Killed: 9» (firma ad hoc con `codesign`), «bad CPU type» (solo Apple Silicon), sin arranque con el
    sistema (aún sin LaunchDaemon), métricas del host «no disponible» (solo Linux) y «nunca visto» (`config-sync`).
    Textos en `DownloadsTextEnum`.
+9. **Repaso DDD de todo el back y el front** (reglas del vault): literales a enums (`*LimitEnum`, `*KeyEnum`, `*TextEnum`,
+   `HttpEnum`, `RequestMetadataKeyEnum`…), funciones sueltas a métodos, nombres sin abreviar y por CQS (`load…OrFail`,
+   fuera `process…`), orden de imports, errores en inglés en `*MessageEnum` (el del rango a medida del visor ahora sale en
+   inglés) y LF en tres ficheros que eran CRLF. Sin cambios de comportamiento, rutas, claves JSON ni SQL. Lo que queda,
+   en `siem-tech-debt` §5.
 
 ## 0.8.0 — 2026-11-16
 

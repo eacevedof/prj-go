@@ -39,12 +39,12 @@ func (u *UuidGenerator) GetUniqueIdWithPrefix(prefix string) string {
     uniqueIdMutex.Lock()
     defer uniqueIdMutex.Unlock()
 
-    micros := time.Now().UnixMicro()
-    if micros <= lastUniqueIdMicros {
-        micros = lastUniqueIdMicros + 1
+    microseconds := time.Now().UnixMicro()
+    if microseconds <= lastUniqueIdMicros {
+        microseconds = lastUniqueIdMicros + 1
     }
-    lastUniqueIdMicros = micros
-    return fmt.Sprintf("%s%08x%05x", prefix, micros/1_000_000, micros%1_000_000)
+    lastUniqueIdMicros = microseconds
+    return fmt.Sprintf("%s%08x%05x", prefix, microseconds/1_000_000, microseconds%1_000_000)
 }
 
 func (u *UuidGenerator) IsUuidV4(uuid string) bool {

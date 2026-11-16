@@ -3,8 +3,9 @@ package repositories
 import (
     "fmt"
 
-    "siem-backend/src/modules/ingest/domain/enums"
     sharedrepositories "siem-backend/src/modules/shared/infrastructure/repositories"
+
+    "siem-backend/src/modules/ingest/domain/enums"
 )
 
 type IngestQueueReaderSqliteRepository struct {

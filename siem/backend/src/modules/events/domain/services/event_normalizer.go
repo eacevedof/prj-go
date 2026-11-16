@@ -5,20 +5,14 @@ import (
     "slices"
     "time"
 
-    "siem-backend/src/modules/events/domain/entities"
-    "siem-backend/src/modules/events/domain/enums"
     "siem-backend/src/modules/shared/application"
+
+    "siem-backend/src/modules/events/domain/enums"
+    "siem-backend/src/modules/events/domain/entities"
 )
 
 const (
-    dateTimeFormat         = "2006-01-02 15:04:05"
-    MESSAGE_MAX_LENGTH     = 8000
-    SOURCE_NAME_MAX_LENGTH = 255
-    FILE_PATH_MAX_LENGTH   = 500
-    // attributes son unos pocos datos estructurados (estado, exit_code, % de cpu...): mas que esto no es un attribute
-    ATTRIBUTES_MAX_BYTES = 4000
-    // events.monitor_uuid VARCHAR(50)
-    MONITOR_UUID_MAX_LENGTH = 50
+    dateTimeFormat       = "2006-01-02 15:04:05"
     EMPTY_COMMAND_OUTPUT = "(no output)"
 )
 
@@ -42,11 +36,11 @@ func (n *EventNormalizer) GetEventEntityOrNil(rawEvent map[string]any, projectId
     }
 
     sourceName := application.GetTrimmedString(rawEvent, enums.EventsKeyEnum.SOURCE_NAME)
-    if sourceName == "" || len([]rune(sourceName)) > SOURCE_NAME_MAX_LENGTH {
+    if sourceName == "" || len([]rune(sourceName)) > enums.EventsLimitEnum.SOURCE_NAME_MAX_LENGTH {
         return nil
     }
 
-    message := n.getTruncated(application.GetTrimmedString(rawEvent, enums.EventsKeyEnum.MESSAGE), MESSAGE_MAX_LENGTH)
+    message := n.getTruncated(application.GetTrimmedString(rawEvent, enums.EventsKeyEnum.MESSAGE), enums.EventsLimitEnum.MESSAGE_MAX_LENGTH)
     if message == "" && eventType == enums.EventTypeEnum.COMMAND_RESULT {
         message = EMPTY_COMMAND_OUTPUT
     }
@@ -64,7 +58,7 @@ func (n *EventNormalizer) GetEventEntityOrNil(rawEvent map[string]any, projectId
         enums.EventsKeyEnum.MESSAGE:     message,
         enums.EventsKeyEnum.SOURCE_TYPE: enums.SourceTypeByEventType[eventType],
         enums.EventsKeyEnum.SOURCE_NAME: sourceName,
-        enums.EventsKeyEnum.FILE_PATH:   n.getTruncated(application.GetTrimmedString(rawEvent, enums.EventsKeyEnum.FILE_PATH), FILE_PATH_MAX_LENGTH),
+        enums.EventsKeyEnum.FILE_PATH:   n.getTruncated(application.GetTrimmedString(rawEvent, enums.EventsKeyEnum.FILE_PATH), enums.EventsLimitEnum.FILE_PATH_MAX_LENGTH),
         enums.EventsKeyEnum.EXIT_CODE:   exitCode,
         enums.EventsKeyEnum.DURATION_MS: max(0, application.GetInt(rawEvent, enums.EventsKeyEnum.DURATION_MS)),
         enums.EventsKeyEnum.ATTRIBUTES:  n.getAttributesJson(attributes),
@@ -74,14 +68,14 @@ func (n *EventNormalizer) GetEventEntityOrNil(rawEvent map[string]any, projectId
     })
 }
 
-// getAttributesOrNil solo un objeto JSON que, compacto, no pase de ATTRIBUTES_MAX_BYTES; otra cosa se ignora (el
+// getAttributesOrNil solo un objeto JSON que, compacto, no pase de EventsLimitEnum.ATTRIBUTES_MAX_BYTES; otra cosa se ignora (el
 // evento se guarda igual, sin attributes).
 func (n *EventNormalizer) getAttributesOrNil(rawAttributes any) map[string]any {
     attributes, isObject := rawAttributes.(map[string]any)
     if !isObject || len(attributes) == 0 {
         return nil
     }
-    if len(n.getAttributesJson(attributes)) > ATTRIBUTES_MAX_BYTES {
+    if len(n.getAttributesJson(attributes)) > enums.EventsLimitEnum.ATTRIBUTES_MAX_BYTES {
         return nil
     }
     return attributes
@@ -105,7 +99,7 @@ func (n *EventNormalizer) getOccurredAtOrReceivedAt(occurredAt string, receivedA
         return receivedAt
     }
     receivedTime, err := time.Parse(dateTimeFormat, receivedAt)
-    if err == nil && occurredTime.After(receivedTime.Add(5*time.Minute)) {
+    if err == nil && occurredTime.After(receivedTime.Add(time.Duration(enums.EventsLimitEnum.OCCURRED_AT_MAX_AHEAD_MINUTES) * time.Minute)) {
         return receivedAt
     }
     return occurredAt
@@ -123,7 +117,7 @@ func (n *EventNormalizer) getTruncated(text string, maxLength int) string {
 // cabe en ella (no es un uuid de monitor) se ignora.
 func (n *EventNormalizer) getMonitorUuid(attributes map[string]any) string {
     monitorUuid := application.GetTrimmedString(attributes, enums.MonitorAttributeEnum.MONITOR_UUID)
-    if len(monitorUuid) > MONITOR_UUID_MAX_LENGTH {
+    if len(monitorUuid) > enums.EventsLimitEnum.MONITOR_UUID_MAX_LENGTH {
         return ""
     }
     return monitorUuid

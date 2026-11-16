@@ -4,11 +4,17 @@ import (
     "regexp"
     "strings"
 
-    "siem-backend/src/modules/monitors/domain/enums"
     "siem-backend/src/modules/shared/application"
+
+    "siem-backend/src/modules/monitors/domain/enums"
 )
 
-const resourceKeySeparator = "|"
+const (
+    resourceKeySeparator = "|"
+    // largo de la raiz de una ruta: "/" o "C:\"
+    unixRootLength    = 1
+    windowsRootLength = 3
+)
 
 var windowsPathPattern = regexp.MustCompile(`^[A-Za-z]:[\\/]`)
 
@@ -27,15 +33,15 @@ func (k *MonitorResourceKeyer) GetResourceKey(monitorType string, normalizedConf
     keyParts := []string{monitorType}
     switch monitorType {
     case enums.MonitorTypeEnum.DISK:
-        keyParts = append(keyParts, getComparablePath(normalizedConfig))
+        keyParts = append(keyParts, k.getComparablePath(normalizedConfig))
     case enums.MonitorTypeEnum.NETWORK:
         keyParts = append(keyParts, strings.ToLower(application.GetTrimmedString(normalizedConfig, enums.MonitorsKeyEnum.INTERFACE)))
     case enums.MonitorTypeEnum.FOLDER:
-        keyParts = append(keyParts, getComparablePath(normalizedConfig), application.GetTrimmedString(normalizedConfig, enums.MonitorsKeyEnum.PATTERN))
+        keyParts = append(keyParts, k.getComparablePath(normalizedConfig), application.GetTrimmedString(normalizedConfig, enums.MonitorsKeyEnum.PATTERN))
     case enums.MonitorTypeEnum.LOG_PATTERN:
         keyParts = append(
             keyParts,
-            getComparablePath(normalizedConfig),
+            k.getComparablePath(normalizedConfig),
             application.GetTrimmedString(normalizedConfig, enums.MonitorsKeyEnum.PATTERN),
             application.ToString(normalizedConfig[enums.MonitorsKeyEnum.MATCH]),
         )
@@ -45,13 +51,13 @@ func (k *MonitorResourceKeyer) GetResourceKey(monitorType string, normalizedConf
 
 // getComparablePath sin separador final (salvo la raiz) y, en Windows, sin distinguir mayusculas: /var/log/ = /var/log
 // y C:\Logs = c:\logs.
-func getComparablePath(normalizedConfig map[string]any) string {
+func (k *MonitorResourceKeyer) getComparablePath(normalizedConfig map[string]any) string {
     comparablePath := application.GetTrimmedString(normalizedConfig, enums.MonitorsKeyEnum.PATH)
     isWindowsPath := windowsPathPattern.MatchString(comparablePath)
     // la raiz se queda como esta: "/" o "C:\"
-    rootLength := 1
+    rootLength := unixRootLength
     if isWindowsPath {
-        rootLength = 3
+        rootLength = windowsRootLength
     }
     for len(comparablePath) > rootLength && strings.ContainsAny(comparablePath[len(comparablePath)-1:], `/\`) {
         comparablePath = comparablePath[:len(comparablePath)-1]

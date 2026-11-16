@@ -2,19 +2,22 @@ package createagent
 
 import (
     "siem-backend/src/core/config"
-    "siem-backend/src/modules/agents/domain/entities"
-    "siem-backend/src/modules/agents/domain/enums"
-    "siem-backend/src/modules/agents/domain/exceptions"
-    "siem-backend/src/modules/agents/domain/services"
-    "siem-backend/src/modules/agents/infrastructure/repositories"
-    projectsentities "siem-backend/src/modules/projects/domain/entities"
-    projectsrepositories "siem-backend/src/modules/projects/infrastructure/repositories"
+
     sharedenums "siem-backend/src/modules/shared/domain/enums"
     "siem-backend/src/modules/shared/infrastructure/components/datetimer"
     "siem-backend/src/modules/shared/infrastructure/components/token"
     "siem-backend/src/modules/shared/infrastructure/components/uuid"
-    sharedexceptions "siem-backend/src/modules/shared/infrastructure/exceptions"
     "siem-backend/src/modules/shared/infrastructure/traits"
+    sharedexceptions "siem-backend/src/modules/shared/infrastructure/exceptions"
+
+    projectsentities "siem-backend/src/modules/projects/domain/entities"
+    projectsrepositories "siem-backend/src/modules/projects/infrastructure/repositories"
+
+    "siem-backend/src/modules/agents/domain/enums"
+    "siem-backend/src/modules/agents/domain/entities"
+    "siem-backend/src/modules/agents/domain/services"
+    "siem-backend/src/modules/agents/infrastructure/repositories"
+    "siem-backend/src/modules/agents/domain/exceptions"
 )
 
 // CreateAgentService alta de un agente (una instalacion del siem-client) dentro de un proyecto. Devuelve su

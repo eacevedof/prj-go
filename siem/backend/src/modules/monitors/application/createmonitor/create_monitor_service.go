@@ -2,13 +2,16 @@ package createmonitor
 
 import (
     "siem-backend/src/core/config"
-    "siem-backend/src/modules/monitors/domain/entities"
-    "siem-backend/src/modules/monitors/domain/enums"
-    "siem-backend/src/modules/monitors/domain/exceptions"
-    "siem-backend/src/modules/monitors/infrastructure/traits"
-    projectsrepositories "siem-backend/src/modules/projects/infrastructure/repositories"
+
     "siem-backend/src/modules/shared/infrastructure/components/datetimer"
     "siem-backend/src/modules/shared/infrastructure/components/uuid"
+
+    projectsrepositories "siem-backend/src/modules/projects/infrastructure/repositories"
+
+    "siem-backend/src/modules/monitors/domain/enums"
+    "siem-backend/src/modules/monitors/domain/entities"
+    "siem-backend/src/modules/monitors/infrastructure/traits"
+    "siem-backend/src/modules/monitors/domain/exceptions"
 )
 
 // CreateMonitorService alta de un recurso a vigilar en un proyecto (desde el panel). El agente lo recibe en su

@@ -1,7 +1,7 @@
 import { MonitorsMessageEnum } from "/js/Modules/Monitors/Domain/Enums/MonitorsMessageEnum.js";
-import { MonitorsException } from "/js/Modules/Monitors/Domain/Exceptions/MonitorsException.js";
 import { DeleteMonitorResultDto } from "/js/Modules/Monitors/Application/DeleteMonitor/DeleteMonitorResultDto.js";
 import { MonitorsWriterHttpRepository } from "/js/Modules/Monitors/Infrastructure/Repositories/MonitorsWriterHttpRepository.js";
+import { MonitorsException } from "/js/Modules/Monitors/Domain/Exceptions/MonitorsException.js";
 
 /**
  * Baja de un monitor: los agentes dejan de vigilarlo en su siguiente sincronizacion. Sus eventos ya guardados siguen.

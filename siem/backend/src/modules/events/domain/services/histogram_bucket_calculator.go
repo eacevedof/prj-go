@@ -1,10 +1,9 @@
 package services
 
-import "time"
+import (
+    "time"
 
-const (
-    HISTOGRAM_TARGET_BUCKETS       = 60
-    HISTOGRAM_DEFAULT_RANGE_HOURS  = 24
+    "siem-backend/src/modules/events/domain/enums"
 )
 
 // anchos de tramo "redondos": 1 s ... 1 semana. Se elige el primero con el que el rango cabe en ~60 barras.
@@ -26,7 +25,7 @@ func (c *HistogramBucketCalculator) GetRange(from string, to string, now time.Ti
     }
     fromTime, err := time.Parse(dateTimeFormat, from)
     if err != nil {
-        fromTime = toTime.Add(-HISTOGRAM_DEFAULT_RANGE_HOURS * time.Hour)
+        fromTime = toTime.Add(-time.Duration(enums.EventsLimitEnum.HISTOGRAM_DEFAULT_RANGE_HOURS) * time.Hour)
     }
     return fromTime, toTime
 }
@@ -35,7 +34,7 @@ func (c *HistogramBucketCalculator) GetRange(from string, to string, now time.Ti
 func (c *HistogramBucketCalculator) GetBucketSeconds(fromTime time.Time, toTime time.Time) int {
     rangeSeconds := int(toTime.Sub(fromTime).Seconds())
     for _, bucketSeconds := range histogramBucketSeconds {
-        if rangeSeconds/bucketSeconds <= HISTOGRAM_TARGET_BUCKETS {
+        if rangeSeconds/bucketSeconds <= enums.EventsLimitEnum.HISTOGRAM_TARGET_BUCKETS {
             return bucketSeconds
         }
     }

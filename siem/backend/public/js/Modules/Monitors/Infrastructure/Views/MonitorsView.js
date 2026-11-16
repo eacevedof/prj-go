@@ -1,13 +1,16 @@
 import { DateTimer } from "/js/Modules/Shared/Infrastructure/Components/DateTimer.js";
 import { Dispatcher } from "/js/Modules/Shared/Infrastructure/Components/Dispatcher.js";
 import { Htmler } from "/js/Modules/Shared/Infrastructure/Components/Htmler.js";
+import { TextFormatter } from "/js/Modules/Shared/Infrastructure/Components/TextFormatter.js";
 
+import { MonitorDuplicateReasonEnum } from "/js/Modules/Monitors/Domain/Enums/MonitorDuplicateReasonEnum.js";
 import { MonitorsEventEnum } from "/js/Modules/Monitors/Domain/Enums/MonitorsEventEnum.js";
+import { MonitorsTextEnum } from "/js/Modules/Monitors/Domain/Enums/MonitorsTextEnum.js";
 import {
     METRIC_MONITOR_TYPES, MONITOR_SEVERITIES, MONITOR_TYPE_LABELS, MONITOR_TYPES, MonitorDefaultEnum, MonitorTypeEnum,
     PERCENT_MONITOR_TYPES,
 } from "/js/Modules/Monitors/Domain/Enums/MonitorTypeEnum.js";
-import { DuplicateReasonEnum, MonitorDuplicateFinder } from "/js/Modules/Monitors/Domain/Services/MonitorDuplicateFinder.js";
+import { MonitorDuplicateFinder } from "/js/Modules/Monitors/Domain/Services/MonitorDuplicateFinder.js";
 
 const CSS_HIDDEN = "hidden";
 const ACTION_EDIT = "edit";
@@ -15,12 +18,10 @@ const ACTION_TOGGLE = "toggle";
 const ACTION_ASK_DELETE = "ask-delete";
 const ACTION_CONFIRM_DELETE = "confirm-delete";
 const ACTION_CANCEL_DELETE = "cancel-delete";
-const ALL_AGENTS_LABEL = "todos los agentes";
 const UNIT_PERCENT = "%";
 const UNIT_MBIT = "Mbit/s";
-const TITLE_CREATE = "Nuevo monitor";
-const SUBMIT_CREATE = "Crear monitor";
-const SUBMIT_UPDATE = "Guardar cambios";
+// ejemplo de ruta del campo path en los monitores de lineas (en disco, la ruta por defecto)
+const LINES_PATH_PLACEHOLDER = "/var/log/nginx";
 // que campos de config enseña el formulario para cada tipo
 const CONFIG_FIELDS_BY_TYPE = Object.freeze({
     [MonitorTypeEnum.DISK]: ["path"],
@@ -45,6 +46,7 @@ export class MonitorsView {
     #dateTimer;
     #dispatcher;
     #htmler;
+    #textFormatter;
     #monitorDuplicateFinder;
     #elements = {};
     #projectUuid = "";
@@ -57,6 +59,7 @@ export class MonitorsView {
         this.#dateTimer = DateTimer.getInstance();
         this.#dispatcher = Dispatcher.getInstance();
         this.#htmler = Htmler.getInstance();
+        this.#textFormatter = TextFormatter.getInstance();
         this.#monitorDuplicateFinder = MonitorDuplicateFinder.getInstance();
     }
 
@@ -104,7 +107,9 @@ export class MonitorsView {
     openCreateDialog(agentUuid, agentName) {
         this.resetForm();
         this.#renderScope(agentUuid, agentName);
-        this.#elements.h2MonitorForm.textContent = agentUuid ? `${TITLE_CREATE} en ${agentName}` : `${TITLE_CREATE} para ${ALL_AGENTS_LABEL}`;
+        this.#elements.h2MonitorForm.textContent = agentUuid
+            ? this.#textFormatter.getFormatted(MonitorsTextEnum.FORM_TITLE_CREATE_IN_AGENT, agentName)
+            : MonitorsTextEnum.FORM_TITLE_CREATE_FOR_ALL_AGENTS;
         this.renderMessage("");
         this.#showDialog();
         this.#elements.selectMonitorType.focus();
@@ -178,8 +183,8 @@ export class MonitorsView {
         this.#elements.selectMonitorType.disabled = false;
         this.#elements.inputMonitorInterval.value = String(MonitorDefaultEnum.INTERVAL_SECONDS);
         this.#elements.checkboxMonitorEnabled.checked = true;
-        this.#elements.h2MonitorForm.textContent = TITLE_CREATE;
-        this.#elements.buttonMonitorSubmit.textContent = SUBMIT_CREATE;
+        this.#elements.h2MonitorForm.textContent = MonitorsTextEnum.FORM_TITLE_CREATE;
+        this.#elements.buttonMonitorSubmit.textContent = MonitorsTextEnum.SUBMIT_CREATE;
         this.#renderScope("", "");
         this.renderFormErrors([]);
         this.#renderFormByType();
@@ -240,7 +245,7 @@ export class MonitorsView {
 
     #renderScope(agentUuid, agentName) {
         this.#elements.hiddenMonitorAgentUuid.value = agentUuid;
-        this.#elements.strongMonitorScope.textContent = agentUuid ? (agentName || agentUuid) : ALL_AGENTS_LABEL;
+        this.#elements.strongMonitorScope.textContent = agentUuid ? (agentName || agentUuid) : MonitorsTextEnum.ALL_AGENTS;
     }
 
     /**
@@ -255,7 +260,7 @@ export class MonitorsView {
         this.#elements.divMonitorFieldPattern.classList.toggle(CSS_HIDDEN, !configFields.includes("pattern"));
         this.#elements.divMonitorFieldMatch.classList.toggle(CSS_HIDDEN, !configFields.includes("match"));
         this.#elements.spanMonitorThresholdUnit.textContent = this.#getUnit(monitorType);
-        this.#elements.inputMonitorPath.placeholder = monitorType === MonitorTypeEnum.DISK ? MonitorDefaultEnum.DISK_PATH : "/var/log/nginx";
+        this.#elements.inputMonitorPath.placeholder = monitorType === MonitorTypeEnum.DISK ? MonitorDefaultEnum.DISK_PATH : LINES_PATH_PLACEHOLDER;
         this.#renderDuplicate();
     }
 
@@ -283,10 +288,10 @@ export class MonitorsView {
 
     #getDuplicateText(duplicate) {
         const monitor = duplicate.monitor;
-        if (duplicate.reason === DuplicateReasonEnum.NAME) {
+        if (duplicate.reason === MonitorDuplicateReasonEnum.NAME) {
             return `Repetido: ya hay un monitor que se llama ${monitor.monitor_name} en este proyecto. Elige otro nombre.`;
         }
-        const scope = monitor.agent_uuid ? `el agente ${monitor.agent_name || monitor.agent_uuid}` : ALL_AGENTS_LABEL;
+        const scope = monitor.agent_uuid ? `el agente ${monitor.agent_name || monitor.agent_uuid}` : MonitorsTextEnum.ALL_AGENTS;
         const configLabel = this.#getConfigLabel(monitor);
         return `Repetido: ${monitor.monitor_name} (${monitor.monitor_type}${configLabel ? ` ${configLabel}` : ""}) ya vigila lo mismo en ${scope}.`
             + " Edita ese monitor en vez de crear otro.";
@@ -319,7 +324,7 @@ export class MonitorsView {
             <td class="mono">${h.getEscaped(monitor.monitor_type)}</td>
             <td><strong>${h.getEscaped(monitor.monitor_name)}</strong><br><span class="muted mono">${h.getEscaped(this.#getConfigLabel(monitor))}</span></td>
             <td class="nowrap">${h.getCopyableValue(monitor.monitor_uuid)}</td>
-            <td>${h.getEscaped(monitor.agent_uuid ? (monitor.agent_name || monitor.agent_uuid) : ALL_AGENTS_LABEL)}</td>
+            <td>${h.getEscaped(monitor.agent_uuid ? (monitor.agent_name || monitor.agent_uuid) : MonitorsTextEnum.ALL_AGENTS)}</td>
             <td class="num nowrap">${isMetric ? `${h.getEscaped(monitor.interval_seconds)} s` : "cada pasada"}</td>
             <td class="nowrap">${h.getEscaped(this.#getThresholdsLabel(monitor))}</td>
             <td>${h.getBadge(monitor.is_enabled ? "enabled" : "disabled")}</td>
@@ -457,8 +462,8 @@ export class MonitorsView {
         this.#elements.checkboxMonitorRecursive.checked = primitives.isRecursive;
         this.#elements.inputMonitorMatch.value = primitives.match;
         this.#elements.selectMonitorSeverity.value = primitives.severity;
-        this.#elements.h2MonitorForm.textContent = `Editar monitor ${primitives.monitorName}`;
-        this.#elements.buttonMonitorSubmit.textContent = SUBMIT_UPDATE;
+        this.#elements.h2MonitorForm.textContent = this.#textFormatter.getFormatted(MonitorsTextEnum.FORM_TITLE_UPDATE, primitives.monitorName);
+        this.#elements.buttonMonitorSubmit.textContent = MonitorsTextEnum.SUBMIT_UPDATE;
         this.#renderFormByType();
         this.renderMessage("");
         this.#showDialog();

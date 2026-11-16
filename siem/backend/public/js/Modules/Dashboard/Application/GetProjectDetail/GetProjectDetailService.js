@@ -1,8 +1,8 @@
 import { DashboardKeyEnum } from "/js/Modules/Dashboard/Domain/Enums/DashboardKeyEnum.js";
 import { DashboardMessageEnum } from "/js/Modules/Dashboard/Domain/Enums/DashboardMessageEnum.js";
-import { DashboardException } from "/js/Modules/Dashboard/Domain/Exceptions/DashboardException.js";
 import { GetProjectDetailResultDto } from "/js/Modules/Dashboard/Application/GetProjectDetail/GetProjectDetailResultDto.js";
 import { DashboardReaderHttpRepository } from "/js/Modules/Dashboard/Infrastructure/Repositories/DashboardReaderHttpRepository.js";
+import { DashboardException } from "/js/Modules/Dashboard/Domain/Exceptions/DashboardException.js";
 
 /**
  * Un proyecto con sus agentes y, por agente, cada carpeta y comando con su ultimo resultado. El detalle no trae el

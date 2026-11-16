@@ -4,11 +4,14 @@ import (
     "strings"
 
     "siem-backend/src/core/config"
-    "siem-backend/src/modules/monitors/domain/enums"
-    "siem-backend/src/modules/monitors/domain/exceptions"
-    "siem-backend/src/modules/monitors/infrastructure/repositories"
-    projectsrepositories "siem-backend/src/modules/projects/infrastructure/repositories"
+
     "siem-backend/src/modules/shared/application"
+
+    projectsrepositories "siem-backend/src/modules/projects/infrastructure/repositories"
+
+    "siem-backend/src/modules/monitors/domain/enums"
+    "siem-backend/src/modules/monitors/infrastructure/repositories"
+    "siem-backend/src/modules/monitors/domain/exceptions"
 )
 
 // GetProjectMonitorsService los monitores de un proyecto (activos o no) para la tabla del panel, cada uno con su

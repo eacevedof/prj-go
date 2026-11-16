@@ -6,6 +6,8 @@ import { NavigationView } from "/js/Modules/Shared/Infrastructure/Views/Navigati
 
 import { SessionEventEnum } from "/js/Modules/Session/Domain/Enums/SessionEventEnum.js";
 
+const MILLISECONDS_PER_SECOND = 1000;
+
 /**
  * Repinta sola la pantalla visible: el estado de agentes y proyectos cambia sin que nadie toque nada. Cada pintado
  * (SCREEN_RENDERED) reprograma el siguiente; cambiar de pantalla o salir lo cancela. La pantalla decide si se refresca
@@ -47,7 +49,7 @@ export class RefreshScreenController {
         this.#navigationView.renderRefreshInfo(isAutoRefreshed, this.#dateTimer.getUtcDateTimeNow(), intervalSeconds);
         if (!isAutoRefreshed) return;
 
-        this.#timeoutId = setTimeout(() => this.#navigationView.renderCurrentScreen(), intervalSeconds * 1000);
+        this.#timeoutId = setTimeout(() => this.#navigationView.renderCurrentScreen(), intervalSeconds * MILLISECONDS_PER_SECOND);
     }
 
     #cancel() {

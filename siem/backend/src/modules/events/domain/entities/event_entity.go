@@ -1,25 +1,26 @@
 package entities
 
 import (
-    "siem-backend/src/modules/events/domain/enums"
     "siem-backend/src/modules/shared/application"
+
+    "siem-backend/src/modules/events/domain/enums"
 )
 
 // EventEntity un evento ya normalizado (EventNormalizer), listo para insertar. sourceType + sourceName identifican
 // su source dentro del agente; el id de esa source lo resuelve quien inserta.
 type EventEntity struct {
-    projectId   int
-    agentId     int
-    eventType   string
-    severity    string
-    message     string
-    sourceType  string
-    sourceName  string
-    filePath    string
-    exitCode    int
-    durationMs  int
+    projectId  int
+    agentId    int
+    eventType  string
+    severity   string
+    message    string
+    sourceType string
+    sourceName string
+    filePath   string
+    exitCode   int
+    durationMs int
     // JSON compacto de los attributes del evento ("" = sin attributes)
-    attributes  string
+    attributes string
     // attributes.monitor_uuid copiado a su columna (filtro del visor por monitor); "" = no es de un monitor
     monitorUuid string
     occurredAt  string
@@ -28,20 +29,20 @@ type EventEntity struct {
 
 func EventEntityFromPrimitives(primitives map[string]any) *EventEntity {
     return &EventEntity{
-        projectId:  application.GetInt(primitives, enums.EventsKeyEnum.PROJECT_ID),
-        agentId:    application.GetInt(primitives, enums.EventsKeyEnum.AGENT_ID),
-        eventType:  application.GetTrimmedString(primitives, enums.EventsKeyEnum.EVENT_TYPE),
-        severity:   application.GetTrimmedString(primitives, enums.EventsKeyEnum.SEVERITY),
-        message:    application.GetTrimmedString(primitives, enums.EventsKeyEnum.MESSAGE),
-        sourceType: application.GetTrimmedString(primitives, enums.EventsKeyEnum.SOURCE_TYPE),
-        sourceName: application.GetTrimmedString(primitives, enums.EventsKeyEnum.SOURCE_NAME),
-        filePath:   application.GetTrimmedString(primitives, enums.EventsKeyEnum.FILE_PATH),
-        exitCode:   application.GetInt(primitives, enums.EventsKeyEnum.EXIT_CODE),
-        durationMs: application.GetInt(primitives, enums.EventsKeyEnum.DURATION_MS),
-        attributes: application.GetTrimmedString(primitives, enums.EventsKeyEnum.ATTRIBUTES),
+        projectId:   application.GetInt(primitives, enums.EventsKeyEnum.PROJECT_ID),
+        agentId:     application.GetInt(primitives, enums.EventsKeyEnum.AGENT_ID),
+        eventType:   application.GetTrimmedString(primitives, enums.EventsKeyEnum.EVENT_TYPE),
+        severity:    application.GetTrimmedString(primitives, enums.EventsKeyEnum.SEVERITY),
+        message:     application.GetTrimmedString(primitives, enums.EventsKeyEnum.MESSAGE),
+        sourceType:  application.GetTrimmedString(primitives, enums.EventsKeyEnum.SOURCE_TYPE),
+        sourceName:  application.GetTrimmedString(primitives, enums.EventsKeyEnum.SOURCE_NAME),
+        filePath:    application.GetTrimmedString(primitives, enums.EventsKeyEnum.FILE_PATH),
+        exitCode:    application.GetInt(primitives, enums.EventsKeyEnum.EXIT_CODE),
+        durationMs:  application.GetInt(primitives, enums.EventsKeyEnum.DURATION_MS),
+        attributes:  application.GetTrimmedString(primitives, enums.EventsKeyEnum.ATTRIBUTES),
         monitorUuid: application.GetTrimmedString(primitives, enums.EventsKeyEnum.MONITOR_UUID),
-        occurredAt: application.GetTrimmedString(primitives, enums.EventsKeyEnum.OCCURRED_AT),
-        receivedAt: application.GetTrimmedString(primitives, enums.EventsKeyEnum.RECEIVED_AT),
+        occurredAt:  application.GetTrimmedString(primitives, enums.EventsKeyEnum.OCCURRED_AT),
+        receivedAt:  application.GetTrimmedString(primitives, enums.EventsKeyEnum.RECEIVED_AT),
     }
 }
 

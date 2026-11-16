@@ -6,14 +6,9 @@ import (
     "unicode/utf8"
 
     "siem-backend/src/core/config"
-    "siem-backend/src/modules/events/domain/entities"
-    "siem-backend/src/modules/events/domain/enums"
-)
 
-const (
-    PAGE_SIZE_DEFAULT = 50
-    PAGE_SIZE_MAX     = 200
-    SEARCH_MAX_LENGTH = 200
+    "siem-backend/src/modules/events/domain/enums"
+    "siem-backend/src/modules/events/domain/entities"
 )
 
 // EventsSearchValidator reglas de los filtros de eventos (lista, histograma y facetas) y de la paginacion de la lista.
@@ -50,7 +45,7 @@ func (v *EventsSearchValidator) GetFilterErrors(eventsFilterEntity *entities.Eve
             errors = append(errors, config.Tr(enums.EventsMessageEnum.X_MAX_VALUES_IS_20, enums.EventsFilterFieldEnum.NOT_PREFIX+field))
         }
     }
-    if utf8.RuneCountInString(eventsFilterEntity.GetSearch()) > SEARCH_MAX_LENGTH {
+    if utf8.RuneCountInString(eventsFilterEntity.GetSearch()) > enums.EventsLimitEnum.SEARCH_MAX_LENGTH {
         errors = append(errors, enums.EventsMessageEnum.SEARCH_MAX_LENGTH_IS_200)
     }
     return append(errors, v.getRangeErrors(eventsFilterEntity.GetFrom(), eventsFilterEntity.GetTo())...)
@@ -58,10 +53,10 @@ func (v *EventsSearchValidator) GetFilterErrors(eventsFilterEntity *entities.Eve
 
 func (v *EventsSearchValidator) GetPaginationErrors(page int, pageSize int) []string {
     errors := []string{}
-    if page < 1 {
+    if page < enums.EventsLimitEnum.PAGE_MIN {
         errors = append(errors, enums.EventsMessageEnum.PAGE_MUST_BE_1_OR_GREATER)
     }
-    if pageSize < 1 || pageSize > PAGE_SIZE_MAX {
+    if pageSize < enums.EventsLimitEnum.PAGE_SIZE_MIN || pageSize > enums.EventsLimitEnum.PAGE_SIZE_MAX {
         errors = append(errors, enums.EventsMessageEnum.PAGE_SIZE_MUST_BE_1_TO_200)
     }
     return errors

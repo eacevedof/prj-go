@@ -41,6 +41,12 @@ var DashboardKeyEnum = struct {
     // agent
     AGENT_ID     string
     AGENT_STATUS string
+
+    // alias de columnas de las lecturas agregadas (DashboardReaderSqliteRepository)
+    QUEUE_STATUS       string
+    N_BATCHES          string
+    N_EVENTS           string
+    OLDEST_RECEIVED_AT string
 }{
     SERVER:   "server",
     PROJECTS: "projects",
@@ -78,4 +84,9 @@ var DashboardKeyEnum = struct {
 
     AGENT_ID:     "agent_id",
     AGENT_STATUS: "agent_status",
+
+    QUEUE_STATUS:       "queue_status",
+    N_BATCHES:          "n_batches",
+    N_EVENTS:           "n_events",
+    OLDEST_RECEIVED_AT: "oldest_received_at",
 }

@@ -3,15 +3,17 @@ package controllers
 import (
     "errors"
 
-    agentsexceptions "siem-backend/src/modules/agents/domain/exceptions"
-    "siem-backend/src/modules/ingest/application/enqueueingestbatch"
-    "siem-backend/src/modules/ingest/domain/enums"
-    "siem-backend/src/modules/ingest/domain/exceptions"
     "siem-backend/src/modules/shared/application"
     "siem-backend/src/modules/shared/infrastructure/components/httprequester"
     "siem-backend/src/modules/shared/infrastructure/components/httpresponder"
     sharedcontrollers "siem-backend/src/modules/shared/infrastructure/controllers"
     sharedexceptions "siem-backend/src/modules/shared/infrastructure/exceptions"
+
+    agentsexceptions "siem-backend/src/modules/agents/domain/exceptions"
+
+    "siem-backend/src/modules/ingest/domain/enums"
+    "siem-backend/src/modules/ingest/application/enqueueingestbatch"
+    "siem-backend/src/modules/ingest/domain/exceptions"
 )
 
 // EnqueueIngestBatchRestController POST /api/v1/ingest-batches  (Bearer: api_token del agente)
@@ -53,7 +55,7 @@ func (c *EnqueueIngestBatchRestController) getEnqueueIngestBatchResultDto() (*en
     }
 
     httpRequest := c.GetHttpRequest()
-    agent, _ := httpRequest.GetPostValue(enums.IngestKeyEnum.AGENT, map[string]any{}).(map[string]any)
+    agentPrimitives, _ := httpRequest.GetPostValue(enums.IngestKeyEnum.AGENT, map[string]any{}).(map[string]any)
     eventsJson, eventsCount := c.getEventsJsonAndCount()
     return enqueueingestbatch.EnqueueIngestBatchServiceGetInstance().Invoke(
         enqueueingestbatch.EnqueueIngestBatchDtoFromPrimitives(application.MergePrimitives(
@@ -61,10 +63,10 @@ func (c *EnqueueIngestBatchRestController) getEnqueueIngestBatchResultDto() (*en
             authAgentPrimitives,
             map[string]any{
                 "batchUuid":     httpRequest.GetPostString(enums.IngestKeyEnum.BATCH_UUID),
-                "hostName":      application.GetTrimmedString(agent, enums.IngestKeyEnum.HOST_NAME),
-                "hostOs":        application.GetTrimmedString(agent, enums.IngestKeyEnum.HOST_OS),
-                "clientVersion": application.GetTrimmedString(agent, enums.IngestKeyEnum.CLIENT_VERSION),
-                "clientPath":    application.GetTrimmedString(agent, enums.IngestKeyEnum.CLIENT_PATH),
+                "hostName":      application.GetTrimmedString(agentPrimitives, enums.IngestKeyEnum.HOST_NAME),
+                "hostOs":        application.GetTrimmedString(agentPrimitives, enums.IngestKeyEnum.HOST_OS),
+                "clientVersion": application.GetTrimmedString(agentPrimitives, enums.IngestKeyEnum.CLIENT_VERSION),
+                "clientPath":    application.GetTrimmedString(agentPrimitives, enums.IngestKeyEnum.CLIENT_PATH),
                 "eventsJson":    eventsJson,
                 "eventsCount":   eventsCount,
             },
@@ -78,7 +80,7 @@ func (c *EnqueueIngestBatchRestController) getEventsJsonAndCount() (string, int)
     rawEvents := c.GetHttpRequest().GetPostValue(enums.IngestKeyEnum.EVENTS, []any{})
     events, isArray := rawEvents.([]any)
     if !isArray {
-        return "[]", -1
+        return "[]", enums.IngestLimitEnum.EVENTS_COUNT_NOT_AN_ARRAY
     }
     return sharedcontrollers.GetJsonEncoded(events), len(events)
 }

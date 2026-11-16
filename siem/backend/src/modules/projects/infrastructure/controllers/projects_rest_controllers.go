@@ -1,14 +1,15 @@
 package controllers
 
 import (
-    "siem-backend/src/modules/projects/application/createproject"
-    "siem-backend/src/modules/projects/application/deleteproject"
-    "siem-backend/src/modules/projects/application/updateproject"
-    "siem-backend/src/modules/projects/domain/enums"
     "siem-backend/src/modules/shared/application"
     "siem-backend/src/modules/shared/infrastructure/components/httprequester"
     "siem-backend/src/modules/shared/infrastructure/components/httpresponder"
     sharedcontrollers "siem-backend/src/modules/shared/infrastructure/controllers"
+
+    "siem-backend/src/modules/projects/domain/enums"
+    "siem-backend/src/modules/projects/application/createproject"
+    "siem-backend/src/modules/projects/application/deleteproject"
+    "siem-backend/src/modules/projects/application/updateproject"
 )
 
 // CreateProjectRestController POST /api/v1/projects (Bearer del dashboard) {project_name, project_description}

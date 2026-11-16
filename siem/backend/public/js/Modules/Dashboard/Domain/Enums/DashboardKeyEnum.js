@@ -8,4 +8,8 @@ export const DashboardKeyEnum = Object.freeze({
 
     PROJECT: "project",
     AGENTS: "agents",
+
+    PROJECT_UUID: "project_uuid",
+    PROJECT_NAME: "project_name",
+    PROJECT_DESCRIPTION: "project_description",
 });

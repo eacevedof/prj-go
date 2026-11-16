@@ -11,8 +11,8 @@ import (
     "time"
     _ "time/tzdata"
 
-    "siem-backend/src/modules/shared/application"
     "siem-backend/src/modules/shared/domain/enums"
+    "siem-backend/src/modules/shared/application"
     "siem-backend/src/modules/shared/infrastructure/components/useragent"
 )
 
@@ -80,7 +80,7 @@ func (h *HttpRequester) GetPostValue(key string, defaultValue any) any {
 // GetPostString campo escalar del body como string. Un array/objeto en un campo escalar se trata como vacio
 // (y lo rechaza la validacion de campos obligatorios) en vez de dar "Array" o un error de tipo.
 func (h *HttpRequester) GetPostString(key string) string {
-    return getScalarAsString(h.GetPostValue(key, ""))
+    return h.getScalarAsString(h.GetPostValue(key, ""))
 }
 
 // GetGet la query entera (el ultimo valor de cada clave, como $_GET).
@@ -93,13 +93,13 @@ func (h *HttpRequester) GetGet() map[string]any {
 }
 
 func (h *HttpRequester) GetGetString(key string) string {
-    return getScalarAsString(h.GetGet()[key])
+    return h.getScalarAsString(h.GetGet()[key])
 }
 
 func (h *HttpRequester) GetRequestMethod() string {
     method := strings.ToLower(strings.TrimSpace(h.request.Method))
     if method == "" {
-        return "get"
+        return enums.HttpEnum.METHOD_GET
     }
     return method
 }
@@ -116,7 +116,7 @@ func (h *HttpRequester) GetHeaderValueByKey(key string) string {
 }
 
 func (h *HttpRequester) GetBearerToken() string {
-    matches := bearerTokenPattern.FindStringSubmatch(h.GetHeaderValueByKey("Authorization"))
+    matches := bearerTokenPattern.FindStringSubmatch(h.GetHeaderValueByKey(enums.HttpEnum.HEADER_AUTHORIZATION))
     if matches == nil {
         return ""
     }
@@ -127,17 +127,17 @@ func (h *HttpRequester) GetMetadata() map[string]any {
     userAgent := h.GetUserAgent()
     userAgentParser := useragent.GetInstance()
     return map[string]any{
-        "userIpAddress":      h.GetClientIp(),
-        "userBrowser":        userAgentParser.GetBrowserName(userAgent),
-        "userBrowserVersion": userAgentParser.GetBrowserVersion(userAgent),
-        "userOs":             userAgentParser.GetOsName(userAgent),
-        "userTimeZone":       h.GetTimeZone(),
-        "userLanguageCode":   h.GetLanguageCode(),
+        enums.RequestMetadataKeyEnum.USER_IP_ADDRESS:      h.GetClientIp(),
+        enums.RequestMetadataKeyEnum.USER_BROWSER:         userAgentParser.GetBrowserName(userAgent),
+        enums.RequestMetadataKeyEnum.USER_BROWSER_VERSION: userAgentParser.GetBrowserVersion(userAgent),
+        enums.RequestMetadataKeyEnum.USER_OS:              userAgentParser.GetOsName(userAgent),
+        enums.RequestMetadataKeyEnum.USER_TIME_ZONE:       h.GetTimeZone(),
+        enums.RequestMetadataKeyEnum.USER_LANGUAGE_CODE:   h.GetLanguageCode(),
     }
 }
 
 func (h *HttpRequester) GetUserAgent() string {
-    userAgent := []rune(h.GetHeaderValueByKey("User-Agent"))
+    userAgent := []rune(h.GetHeaderValueByKey(enums.HttpEnum.HEADER_USER_AGENT))
     if len(userAgent) > userAgentMaxLength {
         userAgent = userAgent[:userAgentMaxLength]
     }
@@ -145,11 +145,11 @@ func (h *HttpRequester) GetUserAgent() string {
 }
 
 func (h *HttpRequester) GetClientIp() string {
-    if ip := h.request.Header.Get("Client-Ip"); ip != "" {
+    if ip := h.request.Header.Get(enums.HttpEnum.HEADER_CLIENT_IP); ip != "" {
         return ip
     }
     // "cliente, proxy1, proxy2": el cliente es el primer salto
-    if ip := strings.TrimSpace(strings.Split(h.request.Header.Get("X-Forwarded-For"), ",")[0]); ip != "" {
+    if ip := strings.TrimSpace(strings.Split(h.request.Header.Get(enums.HttpEnum.HEADER_X_FORWARDED_FOR), ",")[0]); ip != "" {
         return ip
     }
     if remoteAddr := h.request.RemoteAddr; remoteAddr != "" {
@@ -158,12 +158,12 @@ func (h *HttpRequester) GetClientIp() string {
         }
         return remoteAddr
     }
-    return "127.0.0.1"
+    return enums.HttpEnum.DEFAULT_CLIENT_IP
 }
 
 // GetTimeZone cabecera opcional "X-Time-Zone: Europe/Madrid". Solo si es una zona IANA valida.
 func (h *HttpRequester) GetTimeZone() string {
-    timeZone := h.GetHeaderValueByKey("X-Time-Zone")
+    timeZone := h.GetHeaderValueByKey(enums.HttpEnum.HEADER_X_TIME_ZONE)
     if timeZone == "" || timeZone == "Local" {
         return ""
     }
@@ -175,7 +175,7 @@ func (h *HttpRequester) GetTimeZone() string {
 
 // GetLanguageCode "es-ES,es;q=0.9,en;q=0.8" -> "es": la primera preferencia, si la API la entiende.
 func (h *HttpRequester) GetLanguageCode() string {
-    languageCode := strings.TrimSpace(strings.Split(h.GetHeaderValueByKey("Accept-Language"), ",")[0])
+    languageCode := strings.TrimSpace(strings.Split(h.GetHeaderValueByKey(enums.HttpEnum.HEADER_ACCEPT_LANGUAGE), ",")[0])
     if len(languageCode) > 2 {
         languageCode = languageCode[:2]
     }
@@ -187,12 +187,12 @@ func (h *HttpRequester) GetLanguageCode() string {
 }
 
 func (h *HttpRequester) isFormPost() bool {
-    contentType := h.request.Header.Get("Content-Type")
+    contentType := h.request.Header.Get(enums.HttpEnum.HEADER_CONTENT_TYPE)
     return h.request.Method == http.MethodPost &&
-        (strings.HasPrefix(contentType, "application/x-www-form-urlencoded") || strings.HasPrefix(contentType, "multipart/form-data"))
+        (strings.HasPrefix(contentType, enums.HttpEnum.CONTENT_TYPE_FORM_URLENCODED) || strings.HasPrefix(contentType, enums.HttpEnum.CONTENT_TYPE_MULTIPART_FORM_DATA))
 }
 
-func getScalarAsString(value any) string {
+func (h *HttpRequester) getScalarAsString(value any) string {
     switch value.(type) {
     case map[string]any, []any:
         return ""

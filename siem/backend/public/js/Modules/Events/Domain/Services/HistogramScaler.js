@@ -1,4 +1,14 @@
-const SEVERITIES_BOTTOM_UP = Object.freeze(["debug", "info", "warning", "error", "critical"]);
+import { EventSeverityEnum } from "/js/Modules/Events/Domain/Enums/EventSeverityEnum.js";
+
+// EventSeverityEnum va de menos a mas grave: el orden de apilado
+const SEVERITIES_BOTTOM_UP = Object.freeze(Object.values(EventSeverityEnum));
+// el techo del eje Y es uno de estos por una potencia de 10
+const NICE_CEILING_STEPS = Object.freeze([1, 2, 5, 10]);
+// posiciones de "MM-DD" y "HH:MM" dentro de "YYYY-MM-DD HH:MM:SS"
+const MONTH_DAY_START = 5;
+const MONTH_DAY_END = 10;
+const HOUR_MINUTE_START = 11;
+const HOUR_MINUTE_END = 16;
 const SECONDS_PER_DAY = 86400;
 const X_TICKS_MAX = 7;
 const Y_TICKS = 2;
@@ -81,7 +91,7 @@ export class HistogramScaler {
     getNiceCeiling(value) {
         if (!(value > 0)) return 1;
         const magnitude = 10 ** Math.floor(Math.log10(value));
-        const candidate = [1, 2, 5, 10].find((step) => step * magnitude >= value);
+        const candidate = NICE_CEILING_STEPS.find((step) => step * magnitude >= value);
         return candidate * magnitude;
     }
 
@@ -113,8 +123,8 @@ export class HistogramScaler {
     // "YYYY-MM-DD HH:MM:SS" -> tramos de un dia o mas: "MM-DD"; rango de mas de un dia: "MM-DD HH:MM"; si no, "HH:MM"
     #getTimeLabel(bucketAt, bucketSeconds, spanSeconds) {
         const text = String(bucketAt ?? "");
-        const monthDay = text.slice(5, 10);
-        const hourMinute = text.slice(11, 16);
+        const monthDay = text.slice(MONTH_DAY_START, MONTH_DAY_END);
+        const hourMinute = text.slice(HOUR_MINUTE_START, HOUR_MINUTE_END);
         if (bucketSeconds >= SECONDS_PER_DAY) return monthDay;
         if (spanSeconds > SECONDS_PER_DAY) return `${monthDay} ${hourMinute}`;
         return hourMinute;

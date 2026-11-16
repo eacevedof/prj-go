@@ -3,12 +3,13 @@ package controllers
 import (
     "errors"
 
-    "siem-backend/src/modules/dashboard/application/getprojectdetail"
-    "siem-backend/src/modules/dashboard/domain/exceptions"
     "siem-backend/src/modules/shared/application"
     "siem-backend/src/modules/shared/infrastructure/components/httprequester"
     "siem-backend/src/modules/shared/infrastructure/components/httpresponder"
     sharedcontrollers "siem-backend/src/modules/shared/infrastructure/controllers"
+
+    "siem-backend/src/modules/dashboard/application/getprojectdetail"
+    "siem-backend/src/modules/dashboard/domain/exceptions"
 )
 
 // GetProjectDetailRestController GET /api/v1/projects/:project_uuid  (Bearer del dashboard) -> {project, agents}

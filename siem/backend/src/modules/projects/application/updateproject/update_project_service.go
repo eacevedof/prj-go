@@ -2,15 +2,17 @@ package updateproject
 
 import (
     "siem-backend/src/core/config"
-    "siem-backend/src/modules/projects/domain/entities"
-    "siem-backend/src/modules/projects/domain/enums"
-    "siem-backend/src/modules/projects/domain/exceptions"
-    "siem-backend/src/modules/projects/domain/services"
-    "siem-backend/src/modules/projects/infrastructure/repositories"
+
     sharedenums "siem-backend/src/modules/shared/domain/enums"
     "siem-backend/src/modules/shared/infrastructure/components/datetimer"
-    sharedexceptions "siem-backend/src/modules/shared/infrastructure/exceptions"
     "siem-backend/src/modules/shared/infrastructure/traits"
+    sharedexceptions "siem-backend/src/modules/shared/infrastructure/exceptions"
+
+    "siem-backend/src/modules/projects/domain/enums"
+    "siem-backend/src/modules/projects/domain/entities"
+    "siem-backend/src/modules/projects/domain/services"
+    "siem-backend/src/modules/projects/infrastructure/repositories"
+    "siem-backend/src/modules/projects/domain/exceptions"
 )
 
 // UpdateProjectService cambia nombre y descripcion de un proyecto desde el panel. El uuid no cambia: agentes,
@@ -41,7 +43,7 @@ func (s *UpdateProjectService) Invoke(updateProjectDto *UpdateProjectDto) (*Upda
     if err := s.failIfWrongInput(); err != nil {
         return nil, err
     }
-    if err := s.failIfProjectNotFound(); err != nil {
+    if err := s.loadProjectOrFail(); err != nil {
         return nil, err
     }
     if err := s.failIfProjectNameExists(); err != nil {
@@ -78,7 +80,7 @@ func (s *UpdateProjectService) failIfWrongInput() error {
     )
 }
 
-func (s *UpdateProjectService) failIfProjectNotFound() error {
+func (s *UpdateProjectService) loadProjectOrFail() error {
     projectUuid := s.updateProjectDto.GetProjectUuid()
     projectEntity, err := s.projectsReaderSqliteRepository.GetProjectByProjectUuid(projectUuid)
     if err != nil {

@@ -3,8 +3,9 @@ package entities
 import (
     "encoding/json"
 
-    "siem-backend/src/modules/monitors/domain/enums"
     "siem-backend/src/modules/shared/application"
+
+    "siem-backend/src/modules/monitors/domain/enums"
 )
 
 const MONITOR_UUID_PREFIX = "monitor-"
@@ -50,7 +51,7 @@ type MonitorEntity struct {
 // MonitorEntityFromPrimitives de una fila de BD (config como texto JSON, umbrales NULL o numero) o de los primitivos
 // de un servicio (config como map, umbrales *float64).
 func MonitorEntityFromPrimitives(primitives map[string]any) *MonitorEntity {
-    return &MonitorEntity{
+    monitorEntity := &MonitorEntity{
         id:                application.GetInt(primitives, enums.MonitorsKeyEnum.ID),
         monitorUuid:       application.GetTrimmedString(primitives, enums.MonitorsKeyEnum.MONITOR_UUID),
         projectId:         application.GetInt(primitives, enums.MonitorsKeyEnum.PROJECT_ID),
@@ -62,12 +63,13 @@ func MonitorEntityFromPrimitives(primitives map[string]any) *MonitorEntity {
         monitorName:       application.GetTrimmedString(primitives, enums.MonitorsKeyEnum.MONITOR_NAME),
         isEnabled:         application.GetInt(primitives, enums.MonitorsKeyEnum.IS_ENABLED) == 1,
         intervalSeconds:   application.GetInt(primitives, enums.MonitorsKeyEnum.INTERVAL_SECONDS),
-        config:            getConfig(primitives[enums.MonitorsKeyEnum.CONFIG]),
         warningThreshold:  GetFloatOrNil(primitives[enums.MonitorsKeyEnum.WARNING_THRESHOLD]),
         criticalThreshold: GetFloatOrNil(primitives[enums.MonitorsKeyEnum.CRITICAL_THRESHOLD]),
         createdAt:         application.GetTrimmedString(primitives, enums.MonitorsKeyEnum.CREATED_AT),
         updatedAt:         application.GetTrimmedString(primitives, enums.MonitorsKeyEnum.UPDATED_AT),
     }
+    monitorEntity.loadConfig(primitives[enums.MonitorsKeyEnum.CONFIG])
+    return monitorEntity
 }
 
 func (e *MonitorEntity) ToPrimitives() MonitorPrimitives {
@@ -153,20 +155,21 @@ func (e *MonitorEntity) GetUpdatedAt() string {
     return e.updatedAt
 }
 
-// getConfig un map tal cual; un texto JSON, decodificado; otra cosa, config vacia.
-func getConfig(rawConfig any) map[string]any {
+// loadConfig un map tal cual; un texto JSON, decodificado; otra cosa, config vacia.
+func (e *MonitorEntity) loadConfig(rawConfig any) {
     switch typedConfig := rawConfig.(type) {
     case map[string]any:
-        return typedConfig
+        e.config = typedConfig
     case string:
-        return getConfigFromJson([]byte(typedConfig))
+        e.config = e.getConfigFromJson([]byte(typedConfig))
     case []byte:
-        return getConfigFromJson(typedConfig)
+        e.config = e.getConfigFromJson(typedConfig)
+    default:
+        e.config = map[string]any{}
     }
-    return map[string]any{}
 }
 
-func getConfigFromJson(configJson []byte) map[string]any {
+func (e *MonitorEntity) getConfigFromJson(configJson []byte) map[string]any {
     config := map[string]any{}
     if json.Unmarshal(configJson, &config) != nil || config == nil {
         return map[string]any{}

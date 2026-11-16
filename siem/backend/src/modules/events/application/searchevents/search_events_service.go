@@ -2,13 +2,16 @@ package searchevents
 
 import (
     "siem-backend/src/core/config"
+
+    sharedenums "siem-backend/src/modules/shared/domain/enums"
+    "siem-backend/src/modules/shared/infrastructure/traits"
+    sharedexceptions "siem-backend/src/modules/shared/infrastructure/exceptions"
+
     dashboardexceptions "siem-backend/src/modules/dashboard/domain/exceptions"
+
     "siem-backend/src/modules/events/domain/entities"
     "siem-backend/src/modules/events/domain/services"
     "siem-backend/src/modules/events/infrastructure/repositories"
-    sharedenums "siem-backend/src/modules/shared/domain/enums"
-    sharedexceptions "siem-backend/src/modules/shared/infrastructure/exceptions"
-    "siem-backend/src/modules/shared/infrastructure/traits"
 )
 
 // SearchEventsService una pagina de eventos (los mas recientes primero) con filtros opcionales: rango de fechas,

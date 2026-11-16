@@ -3,10 +3,11 @@ package commands
 import (
     "errors"
 
-    "siem-backend/src/modules/events/application/purgeevents"
-    "siem-backend/src/modules/events/domain/enums"
     sharedcommands "siem-backend/src/modules/shared/infrastructure/commands"
     sharedexceptions "siem-backend/src/modules/shared/infrastructure/exceptions"
+
+    "siem-backend/src/modules/events/domain/enums"
+    "siem-backend/src/modules/events/application/purgeevents"
 )
 
 // PurgeEventsCommand ./console events-purge --retention_days=30   (sin la opcion: APP_EVENTS_RETENTION_DAYS)

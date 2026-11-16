@@ -1,3 +1,4 @@
+import { RouteHashEnum } from "/js/Modules/Shared/Domain/Enums/RouteHashEnum.js";
 import { Dispatcher } from "/js/Modules/Shared/Infrastructure/Components/Dispatcher.js";
 import { Htmler } from "/js/Modules/Shared/Infrastructure/Components/Htmler.js";
 import { NumberFormatter } from "/js/Modules/Shared/Infrastructure/Components/NumberFormatter.js";
@@ -15,7 +16,6 @@ const ACTION_DELETE = "delete";
 const TEXT_FILTER_DEBOUNCE_MS = 300;
 // en la tabla, un trozo de la descripcion; la entera en el tooltip
 const DESCRIPTION_EXCERPT_CHARS = 90;
-const PROJECT_HASH_PREFIX = "#/projects/";
 // color de cada contador de 24 h segun su gravedad (gris si es 0)
 const COUNT_CSS_WARNING = "count-warning";
 const COUNT_CSS_ERROR = "count-error";
@@ -69,7 +69,7 @@ export class ProjectsTableView {
             divProjectsTable: document.getElementById("div-projects-table"),
             tbodyProjects: document.getElementById("tbody-projects"),
         };
-        this.#loadHealthOptions();
+        this.#renderHealthOptions();
         this.#elements.formProjectsFilters.addEventListener("submit", (event) => this.#onFiltersSubmit(event));
         this.#elements.inputFilterProjectText.addEventListener("input", () => this.#onTextFilterInput());
         this.#elements.selectFilterProjectHealth.addEventListener("change", () => this.#dispatchFiltersChanged());
@@ -119,7 +119,7 @@ export class ProjectsTableView {
         this.#elements.pProjectsErrors.classList.toggle(CSS_HIDDEN, errors.length === 0);
     }
 
-    #loadHealthOptions() {
+    #renderHealthOptions() {
         const healthOptions = ProjectHealthEnum.VALUES
             .map((projectHealth) => `<option value="${this.#htmler.getEscaped(projectHealth)}">${this.#htmler.getEscaped(ProjectHealthEnum.LABELS[projectHealth])}</option>`)
             .join("");
@@ -195,7 +195,7 @@ export class ProjectsTableView {
     <td class="row-uuid"><span class="copyable"><code>${h.getEscaped(projectUuid)}</code>${h.getCopyButton(projectUuid)}</span></td>
     <td class="row-main">
         <div class="row-main-head">
-            <a class="row-title project-link" href="${PROJECT_HASH_PREFIX}${encodeURIComponent(projectUuid)}">${h.getEscaped(project[ProjectsKeyEnum.PROJECT_NAME])}</a>
+            <a class="row-title project-link" href="${RouteHashEnum.PROJECTS}/${encodeURIComponent(projectUuid)}">${h.getEscaped(project[ProjectsKeyEnum.PROJECT_NAME])}</a>
             ${h.getBadge(project[ProjectsKeyEnum.PROJECT_HEALTH])}
         </div>
         ${this.#getHtmlProjectDescription(project[ProjectsKeyEnum.PROJECT_DESCRIPTION])}

@@ -4,15 +4,18 @@ import (
     "time"
 
     "siem-backend/src/core/config"
+
+    sharedenums "siem-backend/src/modules/shared/domain/enums"
+    "siem-backend/src/modules/shared/application"
+    "siem-backend/src/modules/shared/infrastructure/traits"
+    sharedexceptions "siem-backend/src/modules/shared/infrastructure/exceptions"
+
     dashboardexceptions "siem-backend/src/modules/dashboard/domain/exceptions"
-    "siem-backend/src/modules/events/domain/entities"
+
     "siem-backend/src/modules/events/domain/enums"
+    "siem-backend/src/modules/events/domain/entities"
     "siem-backend/src/modules/events/domain/services"
     "siem-backend/src/modules/events/infrastructure/repositories"
-    "siem-backend/src/modules/shared/application"
-    sharedenums "siem-backend/src/modules/shared/domain/enums"
-    sharedexceptions "siem-backend/src/modules/shared/infrastructure/exceptions"
-    "siem-backend/src/modules/shared/infrastructure/traits"
 )
 
 // GetEventsHistogramService cuantos eventos hay por tramo de tiempo y gravedad, con los mismos filtros que la lista:
@@ -72,11 +75,11 @@ func (s *GetEventsHistogramService) getBuckets(rows []map[string]any, bucketStar
     }
 
     for _, row := range rows {
-        bucket := bucketsByStart[int64(application.GetInt(row, "bucket_unix"))]
+        bucket := bucketsByStart[int64(application.GetInt(row, enums.EventsKeyEnum.BUCKET_UNIX))]
         if bucket == nil {
             continue
         }
-        eventsCount := application.GetInt(row, "n_events")
+        eventsCount := application.GetInt(row, enums.EventsKeyEnum.EVENTS_COUNT)
         bucket.Total += eventsCount
         switch application.GetTrimmedString(row, enums.EventsKeyEnum.SEVERITY) {
         case enums.EventSeverityEnum.DEBUG:

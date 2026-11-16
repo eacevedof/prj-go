@@ -1,9 +1,10 @@
 package authenticatedashboard
 
 import (
-    "siem-backend/src/modules/dashboard/domain/exceptions"
     "siem-backend/src/modules/shared/infrastructure/components/token"
     "siem-backend/src/modules/shared/infrastructure/repositories/configuration"
+
+    "siem-backend/src/modules/dashboard/domain/exceptions"
 )
 
 // AuthenticateDashboardService el Bearer del front contra APP_DASHBOARD_TOKEN (un unico token de solo lectura: el

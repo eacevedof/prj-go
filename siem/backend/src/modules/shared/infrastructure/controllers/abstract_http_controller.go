@@ -17,20 +17,20 @@ import (
 type AbstractHttpController struct {
     traits.LogTrait
     traits.MailTrait
-    httpRequest *httprequester.HttpRequester
+    httpRequester *httprequester.HttpRequester
 }
 
 func NewAbstractHttpController(httpRequester *httprequester.HttpRequester) AbstractHttpController {
     logTrait := traits.NewLogTrait(httpRequester)
     return AbstractHttpController{
-        LogTrait:    logTrait,
-        MailTrait:   traits.NewMailTrait(logTrait),
-        httpRequest: httpRequester,
+        LogTrait:      logTrait,
+        MailTrait:     traits.NewMailTrait(logTrait),
+        httpRequester: httpRequester,
     }
 }
 
 func (c *AbstractHttpController) GetHttpRequest() *httprequester.HttpRequester {
-    return c.httpRequest
+    return c.httpRequester
 }
 
 // GetAuthAgentOrFail se llama DENTRO del controller: el 401 (AgentsException) lo mapea su rama de error como
@@ -38,8 +38,8 @@ func (c *AbstractHttpController) GetHttpRequest() *httprequester.HttpRequester {
 func (c *AbstractHttpController) GetAuthAgentOrFail() (map[string]any, error) {
     authenticateAgentResultDto, err := authenticateagent.AuthenticateAgentServiceGetInstance().Invoke(
         authenticateagent.AuthenticateAgentDtoFromPrimitives(application.MergePrimitives(
-            map[string]any{"apiToken": c.httpRequest.GetBearerToken()},
-            c.httpRequest.GetMetadata(),
+            map[string]any{"apiToken": c.httpRequester.GetBearerToken()},
+            c.httpRequester.GetMetadata(),
         )),
     )
     if err != nil {
@@ -52,8 +52,8 @@ func (c *AbstractHttpController) GetAuthAgentOrFail() (map[string]any, error) {
 func (c *AbstractHttpController) GetDashboardAuthOrFail() (map[string]any, error) {
     authenticateDashboardResultDto, err := authenticatedashboard.AuthenticateDashboardServiceGetInstance().Invoke(
         authenticatedashboard.AuthenticateDashboardDtoFromPrimitives(application.MergePrimitives(
-            map[string]any{"dashboardToken": c.httpRequest.GetBearerToken()},
-            c.httpRequest.GetMetadata(),
+            map[string]any{"dashboardToken": c.httpRequester.GetBearerToken()},
+            c.httpRequester.GetMetadata(),
         )),
     )
     if err != nil {

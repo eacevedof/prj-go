@@ -2,6 +2,10 @@ const METHOD_GET = "GET";
 const METHOD_POST = "POST";
 const METHOD_PUT = "PUT";
 const METHOD_DELETE = "DELETE";
+const HEADER_ACCEPT = "Accept";
+const HEADER_AUTHORIZATION = "Authorization";
+const HEADER_CONTENT_TYPE = "Content-Type";
+const CONTENT_TYPE_JSON = "application/json";
 
 /**
  * Peticiones a la API REST del backend (la misma origin que sirve el front) con el Bearer del dashboard. Devuelve el
@@ -57,13 +61,13 @@ export class HttpRequester {
     }
 
     async #getResponse(method, url, body, dashboardToken) {
-        const headers = { "Accept": "application/json" };
+        const headers = { [HEADER_ACCEPT]: CONTENT_TYPE_JSON };
         if (dashboardToken) {
-            headers["Authorization"] = `Bearer ${dashboardToken}`;
+            headers[HEADER_AUTHORIZATION] = `Bearer ${dashboardToken}`;
         }
         const options = { method, headers };
         if (body !== null) {
-            headers["Content-Type"] = "application/json";
+            headers[HEADER_CONTENT_TYPE] = CONTENT_TYPE_JSON;
             options.body = JSON.stringify(body);
         }
 

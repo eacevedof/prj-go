@@ -1,4 +1,4 @@
-const DEFAULT_HEARTBEAT_INTERVAL_SECONDS = 30;
+import { AgentFieldsEnum } from "/js/Modules/Agents/Domain/Enums/AgentFieldsEnum.js";
 
 /**
  * Entrada del caso de uso: solo primitivos, strings con trim. Sin intervalo de latido, el de por defecto (30 s).
@@ -18,7 +18,7 @@ export class CreateAgentDto {
         this.#projectUuid = String(primitives.projectUuid ?? "").trim();
         this.#agentName = String(primitives.agentName ?? "").trim();
         const rawHeartbeat = String(primitives.heartbeatIntervalSeconds ?? "").trim();
-        this.#heartbeatIntervalSeconds = rawHeartbeat === "" ? DEFAULT_HEARTBEAT_INTERVAL_SECONDS : Number(rawHeartbeat);
+        this.#heartbeatIntervalSeconds = rawHeartbeat === "" ? AgentFieldsEnum.HEARTBEAT_DEFAULT_SECONDS : Number(rawHeartbeat);
     }
 
     /**

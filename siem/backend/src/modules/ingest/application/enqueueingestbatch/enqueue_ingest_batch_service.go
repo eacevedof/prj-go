@@ -2,17 +2,20 @@ package enqueueingestbatch
 
 import (
     "siem-backend/src/core/config"
-    agentsentities "siem-backend/src/modules/agents/domain/entities"
-    agentsenums "siem-backend/src/modules/agents/domain/enums"
-    agentsrepositories "siem-backend/src/modules/agents/infrastructure/repositories"
-    "siem-backend/src/modules/ingest/domain/enums"
-    "siem-backend/src/modules/ingest/domain/exceptions"
-    "siem-backend/src/modules/ingest/domain/services"
-    "siem-backend/src/modules/ingest/infrastructure/repositories"
+
     sharedenums "siem-backend/src/modules/shared/domain/enums"
     "siem-backend/src/modules/shared/infrastructure/components/datetimer"
-    sharedexceptions "siem-backend/src/modules/shared/infrastructure/exceptions"
     "siem-backend/src/modules/shared/infrastructure/traits"
+    sharedexceptions "siem-backend/src/modules/shared/infrastructure/exceptions"
+
+    agentsenums "siem-backend/src/modules/agents/domain/enums"
+    agentsentities "siem-backend/src/modules/agents/domain/entities"
+    agentsrepositories "siem-backend/src/modules/agents/infrastructure/repositories"
+
+    "siem-backend/src/modules/ingest/domain/enums"
+    "siem-backend/src/modules/ingest/domain/services"
+    "siem-backend/src/modules/ingest/infrastructure/repositories"
+    "siem-backend/src/modules/ingest/domain/exceptions"
 )
 
 // EnqueueIngestBatchService lo que hace el endpoint de ingesta, y nada mas: anota el latido del agente y deja el lote
@@ -25,6 +28,7 @@ type EnqueueIngestBatchService struct {
     dateTimer                         *datetimer.DateTimer
     agentsWriterSqliteRepository      *agentsrepositories.AgentsWriterSqliteRepository
     ingestQueueWriterSqliteRepository *repositories.IngestQueueWriterSqliteRepository
+    ingestBatchValidator              *services.IngestBatchValidator
 
     enqueueIngestBatchDto *EnqueueIngestBatchDto
 }
@@ -34,6 +38,7 @@ func EnqueueIngestBatchServiceGetInstance() *EnqueueIngestBatchService {
         dateTimer:                         datetimer.GetInstance(),
         agentsWriterSqliteRepository:      agentsrepositories.AgentsWriterSqliteRepositoryGetInstance(),
         ingestQueueWriterSqliteRepository: repositories.IngestQueueWriterSqliteRepositoryGetInstance(),
+        ingestBatchValidator:              services.IngestBatchValidatorGetInstance(),
     }
 }
 
@@ -52,7 +57,9 @@ func (s *EnqueueIngestBatchService) Invoke(enqueueIngestBatchDto *EnqueueIngestB
 
     eventsCount := enqueueIngestBatchDto.GetEventsCount()
     if eventsCount == 0 {
-        return s.getResultDto(0, 0), nil
+        return EnqueueIngestBatchResultDtoFromPrimitives(map[string]any{
+            "batchUuid": enqueueIngestBatchDto.GetBatchUuid(),
+        }), nil
     }
 
     insertedBatches, err := s.ingestQueueWriterSqliteRepository.InsertBatchIfNew(
@@ -66,9 +73,15 @@ func (s *EnqueueIngestBatchService) Invoke(enqueueIngestBatchDto *EnqueueIngestB
         return nil, err
     }
     if insertedBatches == 0 {
-        return s.getResultDto(0, 1), nil
+        return EnqueueIngestBatchResultDtoFromPrimitives(map[string]any{
+            "batchUuid":   enqueueIngestBatchDto.GetBatchUuid(),
+            "isDuplicate": 1,
+        }), nil
     }
-    return s.getResultDto(eventsCount, 0), nil
+    return EnqueueIngestBatchResultDtoFromPrimitives(map[string]any{
+        "batchUuid":    enqueueIngestBatchDto.GetBatchUuid(),
+        "queuedEvents": eventsCount,
+    }), nil
 }
 
 func (s *EnqueueIngestBatchService) failIfWrongInput() error {
@@ -76,7 +89,7 @@ func (s *EnqueueIngestBatchService) failIfWrongInput() error {
         return exceptions.UnauthorizedCustom(config.Tr(enums.IngestMessageEnum.INVALID_OR_MISSING_API_TOKEN))
     }
 
-    errors := services.IngestBatchValidatorGetInstance().GetErrors(
+    errors := s.ingestBatchValidator.GetErrors(
         s.enqueueIngestBatchDto.GetBatchUuid(), s.enqueueIngestBatchDto.GetEventsCount(),
     )
     if len(errors) == 0 {
@@ -91,23 +104,15 @@ func (s *EnqueueIngestBatchService) updateAgentHeartbeat(lastSeenAt string) erro
     _, err := s.agentsWriterSqliteRepository.UpdateHostDataAndLastSeenById(
         agentsentities.AgentEntityFromPrimitives(map[string]any{
             agentsenums.AgentsKeyEnum.ID:             s.enqueueIngestBatchDto.GetAuthAgentId(),
-            agentsenums.AgentsKeyEnum.HOST_NAME:      s.getTruncated(s.enqueueIngestBatchDto.GetHostName(), 150),
-            agentsenums.AgentsKeyEnum.HOST_OS:        s.getTruncated(s.enqueueIngestBatchDto.GetHostOs(), 50),
-            agentsenums.AgentsKeyEnum.HOST_IP:        s.getTruncated(s.enqueueIngestBatchDto.GetUserIpAddress(), 45),
-            agentsenums.AgentsKeyEnum.CLIENT_VERSION: s.getTruncated(s.enqueueIngestBatchDto.GetClientVersion(), 20),
-            agentsenums.AgentsKeyEnum.CLIENT_PATH:    s.getTruncated(s.enqueueIngestBatchDto.GetClientPath(), 500),
+            agentsenums.AgentsKeyEnum.HOST_NAME:      s.getTruncated(s.enqueueIngestBatchDto.GetHostName(), enums.IngestLimitEnum.HOST_NAME_MAX_LENGTH),
+            agentsenums.AgentsKeyEnum.HOST_OS:        s.getTruncated(s.enqueueIngestBatchDto.GetHostOs(), enums.IngestLimitEnum.HOST_OS_MAX_LENGTH),
+            agentsenums.AgentsKeyEnum.HOST_IP:        s.getTruncated(s.enqueueIngestBatchDto.GetUserIpAddress(), enums.IngestLimitEnum.HOST_IP_MAX_LENGTH),
+            agentsenums.AgentsKeyEnum.CLIENT_VERSION: s.getTruncated(s.enqueueIngestBatchDto.GetClientVersion(), enums.IngestLimitEnum.CLIENT_VERSION_MAX_LENGTH),
+            agentsenums.AgentsKeyEnum.CLIENT_PATH:    s.getTruncated(s.enqueueIngestBatchDto.GetClientPath(), enums.IngestLimitEnum.CLIENT_PATH_MAX_LENGTH),
             agentsenums.AgentsKeyEnum.LAST_SEEN_AT:   lastSeenAt,
         }),
     )
     return err
-}
-
-func (s *EnqueueIngestBatchService) getResultDto(queuedEvents int, isDuplicate int) *EnqueueIngestBatchResultDto {
-    return EnqueueIngestBatchResultDtoFromPrimitives(map[string]any{
-        "batchUuid":    s.enqueueIngestBatchDto.GetBatchUuid(),
-        "queuedEvents": queuedEvents,
-        "isDuplicate":  isDuplicate,
-    })
 }
 
 func (s *EnqueueIngestBatchService) getTruncated(text string, maxLength int) string {

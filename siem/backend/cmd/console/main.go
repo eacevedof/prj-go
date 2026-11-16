@@ -14,5 +14,5 @@ func main() {
         fmt.Fprintln(os.Stderr, err)
         os.Exit(2)
     }
-    ConsoleMainGetInstance(argvWithArgv0(), console.GetCommands()).Exec()
+    ConsoleMainGetInstance(getArgvWithArgv0(), console.GetCommands()).Exec()
 }

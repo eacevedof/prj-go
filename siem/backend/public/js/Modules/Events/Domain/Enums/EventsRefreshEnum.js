@@ -10,7 +10,9 @@ export const EventsRefreshEnum = Object.freeze({
     DEFAULT: "10",
 });
 
-export const EVENTS_REFRESH_VALUES = Object.freeze(["off", "10", "30", "60"]);
+export const EVENTS_REFRESH_VALUES = Object.freeze([
+    EventsRefreshEnum.OFF, EventsRefreshEnum.SECONDS_10, EventsRefreshEnum.SECONDS_30, EventsRefreshEnum.SECONDS_60,
+]);
 
 export const EVENTS_REFRESH_LABELS = Object.freeze({
     [EventsRefreshEnum.OFF]: "Refresco: apagado",

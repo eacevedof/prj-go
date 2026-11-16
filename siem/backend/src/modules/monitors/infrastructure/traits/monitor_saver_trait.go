@@ -2,15 +2,18 @@ package traits
 
 import (
     "siem-backend/src/core/config"
-    agentsrepositories "siem-backend/src/modules/agents/infrastructure/repositories"
-    "siem-backend/src/modules/monitors/application/monitorinput"
-    "siem-backend/src/modules/monitors/domain/enums"
-    "siem-backend/src/modules/monitors/domain/exceptions"
-    "siem-backend/src/modules/monitors/domain/services"
-    "siem-backend/src/modules/monitors/infrastructure/repositories"
+
     sharedenums "siem-backend/src/modules/shared/domain/enums"
-    sharedexceptions "siem-backend/src/modules/shared/infrastructure/exceptions"
     sharedtraits "siem-backend/src/modules/shared/infrastructure/traits"
+    sharedexceptions "siem-backend/src/modules/shared/infrastructure/exceptions"
+
+    agentsrepositories "siem-backend/src/modules/agents/infrastructure/repositories"
+
+    "siem-backend/src/modules/monitors/domain/enums"
+    "siem-backend/src/modules/monitors/domain/services"
+    "siem-backend/src/modules/monitors/application/monitorinput"
+    "siem-backend/src/modules/monitors/infrastructure/repositories"
+    "siem-backend/src/modules/monitors/domain/exceptions"
 )
 
 // MonitorSaverTrait las comprobaciones que comparten el alta y la edicion de un monitor: campos validos, agente del
@@ -18,19 +21,19 @@ import (
 type MonitorSaverTrait struct {
     sharedtraits.ErrorStackTrait
 
-    MonitorFieldsValidator         *services.MonitorFieldsValidator
+    agentsReaderSqliteRepository   *agentsrepositories.AgentsReaderSqliteRepository
     MonitorsReaderSqliteRepository *repositories.MonitorsReaderSqliteRepository
     MonitorsWriterSqliteRepository *repositories.MonitorsWriterSqliteRepository
-    agentsReaderSqliteRepository   *agentsrepositories.AgentsReaderSqliteRepository
+    MonitorFieldsValidator         *services.MonitorFieldsValidator
     monitorResourceKeyer           *services.MonitorResourceKeyer
 }
 
 func NewMonitorSaverTrait() MonitorSaverTrait {
     return MonitorSaverTrait{
-        MonitorFieldsValidator:         services.MonitorFieldsValidatorGetInstance(),
+        agentsReaderSqliteRepository:   agentsrepositories.AgentsReaderSqliteRepositoryGetInstance(),
         MonitorsReaderSqliteRepository: repositories.MonitorsReaderSqliteRepositoryGetInstance(),
         MonitorsWriterSqliteRepository: repositories.MonitorsWriterSqliteRepositoryGetInstance(),
-        agentsReaderSqliteRepository:   agentsrepositories.AgentsReaderSqliteRepositoryGetInstance(),
+        MonitorFieldsValidator:         services.MonitorFieldsValidatorGetInstance(),
         monitorResourceKeyer:           services.MonitorResourceKeyerGetInstance(),
     }
 }

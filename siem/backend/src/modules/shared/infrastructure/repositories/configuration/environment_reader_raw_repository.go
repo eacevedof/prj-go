@@ -89,11 +89,11 @@ func (e *EnvironmentReaderRawRepository) IsTest() bool {
 
 // IsDebug filter_var(FILTER_VALIDATE_BOOLEAN): "1", "true", "on", "yes".
 func (e *EnvironmentReaderRawRepository) IsDebug() bool {
-    debug := strings.ToLower(e.get(enums.AppEnvKeyEnum.APP_DEBUG))
-    if debug == "on" || debug == "yes" {
+    rawDebugValue := strings.ToLower(e.get(enums.AppEnvKeyEnum.APP_DEBUG))
+    if rawDebugValue == "on" || rawDebugValue == "yes" {
         return true
     }
-    isDebug, _ := strconv.ParseBool(debug)
+    isDebug, _ := strconv.ParseBool(rawDebugValue)
     return isDebug
 }
 
@@ -130,12 +130,12 @@ func (e *EnvironmentReaderRawRepository) GetDashboardToken() string {
 // GetQueueWorkerIntervalSeconds cada cuanto el worker de la API vacia ingest_queue. 0 = worker apagado (se procesa
 // con ./console ingest-queue-process).
 func (e *EnvironmentReaderRawRepository) GetQueueWorkerIntervalSeconds() int {
-    return e.getIntOrDefault(enums.AppEnvKeyEnum.APP_QUEUE_WORKER_INTERVAL_SECONDS, 2)
+    return e.getIntOrDefault(enums.AppEnvKeyEnum.APP_QUEUE_WORKER_INTERVAL_SECONDS, enums.AppEnvDefaultEnum.QUEUE_WORKER_INTERVAL_SECONDS)
 }
 
 // GetEventsRetentionDays dias que se conservan los eventos (./console events-purge sin --retention_days).
 func (e *EnvironmentReaderRawRepository) GetEventsRetentionDays() int {
-    return e.getIntOrDefault(enums.AppEnvKeyEnum.APP_EVENTS_RETENTION_DAYS, 30)
+    return e.getIntOrDefault(enums.AppEnvKeyEnum.APP_EVENTS_RETENTION_DAYS, enums.AppEnvDefaultEnum.EVENTS_RETENTION_DAYS)
 }
 
 func (e *EnvironmentReaderRawRepository) getIntOrDefault(key string, defaultValue int) int {

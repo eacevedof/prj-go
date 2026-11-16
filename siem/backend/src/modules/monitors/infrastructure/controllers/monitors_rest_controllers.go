@@ -1,16 +1,17 @@
 package controllers
 
 import (
+    "siem-backend/src/modules/shared/application"
+    "siem-backend/src/modules/shared/infrastructure/components/httprequester"
+    "siem-backend/src/modules/shared/infrastructure/components/httpresponder"
+    sharedcontrollers "siem-backend/src/modules/shared/infrastructure/controllers"
+
+    "siem-backend/src/modules/monitors/domain/enums"
     "siem-backend/src/modules/monitors/application/createmonitor"
     "siem-backend/src/modules/monitors/application/deletemonitor"
     "siem-backend/src/modules/monitors/application/getagentconfig"
     "siem-backend/src/modules/monitors/application/getprojectmonitors"
     "siem-backend/src/modules/monitors/application/updatemonitor"
-    "siem-backend/src/modules/monitors/domain/enums"
-    "siem-backend/src/modules/shared/application"
-    "siem-backend/src/modules/shared/infrastructure/components/httprequester"
-    "siem-backend/src/modules/shared/infrastructure/components/httpresponder"
-    sharedcontrollers "siem-backend/src/modules/shared/infrastructure/controllers"
 )
 
 // Los cinco controllers REST de monitors van en este fichero: son el mismo esqueleto (autenticar -> servicio ->

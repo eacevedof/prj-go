@@ -3,12 +3,13 @@ package controllers
 import (
     "errors"
 
-    "siem-backend/src/modules/dashboard/application/getdashboard"
-    "siem-backend/src/modules/dashboard/domain/exceptions"
     "siem-backend/src/modules/shared/application"
     "siem-backend/src/modules/shared/infrastructure/components/httprequester"
     "siem-backend/src/modules/shared/infrastructure/components/httpresponder"
     sharedcontrollers "siem-backend/src/modules/shared/infrastructure/controllers"
+
+    "siem-backend/src/modules/dashboard/application/getdashboard"
+    "siem-backend/src/modules/dashboard/domain/exceptions"
 )
 
 // GetDashboardRestController GET /api/v1/dashboard  (Bearer del dashboard) -> {server, projects}

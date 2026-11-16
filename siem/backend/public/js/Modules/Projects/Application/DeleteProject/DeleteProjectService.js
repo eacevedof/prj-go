@@ -1,7 +1,8 @@
+import { ProjectsKeyEnum } from "/js/Modules/Projects/Domain/Enums/ProjectsKeyEnum.js";
 import { ProjectsMessageEnum } from "/js/Modules/Projects/Domain/Enums/ProjectsMessageEnum.js";
-import { ProjectsException } from "/js/Modules/Projects/Domain/Exceptions/ProjectsException.js";
 import { DeleteProjectResultDto } from "/js/Modules/Projects/Application/DeleteProject/DeleteProjectResultDto.js";
 import { ProjectsWriterHttpRepository } from "/js/Modules/Projects/Infrastructure/Repositories/ProjectsWriterHttpRepository.js";
+import { ProjectsException } from "/js/Modules/Projects/Domain/Exceptions/ProjectsException.js";
 
 /**
  * Baja de un proyecto: la API borra tambien sus agentes, monitores y eventos (no se puede deshacer) y devuelve los
@@ -40,9 +41,9 @@ export class DeleteProjectService {
         }
         const deletedProject = apiResponse.data ?? {};
         return DeleteProjectResultDto.fromPrimitives({
-            projectUuid: deletedProject.project_uuid ?? deleteProjectDto.getProjectUuid(),
-            projectName: deletedProject.project_name ?? "",
-            agents: deletedProject.agents ?? [],
+            projectUuid: deletedProject[ProjectsKeyEnum.PROJECT_UUID] ?? deleteProjectDto.getProjectUuid(),
+            projectName: deletedProject[ProjectsKeyEnum.PROJECT_NAME] ?? "",
+            agents: deletedProject[ProjectsKeyEnum.AGENTS] ?? [],
         });
     }
 }

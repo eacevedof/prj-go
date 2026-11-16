@@ -45,14 +45,14 @@ func Lgerr(variable any, title string, logType string) {
 // Tr el __() de task-php: sustituye {0}, {1}... por los args. El idioma de alli sale de $_REQUEST["lang"], que la API
 // nunca rellena (y no hay src/Core/locale): siempre responde en ingles, el msgid tal cual. Aqui igual.
 func Tr(msgId string, args ...any) string {
-    msgChanged := strings.TrimSpace(msgId)
-    if msgChanged == "" {
+    translatedMessage := strings.TrimSpace(msgId)
+    if translatedMessage == "" {
         return ""
     }
     for i, arg := range args {
-        msgChanged = strings.ReplaceAll(msgChanged, "{"+strconv.Itoa(i)+"}", fmt.Sprint(arg))
+        translatedMessage = strings.ReplaceAll(translatedMessage, "{"+strconv.Itoa(i)+"}", fmt.Sprint(arg))
     }
-    return msgChanged
+    return translatedMessage
 }
 
 func appbootLoadenvfile(pathEnv string) {

@@ -6,6 +6,7 @@ import (
     "slices"
     "strings"
 
+    "siem-backend/src/modules/shared/domain/enums"
     "siem-backend/src/modules/shared/infrastructure/components/httprequester"
     "siem-backend/src/modules/shared/infrastructure/components/httpresponder"
 )
@@ -45,8 +46,8 @@ func ApiRouterGetInstance(routes []Route) *ApiRouter {
 func (r *ApiRouter) GetRunData(requestMethod string, requestUri string) RunData {
     requestMethod = strings.ToLower(requestMethod)
     //RFC 9110: todo recurso que admite GET admite HEAD
-    if requestMethod == "head" {
-        requestMethod = "get"
+    if requestMethod == enums.HttpEnum.METHOD_HEAD {
+        requestMethod = enums.HttpEnum.METHOD_GET
     }
     path := r.getPathWithoutQueryString(requestUri)
 
@@ -60,7 +61,7 @@ func (r *ApiRouter) GetRunData(requestMethod string, requestUri string) RunData 
 
         allowed := route.Allowed
         if len(allowed) == 0 {
-            allowed = []string{"get"}
+            allowed = []string{enums.HttpEnum.METHOD_GET}
         }
         if slices.Contains(allowed, requestMethod) {
             return RunData{Route: route, Args: args}

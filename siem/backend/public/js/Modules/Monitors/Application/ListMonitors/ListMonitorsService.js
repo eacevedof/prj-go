@@ -1,7 +1,7 @@
 import { MonitorsMessageEnum } from "/js/Modules/Monitors/Domain/Enums/MonitorsMessageEnum.js";
-import { MonitorsException } from "/js/Modules/Monitors/Domain/Exceptions/MonitorsException.js";
 import { ListMonitorsResultDto } from "/js/Modules/Monitors/Application/ListMonitors/ListMonitorsResultDto.js";
 import { MonitorsReaderHttpRepository } from "/js/Modules/Monitors/Infrastructure/Repositories/MonitorsReaderHttpRepository.js";
+import { MonitorsException } from "/js/Modules/Monitors/Domain/Exceptions/MonitorsException.js";
 
 /**
  * Los monitores (recursos a vigilar) de un proyecto con su ultimo valor por agente.

@@ -6,7 +6,9 @@ import { TextFormatter } from "/js/Modules/Shared/Infrastructure/Components/Text
 import {
     EVENT_FACETS, EVENT_FILTER_FIELD_LABELS, EVENT_FILTER_FIELDS, EventFilterFieldEnum,
 } from "/js/Modules/Events/Domain/Enums/EventFilterFieldEnum.js";
+import { EventSeverityEnum } from "/js/Modules/Events/Domain/Enums/EventSeverityEnum.js";
 import { EventsFilterOptionKeyEnum } from "/js/Modules/Events/Domain/Enums/EventsFilterOptionKeyEnum.js";
+import { EventsMessageEnum } from "/js/Modules/Events/Domain/Enums/EventsMessageEnum.js";
 import { EventsPaginationEnum } from "/js/Modules/Events/Domain/Enums/EventsPaginationEnum.js";
 import { EVENTS_REFRESH_LABELS, EVENTS_REFRESH_VALUES } from "/js/Modules/Events/Domain/Enums/EventsRefreshEnum.js";
 import { EventsTextEnum } from "/js/Modules/Events/Domain/Enums/EventsTextEnum.js";
@@ -24,11 +26,10 @@ const ACTION_PILL_REMOVE = "pill-remove";
 const ACTION_PILLS_CLEAR = "pills-clear";
 const ACTION_ROW_TOGGLE = "row-toggle";
 const ACTION_BUCKET = "bucket";
-const SEVERITIES_TOP_DOWN = Object.freeze(["critical", "error", "warning", "info", "debug"]);
+// EventSeverityEnum va de menos a mas grave: la leyenda, de mas a menos
+const SEVERITIES_TOP_DOWN = Object.freeze(Object.values(EventSeverityEnum).reverse());
 const HISTOGRAM_BOX = Object.freeze({ width: 960, height: 170, left: 40, right: 8, top: 10, bottom: 24 });
-const HISTOGRAM_HINT = "Pasa por una barra para ver su tramo; haz clic para acotar el rango a ese tramo.";
 const TABLE_COLUMNS = 6;
-const RANGE_ERROR = "from / to: formato YYYY-MM-DD HH:MM:SS (UTC), con from anterior o igual a to";
 // contenedor de las casillas de un filtro multiple (dentro de su <details>)
 const CSS_MULTI_SELECT_OPTIONS = "multi-select-options";
 
@@ -126,7 +127,7 @@ export class EventsView {
         this.#elements.sectionEvents.addEventListener("click", (event) => this.#onClick(event));
         this.#elements.divEventsHistogram.addEventListener("mouseover", (event) => this.#onHistogramHover(event));
         this.#elements.divEventsHistogram.addEventListener("focusin", (event) => this.#onHistogramHover(event));
-        this.#elements.divEventsHistogram.addEventListener("mouseleave", () => this.#renderHistogramInfo(HISTOGRAM_HINT));
+        this.#elements.divEventsHistogram.addEventListener("mouseleave", () => this.#renderHistogramInfo(EventsTextEnum.HISTOGRAM_HINT));
         this.#elements.divEventsHistogram.addEventListener("keydown", (event) => this.#onHistogramKeydown(event));
     }
 
@@ -213,7 +214,7 @@ export class EventsView {
     renderHistogram(histogram) {
         this.#bucketSeconds = histogram.bucketSeconds;
         this.#elements.divEventsHistogram.innerHTML = this.#getHistogramHtml(histogram);
-        this.#renderHistogramInfo(HISTOGRAM_HINT);
+        this.#renderHistogramInfo(EventsTextEnum.HISTOGRAM_HINT);
     }
 
     /**
@@ -665,7 +666,7 @@ export class EventsView {
         const from = this.#elements.inputEventsFrom.value.trim();
         const to = this.#elements.inputEventsTo.value.trim();
         if (!this.#eventsQueryParser.isUtcDateTime(from) || !this.#eventsQueryParser.isUtcDateTime(to) || from > to) {
-            this.#renderRangeErrors(RANGE_ERROR);
+            this.#renderRangeErrors(EventsMessageEnum.FROM_TO_IS_NOT_VALID);
             return;
         }
         this.#goToState(this.#eventsQueryParser.getStateWith(this.#state, { range: "", from, to }));

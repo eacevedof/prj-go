@@ -2,11 +2,13 @@ package deleteproject
 
 import (
     "siem-backend/src/core/config"
+
     agentsentities "siem-backend/src/modules/agents/domain/entities"
     agentsrepositories "siem-backend/src/modules/agents/infrastructure/repositories"
+
     "siem-backend/src/modules/projects/domain/enums"
-    "siem-backend/src/modules/projects/domain/exceptions"
     "siem-backend/src/modules/projects/infrastructure/repositories"
+    "siem-backend/src/modules/projects/domain/exceptions"
 )
 
 // DeleteProjectService baja de un proyecto desde el panel. La BD se lleva en cascada sus agentes, monitores, fuentes
