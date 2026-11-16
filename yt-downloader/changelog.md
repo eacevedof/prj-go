@@ -4,6 +4,11 @@ La versión es `APP_VERSION` en `src/modules/shared/infrastructure/repositories/
 (única fuente: la muestran `menu`, `help` y `version`, y da nombre a `build/dist/yt-{win,linux,macos}-<versión>`).
 Lo más nuevo arriba.
 
+## 0.6.1 — 2026-11-15
+
+1. `makefile` sin tabuladores: recetas a 4 espacios con `.RECIPEPREFIX` (regla de indentación y LF de la config
+   global); `.editorconfig` nuevo (4 espacios, LF, también en el makefile).
+
 ## 0.6.0 — 2026-10-30
 
 1. **Linux y macOS**: `make dist` genera los tres binarios `yt-win-<versión>.exe`, `yt-linux-<versión>` (amd64) y

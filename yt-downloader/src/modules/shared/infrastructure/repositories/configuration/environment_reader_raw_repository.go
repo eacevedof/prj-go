@@ -13,8 +13,8 @@ import (
 // Version de la app: la muestran el menu, `version` y `help`, y da nombre al instalable (make dist ->
 // build/dist/yt-{win,linux,macos}-<APP_VERSION>). Al subirla, anotar el cambio en changelog.md.
 const (
-	APP_VERSION        = "0.6.0"
-	APP_VERSION_UPDATE = "2026-10-30"
+	APP_VERSION        = "0.6.1"
+	APP_VERSION_UPDATE = "2026-11-15"
 )
 
 // EnvironmentReaderRawRepository fuente UNICA de lectura de entorno: un getter semantico por cada clave del .env
