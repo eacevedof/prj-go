@@ -16,7 +16,8 @@ const (
     INGEST_PATH      = "/api/v1/ingest-batches"
 )
 
-// GetDownloadsService los binarios del siem-client que se pueden descargar desde el panel (los deja ahi "make dist"
+// GetDownloadsService los binarios del siem-client y sus instaladores asistidos que se pueden descargar desde el panel
+// (los deja ahi "make dist"
 // del cliente) y la url de ingesta que tiene que llevar el .env de un agente nuevo. Los ficheros de la carpeta que no
 // son binarios del cliente no se listan.
 type GetDownloadsService struct {
@@ -41,8 +42,19 @@ func (s *GetDownloadsService) Invoke(getDownloadsDto *GetDownloadsDto) (*GetDown
     }
 
     downloads := []DownloadPrimitives{}
+    installers := []InstallerPrimitives{}
     for _, downloadFile := range downloadFiles {
         fileName := application.GetTrimmedString(downloadFile, "file_name")
+        if installerOs, isInstaller := s.downloadFileNameParser.GetInstallerOs(fileName); isInstaller {
+            installers = append(installers, InstallerPrimitives{
+                FileName:  fileName,
+                Os:        installerOs,
+                SizeBytes: application.GetInt(downloadFile, "size_bytes"),
+                Sha256:    application.GetTrimmedString(downloadFile, "sha256"),
+                Url:       "/" + DOWNLOADS_FOLDER + "/" + fileName,
+            })
+            continue
+        }
         os, arch, version, isBinary := s.downloadFileNameParser.GetOsArchAndVersion(fileName)
         if !isBinary {
             continue
@@ -60,5 +72,6 @@ func (s *GetDownloadsService) Invoke(getDownloadsDto *GetDownloadsDto) (*GetDown
     return GetDownloadsResultDtoFromPrimitives(map[string]any{
         "endpointUrl": strings.TrimRight(s.environmentReaderRawRepository.GetBaseUrl(), "/") + INGEST_PATH,
         "downloads":   downloads,
+        "installers":  installers,
     }), nil
 }

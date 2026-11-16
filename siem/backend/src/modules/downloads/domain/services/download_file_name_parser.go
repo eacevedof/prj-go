@@ -12,18 +12,32 @@ var archsByOs = map[string]string{
     "macos":   "arm64",
 }
 
-// DownloadFileNameParser saca el SO, la arquitectura y la version del nombre de un binario del siem-client.
+// instaladores asistidos que copia "make dist" (client/install/) y para que sistemas sirve cada uno
+var osByInstallerFileName = map[string]string{
+    "install.sh":  "linux,macos",
+    "install.ps1": "windows",
+    "install.bat": "windows",
+}
+
+// DownloadFileNameParser saca el SO, la arquitectura y la version del nombre de un binario del siem-client, y que
+// ficheros son instaladores.
 type DownloadFileNameParser struct{}
 
 func DownloadFileNameParserGetInstance() *DownloadFileNameParser {
     return &DownloadFileNameParser{}
 }
 
-// GetOsArchAndVersion isBinary false si el fichero no es un binario del cliente (no se lista).
+// GetOsArchAndVersion isBinary false si el fichero no es un binario del cliente (no se lista como binario).
 func (p *DownloadFileNameParser) GetOsArchAndVersion(fileName string) (os string, arch string, version string, isBinary bool) {
     matches := downloadFileNamePattern.FindStringSubmatch(fileName)
     if matches == nil {
         return "", "", "", false
     }
     return matches[1], archsByOs[matches[1]], matches[2], true
+}
+
+// GetInstallerOs para que sistemas es un instalador ("linux,macos" o "windows"); isInstaller false si no lo es.
+func (p *DownloadFileNameParser) GetInstallerOs(fileName string) (os string, isInstaller bool) {
+    os, isInstaller = osByInstallerFileName[fileName]
+    return os, isInstaller
 }

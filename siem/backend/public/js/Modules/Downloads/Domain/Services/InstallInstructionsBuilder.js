@@ -49,6 +49,41 @@ export class InstallInstructionsBuilder {
         }
     }
 
+    /**
+     * La instalacion asistida en una linea: descarga el instalador del panel y lo lanza con la url y, si se conoce, el
+     * token (sin token, el instalador lo pregunta: asi nunca queda un marcador sin sustituir en el servidor).
+     * @param {string} os linux | macos | windows
+     * @param {string} origin la direccion del backend que veran los servidores
+     * @param {string} apiToken "" = que lo pregunte
+     * @returns {{language: string, code: string}}
+     */
+    getInstallerCommand(os, origin, apiToken = "") {
+        const token = apiToken.trim();
+        if (os === OS_WINDOWS) {
+            const tokenArgument = token ? ` -Token "${token}"` : "";
+            return {
+                language: "PowerShell como administrador",
+                code: `Invoke-WebRequest -UseBasicParsing "${origin}/downloads/install.ps1" -OutFile "$env:TEMP\\siem-install.ps1"\n`
+                    + `powershell -NoProfile -ExecutionPolicy Bypass -File "$env:TEMP\\siem-install.ps1" -Url "${origin}"${tokenArgument}`,
+            };
+        }
+        const tokenArgument = token ? ` --token "${token}"` : "";
+        return {
+            language: os === OS_MACOS ? "zsh" : "bash",
+            code: `curl -fsSL "${origin}/downloads/install.sh" | sudo sh -s -- --url "${origin}"${tokenArgument}`,
+        };
+    }
+
+    /**
+     * Todos los pasos en un solo script, para pegarlo de una vez en el servidor: cada paso precedido de un comentario
+     * con su numero y su titulo (# vale en bash, zsh y PowerShell).
+     * @param {{title: string, code: string}[]} steps los de getSteps
+     * @returns {string}
+     */
+    getFullScript(steps) {
+        return steps.map((step, index) => `# ${index + 1} - ${step.title}\n${step.code}`).join("\n\n");
+    }
+
     #getEnvFile(context) {
         return `APP_ENV=production\nAPP_SIEM_ENDPOINT_URL=${context.endpointUrl}\nAPP_SIEM_API_TOKEN=${context.apiToken}`;
     }

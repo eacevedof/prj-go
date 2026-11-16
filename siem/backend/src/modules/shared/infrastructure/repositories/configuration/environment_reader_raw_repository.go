@@ -13,8 +13,8 @@ import (
 // version publicada en /api/v1: es la del CONTRATO (la misma que task-php). Al subirla, anotar el
 // cambio en changelog.md
 const (
-    APP_VERSION        = "0.4.0"
-    APP_VERSION_UPDATE = "2026-11-15"
+    APP_VERSION        = "0.5.0"
+    APP_VERSION_UPDATE = "2026-11-16"
 )
 
 // EnvironmentReaderRawRepository fuente UNICA de lectura de entorno: un getter semantico por cada clave del .env

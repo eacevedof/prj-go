@@ -35,6 +35,7 @@ export class GetDownloadsService {
         return GetDownloadsResultDto.fromPrimitives({
             endpointUrl: data.endpoint_url,
             downloads: data.downloads,
+            installers: data.installers,
         });
     }
 }

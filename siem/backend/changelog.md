@@ -3,6 +3,20 @@
 La versión es `APP_VERSION` en `src/modules/shared/infrastructure/repositories/configuration/environment_reader_raw_repository.go`
 (la muestra el dashboard). Lo más nuevo arriba.
 
+## 0.5.0 — 2026-11-16
+
+1. **Rediseño UI/UX del panel** con el lenguaje de Ventriloc (refero.design): casi monocromo (grafito sobre blanco,
+   superficies ash/fog/ivory) con un único acento naranja Ember y latón como secundario; sin sombras ni bordes de caja.
+2. Barra lateral oscura sustituida por una **cabecera**: marca a la izquierda, menú en pastilla al centro, refresco y
+   "Salir" a la derecha; contenido centrado a 1200 px.
+3. Cada pantalla abre con una **cabecera editorial** (titular grande + entradilla); en Eventos es compacta, en una línea,
+   para que consulta, histograma y tabla queden en el primer pliegue.
+4. Botones rectos (grafito relleno o contorno), tarjetas de datos de radio 20 (cifras del servidor, proyectos,
+   histograma), paneles con radio asimétrico, pastillas de estado y filtros redondeadas, tablas sin caja con filetes.
+5. Gravedades en escala cálida (gris → latón → ember → rojo tostado) que mantienen la forma de cada pastilla; tema oscuro
+   cálido por tokens. Solo `index.html` y `siem.css`: ids y clases que usa el JS, sin cambios.
+6. Descargas: instalación asistida (`install.sh`) en el paso 3, trabajo previo que no había subido versión.
+
 ## 0.4.0 — 2026-11-15
 
 1. **Panel con escritura** (Bearer del dashboard): `POST /api/v1/projects`, `DELETE /api/v1/projects/:uuid`,

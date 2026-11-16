@@ -34,6 +34,7 @@ import { MonitorsView } from "/js/Modules/Monitors/Infrastructure/Views/Monitors
 import { SearchEventsController } from "/js/Modules/Events/Infrastructure/Controllers/SearchEventsController.js";
 import { EventsView } from "/js/Modules/Events/Infrastructure/Views/EventsView.js";
 
+import { CreateInstallAgentController } from "/js/Modules/Downloads/Infrastructure/Controllers/CreateInstallAgentController.js";
 import { GetDownloadsController } from "/js/Modules/Downloads/Infrastructure/Controllers/GetDownloadsController.js";
 import { DownloadsView } from "/js/Modules/Downloads/Infrastructure/Views/DownloadsView.js";
 
@@ -57,7 +58,7 @@ const start = async function () {
         CreateAgentController, DeleteAgentController,
         ListMonitorsController, CreateMonitorController, UpdateMonitorController, DeleteMonitorController,
         SearchEventsController,
-        GetDownloadsController,
+        GetDownloadsController, CreateInstallAgentController,
     ].forEach((controller) => controller.getInstance().init());
 
     const dashboardToken = SessionStorer.getInstance().getDashboardToken();

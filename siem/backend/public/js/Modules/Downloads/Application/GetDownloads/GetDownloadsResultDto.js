@@ -1,11 +1,12 @@
 /**
  * Resultado del caso de uso: los binarios del agente que sirve el backend (objetos planos de la API: file_name, os,
- * arch, version, size_bytes, sha256, url) y la url de ingesta que debe llevar el .env del agente.
+ * arch, version, size_bytes, sha256, url), sus instaladores asistidos y la url de ingesta que debe llevar el .env del agente.
  */
 export class GetDownloadsResultDto {
 
     #endpointUrl;
     #downloads;
+    #installers;
 
     /**
      * @param {Object} primitives
@@ -13,6 +14,7 @@ export class GetDownloadsResultDto {
     constructor(primitives) {
         this.#endpointUrl = String(primitives.endpointUrl ?? "");
         this.#downloads = Array.isArray(primitives.downloads) ? primitives.downloads : [];
+        this.#installers = Array.isArray(primitives.installers) ? primitives.installers : [];
     }
 
     /**
@@ -35,5 +37,12 @@ export class GetDownloadsResultDto {
      */
     getDownloads() {
         return this.#downloads;
+    }
+
+    /**
+     * @returns {Object[]} los instaladores asistidos (file_name, os "linux,macos" o "windows", size_bytes, sha256, url)
+     */
+    getInstallers() {
+        return this.#installers;
     }
 }

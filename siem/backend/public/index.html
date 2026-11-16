@@ -11,21 +11,22 @@
 <body>
 <div class="app">
 
-    <aside class="sidebar">
-        <a class="brand" href="#/">siem<span class="brand-sub">consola</span></a>
+    <!-- cabecera: marca a la izquierda, menu en pastilla al centro, sesion a la derecha (estilo Ventriloc) -->
+    <header class="topbar">
+        <a class="brand" href="#/">siem<span class="brand-dot" aria-hidden="true"></span><span class="brand-sub">consola</span></a>
         <!-- menu: solo con sesion (NavigationView.show) -->
         <nav id="nav-screens" class="nav hidden" aria-label="Pantallas">
             <a href="#/" data-screen="dashboard"><span class="nav-number">1</span>Proyectos</a>
             <a href="#/events" data-screen="events"><span class="nav-number">2</span>Eventos</a>
             <a href="#/downloads" data-screen="downloads"><span class="nav-number">3</span>Descargas</a>
         </nav>
-        <div class="sidebar-foot">
+        <div class="topbar-session">
             <span id="span-refresh-info" class="refresh-info"></span>
             <span id="div-session" class="hidden">
-                <button id="button-log-out" type="button" class="button button-small">Salir</button>
+                <button id="button-log-out" type="button" class="button button-dark">Salir</button>
             </span>
         </div>
-    </aside>
+    </header>
 
     <main class="content">
 
@@ -34,6 +35,7 @@
 
         <!-- entrada: token del dashboard (AuthView) -->
         <section id="section-auth" class="auth hidden">
+            <p class="eyebrow">siem · consola</p>
             <h1>1 - acceso</h1>
             <p class="muted">Token del dashboard: <code>APP_DASHBOARD_TOKEN</code> del <code>.env</code> del backend.</p>
             <p id="p-auth-message" class="notice hidden"></p>
@@ -47,6 +49,11 @@
 
         <!-- portada: servidor + proyectos (DashboardView) + alta de proyecto (ProjectFormView) -->
         <section id="section-dashboard" data-screen="dashboard" class="screen hidden">
+            <header class="page-head">
+                <p class="eyebrow">Proyectos</p>
+                <p class="display">Lo que vigilan tus agentes, <em>de un vistazo</em>.</p>
+                <p class="lede">Estado del servidor, salud de cada proyecto en las últimas 24 h y alta de proyectos nuevos.</p>
+            </header>
             <p id="p-dashboard-errors" class="error hidden"></p>
             <h1>1 - servidor</h1>
             <div id="div-dashboard-server"></div>
@@ -75,7 +82,7 @@
         <!-- detalle de un proyecto: cabecera y agentes (ProjectDetailView), alta de agente (AgentFormView),
              monitores (MonitorsView) y borrar proyecto (ProjectDangerView) -->
         <section id="section-project" data-screen="projects" class="screen hidden">
-            <p><a href="#/">← proyectos</a></p>
+            <p class="eyebrow back-link"><a href="#/">← Proyectos</a></p>
             <p id="p-project-errors" class="error hidden"></p>
             <div id="div-project-body">
                 <div id="div-project-header"></div>
@@ -197,6 +204,11 @@
 
         <!-- visor de eventos tipo Discover (EventsView) -->
         <section id="section-events" data-screen="events" class="screen hidden">
+            <header class="page-head page-head-compact">
+                <p class="eyebrow">Eventos</p>
+                <p class="display">Cada línea, <em>filtrable</em>.</p>
+                <p class="lede">Busca en el mensaje, acota el rango y filtra con + / − desde los campos o las barras del histograma.</p>
+            </header>
             <h1>1 - consulta</h1>
             <div class="toolbar">
                 <form id="form-events-query" class="toolbar-query">
@@ -243,20 +255,49 @@
             </div>
         </section>
 
-        <!-- binarios del agente e instrucciones (DownloadsView) -->
+        <!-- descargas: asistente de instalacion de un agente en 3 pasos (DownloadsView) -->
         <section id="section-downloads" data-screen="downloads" class="screen hidden">
-            <h1>1 - binarios del agente</h1>
-            <p class="muted">Un solo ejecutable por sistema. Ya no hace falta <code>siem-client.json</code>: en el servidor solo van el binario
-                y un <code>.env</code> con el endpoint y el token; lo que se vigila se crea en el panel (monitores de cada proyecto) y el
-                agente lo descarga solo. El token sale <strong>una sola vez</strong> al crear el agente en su proyecto.</p>
-            <div class="panel form-grid">
-                <div class="field field-wide">
-                    <label for="input-downloads-token">Token del agente <span class="muted">(opcional: para que los comandos salgan completos; no se guarda ni se envía)</span></label>
-                    <input id="input-downloads-token" type="password" autocomplete="off" placeholder="&lt;API_TOKEN&gt;">
-                </div>
-            </div>
+            <header class="page-head">
+                <p class="eyebrow">Descargas</p>
+                <p class="display">Un agente nuevo, <em>en tres pasos</em>.</p>
+            </header>
+            <p class="lede">Instalar un agente en un servidor. En el servidor solo van el binario y un <code>.env</code> con la
+                dirección del panel y el token del agente: lo que vigila (monitores del proyecto) lo descarga solo.</p>
             <p id="p-downloads-errors" class="error hidden"></p>
-            <div id="div-downloads-list"></div>
+            <div id="div-downloads-origin"></div>
+
+            <h1>1 - sistema del servidor</h1>
+            <div id="div-downloads-os" class="segmented" role="radiogroup" aria-label="Sistema del servidor"></div>
+
+            <h1>2 - agente</h1>
+            <div class="segmented" role="radiogroup" aria-label="Agente">
+                <button id="button-downloads-agent-new" type="button" class="segment" role="radio" aria-checked="true" data-agent-mode="new">Crear uno nuevo</button>
+                <button id="button-downloads-agent-existing" type="button" class="segment" role="radio" aria-checked="false" data-agent-mode="existing">Ya tengo su token</button>
+            </div>
+            <div class="panel wizard-panel">
+                <form id="form-downloads-agent" class="form-grid">
+                    <div class="field">
+                        <label for="select-downloads-project">Proyecto</label>
+                        <select id="select-downloads-project"></select>
+                    </div>
+                    <div class="field">
+                        <label for="input-downloads-agent-name">Nombre del agente <span class="muted">(el del servidor)</span></label>
+                        <input id="input-downloads-agent-name" type="text" maxlength="100" autocomplete="off" placeholder="web-01">
+                    </div>
+                    <div class="field field-actions">
+                        <button id="button-downloads-agent-create" type="submit" class="button button-primary">Crear agente</button>
+                    </div>
+                    <p id="p-downloads-agent-errors" class="error field-full hidden"></p>
+                </form>
+                <div id="div-downloads-agent-existing" class="field hidden">
+                    <label for="input-downloads-token">Token del agente <span class="muted">(solo en esta página: no se guarda ni se envía)</span></label>
+                    <input id="input-downloads-token" type="password" autocomplete="off" placeholder="pega aquí el token">
+                </div>
+                <div id="div-downloads-token-status" class="token-status"></div>
+            </div>
+
+            <h1>3 - instalar</h1>
+            <div id="div-downloads-install"></div>
         </section>
 
     </main>

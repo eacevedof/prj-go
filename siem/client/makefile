@@ -56,15 +56,18 @@ vet: ## go vet (sin gofmt: el repo va a 4 espacios) · make vet
 
 DOWNLOADS := ../backend/public/downloads
 
-dist: ## binarios para desplegar: build/dist/siem-client-{linux,win,macos}-<version> + copia en backend/public/downloads (los sirve el panel) · make dist
+dist: ## binarios + instaladores (install.sh/.ps1/.bat) + SHA256SUMS en backend/public/downloads (los sirve el panel) · make dist
     docker exec -e CGO_ENABLED=0 -e GOOS=linux -e GOARCH=amd64 $(APP) go build $(LDFLAGS) -o build/dist/siem-client-linux-$(VERSION) ./cmd/console
     docker exec -e CGO_ENABLED=0 -e GOOS=windows -e GOARCH=amd64 $(APP) go build $(LDFLAGS) -o build/dist/siem-client-win-$(VERSION).exe ./cmd/console
     docker exec -e CGO_ENABLED=0 -e GOOS=darwin -e GOARCH=arm64 $(APP) go build $(LDFLAGS) -o build/dist/siem-client-macos-$(VERSION) ./cmd/console
     @mkdir -p $(DOWNLOADS)
-    @rm -f $(DOWNLOADS)/siem-client-*
+    @rm -f $(DOWNLOADS)/siem-client-* $(DOWNLOADS)/install.* $(DOWNLOADS)/SHA256SUMS
     cp build/dist/siem-client-linux-$(VERSION) $(DOWNLOADS)/siem-client-linux-$(VERSION)
     cp build/dist/siem-client-win-$(VERSION).exe $(DOWNLOADS)/siem-client-windows-$(VERSION).exe
     cp build/dist/siem-client-macos-$(VERSION) $(DOWNLOADS)/siem-client-macos-$(VERSION)
+    cp install/install.sh install/install.ps1 install/install.bat $(DOWNLOADS)/
+    @# SHA256SUMS: lo leen los instaladores para elegir el binario y comprobarlo
+    cd $(DOWNLOADS) && sha256sum siem-client-* install.* > SHA256SUMS
     @ls -la $(DOWNLOADS)
 
 version: ## version actual (APP_VERSION) · make version
