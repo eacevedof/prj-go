@@ -382,7 +382,7 @@ export class EventsView {
                     <td>${h.getBadge(event.severity)}</td>
                     <td>${h.getEscaped(event.project_name)}<br><span class="muted">${h.getEscaped(event.agent_name)}</span></td>
                     <td>${h.getEscaped(event.source_name)}<br><span class="muted mono">${h.getEscaped(event.source_type)}</span></td>
-                    <td class="message${isExpanded ? "" : " is-clamped"}">${h.getEscaped(event.message)}</td>
+                    <td class="message"><div class="${isExpanded ? "" : "is-clamped"}">${h.getEscaped(event.message)}</div></td>
                 </tr>${isExpanded ? this.#getEventDetailHtml(event) : ""}`;
             }).join("")}</tbody>
         </table></div>`;

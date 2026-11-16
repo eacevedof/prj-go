@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+    <title>siem</title>
+    <!-- observabilidad: un pulso (latido de los agentes) sobre grafito, con el punto ember de la marca en la lectura viva -->
+    <rect width="32" height="32" rx="7" fill="#202020"/>
+    <path d="M4.5 18.5h5l2.5-6 4 11 3.5-13.5 2.5 8.5h2" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="25.5" cy="18.5" r="2.6" fill="#ff682c"/>
+</svg>

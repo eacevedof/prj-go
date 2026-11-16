@@ -15,7 +15,13 @@ La versión es `APP_VERSION` en `src/modules/shared/infrastructure/repositories/
    histograma), paneles con radio asimétrico, pastillas de estado y filtros redondeadas, tablas sin caja con filetes.
 5. Gravedades en escala cálida (gris → latón → ember → rojo tostado) que mantienen la forma de cada pastilla; tema oscuro
    cálido por tokens. Solo `index.html` y `siem.css`: ids y clases que usa el JS, sin cambios.
-6. Descargas: instalación asistida (`install.sh`) en el paso 3, trabajo previo que no había subido versión.
+6. Visor de eventos con **un solo scroll** (el de la página): la tabla ya no tiene altura máxima con scroll propio y
+   su cabecera se pega bajo la barra superior (`--topbar-h`); en estrecho vuelve el desplazamiento horizontal. Fix: el
+   recorte a 2 líneas del mensaje iba en el `<td>` (dejaba de ser celda, asomaba media línea y descuadraba la fila):
+   ahora va en un `div` interior.
+7. **Favicon** de observabilidad (pulso blanco sobre grafito con el punto ember): `public/favicon.svg` y `public/favicon.ico`
+   (16/32/48 px, generado del SVG); antes `GET /favicon.ico` daba 404.
+8. Descargas: instalación asistida (`install.sh`) en el paso 3, trabajo previo que no había subido versión.
 
 ## 0.4.0 — 2026-11-15
 
