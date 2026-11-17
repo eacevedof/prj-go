@@ -8,9 +8,10 @@ export const ClientOsEnum = Object.freeze({
     MACOS: "darwin",
 
     SERVICE_NAME: "siem-client",
-    // carpeta que crea el instalador: solo si el ejecutable vive en una carpeta con este nombre se propone borrarla
-    // entera (si alguien lo puso en /usr/local/bin, se borra el binario, nunca la carpeta)
-    INSTALL_DIR_NAME: "siem-client",
-    DEFAULT_PATH_LINUX: "/opt/siem-client/siem-client",
-    DEFAULT_PATH_WINDOWS: "C:\\programs\\siem-client\\siem-client.exe",
+    // carpetas que crea el instalador: solo si el ejecutable vive en una carpeta con uno de estos nombres se propone
+    // borrarla entera (si alguien lo puso en /usr/local/bin, se borra el binario, nunca la carpeta). gosiem-client desde
+    // backend 0.10.0; siem-client, la de los agentes instalados antes
+    INSTALL_DIR_NAMES: Object.freeze(["gosiem-client", "siem-client"]),
+    DEFAULT_PATH_LINUX: "/opt/gosiem-client/siem-client",
+    DEFAULT_PATH_WINDOWS: "C:\\programs\\gosiem-client\\siem-client.exe",
 });

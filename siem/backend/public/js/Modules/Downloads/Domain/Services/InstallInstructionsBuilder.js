@@ -2,9 +2,9 @@ import { DownloadsKeyEnum } from "/js/Modules/Downloads/Domain/Enums/DownloadsKe
 import { DownloadsOsEnum } from "/js/Modules/Downloads/Domain/Enums/DownloadsOsEnum.js";
 
 const API_TOKEN_PLACEHOLDER = "<API_TOKEN>";
-const LINUX_FOLDER = "/opt/siem-client";
-const WINDOWS_FOLDER = "C:\\programs\\siem-client";
-const MACOS_FOLDER = "/usr/local/siem-client";
+const LINUX_FOLDER = "/opt/gosiem-client";
+const WINDOWS_FOLDER = "C:\\programs\\gosiem-client";
+const MACOS_FOLDER = "/usr/local/gosiem-client";
 
 /**
  * Los pasos para instalar y configurar un binario del agente, con los comandos ya montados para copiar: descarga

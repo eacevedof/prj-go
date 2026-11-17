@@ -20,6 +20,7 @@ import { TimeRangeResolver } from "/js/Modules/Events/Domain/Services/TimeRangeR
 
 const CSS_HIDDEN = "hidden";
 const CSS_IS_FILTERING = "is-filtering";
+const CSS_IS_LOADING = "is-loading";
 const ACTION_FILTER = "filter";
 const ACTION_PILL_INVERT = "pill-invert";
 const ACTION_PILL_REMOVE = "pill-remove";
@@ -107,9 +108,8 @@ export class EventsView {
             divEventsFacets: document.getElementById("div-events-facets"),
             pEventsErrors: document.getElementById("p-events-errors"),
             divEventsTable: document.getElementById("div-events-table"),
-            buttonEventsPrevious: document.getElementById("button-events-previous"),
-            buttonEventsNext: document.getElementById("button-events-next"),
-            spanEventsPage: document.getElementById("span-events-page"),
+            navEventsPagerTop: document.getElementById("nav-events-pager-top"),
+            navEventsPagerBottom: document.getElementById("nav-events-pager-bottom"),
         };
         this.#loadSelectOptions();
         this.#elements.formEventsQuery.addEventListener("submit", (event) => this.#onQuerySubmit(event));
@@ -122,8 +122,6 @@ export class EventsView {
         this.#elements.detailsEventsAgent.addEventListener("change", () => this.#onAgentsChange());
         this.#elements.detailsEventsMonitor.addEventListener("change", () => this.#onMonitorsChange());
         document.addEventListener("click", (event) => this.#onDocumentClick(event));
-        this.#elements.buttonEventsPrevious.addEventListener("click", () => this.#goToPage(this.#state.page - 1));
-        this.#elements.buttonEventsNext.addEventListener("click", () => this.#goToPage(this.#state.page + 1));
         this.#elements.sectionEvents.addEventListener("click", (event) => this.#onClick(event));
         this.#elements.divEventsHistogram.addEventListener("mouseover", (event) => this.#onHistogramHover(event));
         this.#elements.divEventsHistogram.addEventListener("focusin", (event) => this.#onHistogramHover(event));
@@ -175,6 +173,7 @@ export class EventsView {
      * @param {{events: Object[], page: number, pageSize: number, hasMore: boolean}} eventsPage
      */
     renderEvents(eventsPage) {
+        const previousPage = this.#eventsPage?.page;
         this.#eventsPage = eventsPage;
         eventsPage.events.forEach((event) => {
             this.#namesByUuid.set(event.project_uuid, event.project_name);
@@ -185,10 +184,14 @@ export class EventsView {
         this.#expandedEventIds = new Set([...this.#expandedEventIds].filter((eventId) => eventIds.has(eventId)));
 
         this.renderErrors([]);
+        this.renderLoading(false);
         this.#renderTable();
-        this.#elements.spanEventsPage.textContent = `página ${eventsPage.page}`;
-        this.#elements.buttonEventsPrevious.disabled = eventsPage.page <= EventsPaginationEnum.FIRST_PAGE;
-        this.#elements.buttonEventsNext.disabled = !eventsPage.hasMore;
+        this.#renderPager();
+        // pagina nueva pedida desde el paginador de abajo: se sube a su principio (el de arriba ya esta a la vista)
+        const isTopPagerAbove = this.#elements.navEventsPagerTop.getBoundingClientRect().top < 0;
+        if (previousPage !== undefined && previousPage !== eventsPage.page && isTopPagerAbove) {
+            this.#elements.navEventsPagerTop.scrollIntoView({ block: "start" });
+        }
         // los nombres recien aprendidos pueden mejorar una pastilla que salia con su uuid
         this.#renderPills();
     }
@@ -201,11 +204,22 @@ export class EventsView {
         this.#elements.pEventsErrors.classList.toggle(CSS_HIDDEN, errors.length === 0);
         if (errors.length) {
             this.#eventsPage = null;
+            this.renderLoading(false);
             this.#elements.divEventsTable.innerHTML = "";
-            this.#elements.spanEventsPage.textContent = "";
-            this.#elements.buttonEventsPrevious.disabled = true;
-            this.#elements.buttonEventsNext.disabled = true;
+            this.#renderPager();
         }
+    }
+
+    /**
+     * Velo de carga sobre el listado mientras llega otra pagina u otra consulta: la tabla vieja se queda atenuada debajo
+     * (no salta la pagina) y el paginador dice "cargando…". El auto-refresco no lo usa: parpadearia cada pocos segundos.
+     * @param {boolean} isLoading
+     */
+    renderLoading(isLoading) {
+        this.#elements.divEventsTable.classList.toggle(CSS_IS_LOADING, isLoading);
+        this.#elements.divEventsTable.setAttribute("aria-busy", String(isLoading));
+        [this.#elements.navEventsPagerTop, this.#elements.navEventsPagerBottom]
+            .forEach((navPager) => navPager.classList.toggle(CSS_IS_LOADING, isLoading));
     }
 
     /**
@@ -677,8 +691,44 @@ export class EventsView {
         this.#elements.pEventsRangeErrors.classList.toggle(CSS_HIDDEN, text === "");
     }
 
-    #goToPage(page) {
-        this.#goToState(this.#eventsQueryParser.getStateWith(this.#state, { page: Math.max(EventsPaginationEnum.FIRST_PAGE, page) }));
+    /**
+     * Paginador de enlaces, arriba y abajo de la tabla: cada enlace lleva el hash de su pagina (se puede abrir en otra
+     * pestaña). Sin pagina anterior o siguiente, el texto queda apagado y sin enlace. Sin pagina cargada, vacio.
+     */
+    #renderPager() {
+        const eventsPage = this.#eventsPage;
+        const pagerHtml = eventsPage ? this.#getPagerHtml(eventsPage) : "";
+        this.#elements.navEventsPagerTop.innerHTML = pagerHtml;
+        this.#elements.navEventsPagerBottom.innerHTML = pagerHtml;
+    }
+
+    /**
+     * @param {{page: number, hasMore: boolean}} eventsPage
+     * @returns {string}
+     */
+    #getPagerHtml(eventsPage) {
+        const hasPrevious = eventsPage.page > EventsPaginationEnum.FIRST_PAGE;
+        const previousHtml = this.#getPagerLinkHtml(EventsTextEnum.PAGER_PREVIOUS, eventsPage.page - 1, hasPrevious, "prev");
+        const nextHtml = this.#getPagerLinkHtml(EventsTextEnum.PAGER_NEXT, eventsPage.page + 1, eventsPage.hasMore, "next");
+        const pageText = this.#textFormatter.getFormatted(EventsTextEnum.PAGER_PAGE, eventsPage.page);
+        return `${previousHtml}
+            <span class="pager-page muted">${this.#htmler.getEscaped(pageText)}</span>
+            <span class="pager-loading">${this.#htmler.getEscaped(EventsTextEnum.PAGER_LOADING)}</span>
+            ${nextHtml}`;
+    }
+
+    /**
+     * @param {string} text
+     * @param {number} page
+     * @param {boolean} isEnabled
+     * @param {string} rel prev | next
+     * @returns {string}
+     */
+    #getPagerLinkHtml(text, page, isEnabled, rel) {
+        const h = this.#htmler;
+        if (!isEnabled) return `<span class="pager-link is-disabled" aria-disabled="true">${h.getEscaped(text)}</span>`;
+        const hash = this.#eventsQueryParser.getHash(this.#eventsQueryParser.getStateWith(this.#state, { page }));
+        return `<a class="pager-link" href="${h.getEscaped(hash)}" rel="${rel}">${h.getEscaped(text)}</a>`;
     }
 
     /**

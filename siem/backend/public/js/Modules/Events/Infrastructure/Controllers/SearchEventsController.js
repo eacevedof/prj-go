@@ -44,6 +44,8 @@ export class SearchEventsController {
     #eventsView;
     // si el usuario cambia de filtros antes de que llegue la respuesta, la vieja no debe pisar a la nueva
     #lastRequestNumber = 0;
+    // hash de la ultima consulta pedida: si se repite (auto-refresco) no se enseña el velo de carga
+    #lastQueryHash = "";
 
     constructor() {
         this.#dispatcher = Dispatcher.getInstance();
@@ -76,6 +78,9 @@ export class SearchEventsController {
         const state = this.#eventsQueryParser.getState(request.query);
         const fromTo = this.#timeRangeResolver.getFromTo(state, new Date());
         this.#eventsView.renderState(state, fromTo);
+        const queryHash = this.#eventsQueryParser.getHash(state);
+        if (queryHash !== this.#lastQueryHash) this.#eventsView.renderLoading(true);
+        this.#lastQueryHash = queryHash;
 
         const filters = {
             dashboardToken: this.#sessionStorer.getDashboardToken(),
@@ -95,6 +100,8 @@ export class SearchEventsController {
         if (requestNumber !== this.#lastRequestNumber) return;
 
         if ([eventsResult, histogramResult, facetsResult].some((result) => this.#isUnauthorized(result))) {
+            this.#eventsView.renderLoading(false);
+            this.#lastQueryHash = "";
             this.#dispatcher.dispatch(SessionEventEnum.SESSION_EXPIRED);
             return;
         }

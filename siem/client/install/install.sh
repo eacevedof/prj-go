@@ -9,12 +9,12 @@
 # Uso (como root):
 #   curl -fsSL https://siem.dominio.com/downloads/install.sh | sudo sh
 #   curl -fsSL https://siem.dominio.com/downloads/install.sh | sudo sh -s -- --url https://siem.dominio.com --token <API_TOKEN>
-#   sudo sh install.sh [--url URL] [--token TOKEN] [--dir /opt/siem-client] [--no-service] [--yes]
+#   sudo sh install.sh [--url URL] [--token TOKEN] [--dir /opt/gosiem-client] [--no-service] [--yes]
 # Volver a lanzarlo actualiza el binario y conserva el token del .env si no se le pasa otro.
 set -eu
 
 SERVICE_NAME="siem-client"
-INSTALL_DIR="/opt/siem-client"
+INSTALL_DIR="/opt/gosiem-client"
 PANEL_URL=""
 API_TOKEN=""
 IS_SERVICE_WANTED=1

@@ -13,7 +13,7 @@ export const DownloadsTextEnum = Object.freeze({
         "lo deja arrancando con el sistema (systemd en Linux, tarea programada en Windows)",
     ]),
     MACOS_TROUBLESHOOTING_TITLE: "Si falla en Mac",
-    MACOS_TROUBLESHOOTING_INTRO: "El binario de macOS se compila desde Linux (Go lo permite sin un Mac), pero no está firmado por Apple ni se ha probado aún en un Mac de verdad. Estos son los fallos esperables y cómo salir de ellos. <ruta> es la carpeta del agente: /opt/siem-client con el instalador, /usr/local/siem-client siguiendo el paso a paso.",
+    MACOS_TROUBLESHOOTING_INTRO: "El binario de macOS se compila desde Linux (Go lo permite sin un Mac), pero no está firmado por Apple ni se ha probado aún en un Mac de verdad. Estos son los fallos esperables y cómo salir de ellos. <ruta> es la carpeta del agente: /opt/gosiem-client con el instalador, /usr/local/gosiem-client siguiendo el paso a paso.",
     // {problem, fix, code?}: code = comando para copiar ("" = sin comando)
     MACOS_TROUBLESHOOTING: Object.freeze([
         Object.freeze({

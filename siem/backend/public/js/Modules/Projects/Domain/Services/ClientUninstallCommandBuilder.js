@@ -74,7 +74,7 @@ export class ClientUninstallCommandBuilder {
 
     #isInstallerDirectory(directory, separator) {
         const directoryName = directory.slice(directory.lastIndexOf(separator) + 1);
-        return directoryName.toLowerCase() === ClientOsEnum.INSTALL_DIR_NAME;
+        return ClientOsEnum.INSTALL_DIR_NAMES.includes(directoryName.toLowerCase());
     }
 
     #getShellQuoted(value) {

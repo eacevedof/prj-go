@@ -478,7 +478,25 @@ input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--graphite
 .kv th { width: 1%; white-space: nowrap; font: 400 13px var(--mono); color: var(--slate); border-bottom-color: var(--mist); }
 .kv-actions { width: 1%; white-space: nowrap; }
 .kv-value { font-family: var(--mono); overflow-wrap: anywhere; white-space: pre-wrap; }
-.pager { display: flex; gap: var(--s-4); align-items: center; justify-content: flex-end; margin-top: var(--s-5); }
+/* paginador de enlaces, arriba y abajo del listado; mientras carga dice "cargando…" en vez de la pagina */
+.pager { display: flex; gap: var(--s-4); align-items: center; justify-content: flex-end; margin-top: var(--s-5); font-size: var(--text-sm); }
+.pager:empty { display: none; }
+.pager-top { margin: 0 0 var(--s-3); scroll-margin-top: calc(var(--topbar-h) + var(--s-4)); }
+.pager-link { color: var(--ember-ink); text-decoration: underline; text-underline-offset: 3px; }
+.pager-link:hover { color: var(--graphite); }
+.pager-link.is-disabled { color: var(--line-strong); text-decoration: none; cursor: default; }
+.pager-loading { display: none; color: var(--ember-ink); }
+.pager.is-loading .pager-page { display: none; }
+.pager.is-loading .pager-loading { display: inline; }
+/* velo de carga del listado: la tabla anterior atenuada y una barra que corre bajo el paginador de arriba */
+.events-table { position: relative; min-height: 80px; }
+.events-table.is-loading > * { opacity: 0.4; pointer-events: none; transition: opacity 0.15s; }
+.events-table.is-loading::before {
+    content: ""; position: absolute; z-index: 2; top: 0; left: 0; height: 2px; width: 30%;
+    background: var(--ember); animation: events-loading 1s ease-in-out infinite;
+}
+@keyframes events-loading { from { left: 0; } to { left: 70%; } }
+@media (prefers-reduced-motion: reduce) { .events-table.is-loading::before { animation: none; width: 100%; } }
 
 /* ---- descargas ---- */
 /* selector de una opcion entre pocas: misma pastilla que el menu */

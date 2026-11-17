@@ -13,5 +13,10 @@ export const EventsTextEnum = Object.freeze({
     MONITOR_OPTION: "{0} ({1})",
     // monitor de "todos los agentes" de su proyecto
     MONITOR_OPTION_ALL_AGENTS: "{0} ({1} · todos los agentes)",
-    HISTOGRAM_HINT: "Pasa por una barra para ver su tramo; haz clic para acotar el rango a ese tramo.",
+    // paginador de enlaces (arriba y abajo de la tabla) y su estado de carga
+    PAGER_PREVIOUS: "← anteriores",
+    PAGER_NEXT: "siguientes →",
+    PAGER_PAGE: "página {0}",
+    PAGER_LOADING: "cargando…",
+    HISTOGRAM_HINT:"Pasa por una barra para ver su tramo; haz clic para acotar el rango a ese tramo.",
 });

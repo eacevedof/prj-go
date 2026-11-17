@@ -355,12 +355,10 @@
                 <div class="discover-results">
                     <h1>3 - eventos</h1>
                     <p id="p-events-errors" class="error hidden"></p>
-                    <div id="div-events-table"></div>
-                    <div class="pager">
-                        <button id="button-events-previous" type="button" class="button" disabled>← anteriores</button>
-                        <span id="span-events-page" class="muted"></span>
-                        <button id="button-events-next" type="button" class="button" disabled>siguientes →</button>
-                    </div>
+                    <!-- paginador de enlaces (EventsView): arriba para no tener que bajar la pagina entera, y repetido abajo -->
+                    <nav id="nav-events-pager-top" class="pager pager-top" aria-label="Páginas de eventos (arriba)"></nav>
+                    <div id="div-events-table" class="events-table" aria-busy="false"></div>
+                    <nav id="nav-events-pager-bottom" class="pager" aria-label="Páginas de eventos (abajo)"></nav>
                 </div>
             </div>
         </section>

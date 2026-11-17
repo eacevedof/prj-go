@@ -3,6 +3,19 @@
 La versión es `APP_VERSION` en `src/modules/shared/infrastructure/repositories/configuration/environment_reader_raw_repository.go`
 (la muestra el dashboard). Lo más nuevo arriba.
 
+## 0.10.0 — 2026-11-17
+
+1. **Eventos — paginador de enlaces arriba del listado** (y repetido abajo): `← anteriores · página N · siguientes →` son
+   enlaces con el hash de su página (se pueden abrir en otra pestaña), no botones; sin página anterior/siguiente el
+   texto queda apagado. Pedir la página desde el de abajo sube al principio de la nueva.
+2. **Eventos — velo de carga**: al cambiar de página, filtros o rango, la tabla anterior se atenúa con una barra que
+   corre encima y el paginador dice "cargando…" hasta que llega la respuesta. El auto-refresco no lo enseña (misma
+   consulta: parpadearía cada pocos segundos).
+3. **Carpeta de instalación del agente `gosiem-client`** (antes `siem-client`): `/opt/gosiem-client`,
+   `C:\programs\gosiem-client` y `/usr/local/gosiem-client` en los pasos de Descargas, en las rutas por defecto del
+   comando de desinstalar (`ClientOsEnum`) y en los tests de `AgentHostDataSanitizer`. El comando de desinstalar borra
+   la carpeta entera si se llama `gosiem-client` o `siem-client`: los agentes instalados antes siguen saliendo bien.
+
 ## 0.9.1 — 2026-11-16
 
 1. **Seguridad — `host_os` y `client_path` saneados al ingestar** (`AgentHostDataSanitizer` + `AgentHostOsEnum` en el

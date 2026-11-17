@@ -76,7 +76,7 @@ Cuerpo de un lote:
 ```json
 {
     "batch_uuid": "b-6af9d1f5bd83a",
-    "agent": {"host_name": "web-01", "host_os": "linux", "client_version": "0.4.0", "client_path": "/opt/siem-client/siem-client"},
+    "agent": {"host_name": "web-01", "host_os": "linux", "client_version": "0.4.0", "client_path": "/opt/gosiem-client/siem-client"},
     "events": [
         {"event_type": "log_line", "source_name": "nginx-logs", "file_path": "/var/log/nginx/error.log",
          "message": "... connect() failed ...", "occurred_at": "2026-11-15 10:00:00"},
@@ -123,7 +123,7 @@ Las instrucciones paso a paso, con los comandos para copiar por sistema operativ
 1. `make dist` (con el contenedor del cliente levantado) → `build/dist/` y una copia en `backend/public/downloads/`
    (`siem-client-{linux,windows,macos}-<versión>`), que es de donde los sirve el panel. En el host se copia como
    `siem-client` (sin versión: la unidad systemd no cambia al actualizar; la versión la dice `version`).
-2. En el host, en una carpeta (p. ej. `/opt/siem-client/`): el binario y un `.env` con `APP_SIEM_ENDPOINT_URL` y
+2. En el host, en una carpeta (p. ej. `/opt/gosiem-client/`): el binario y un `.env` con `APP_SIEM_ENDPOINT_URL` y
    `APP_SIEM_API_TOKEN` (salen al crear el agente en el panel). **Ya no hace falta `siem-client.json`**: lo que se
    vigila son los monitores del proyecto, que el agente descarga del backend al arrancar y cada 60 s
    (`state/remote-config.json`; si el backend no responde, sigue con la última). El fichero sigue valiendo para lo que
@@ -137,8 +137,8 @@ Description=siem-client
 After=network-online.target
 
 [Service]
-WorkingDirectory=/opt/siem-client
-ExecStart=/opt/siem-client/siem-client agent-run
+WorkingDirectory=/opt/gosiem-client
+ExecStart=/opt/gosiem-client/siem-client agent-run
 Restart=always
 
 [Install]

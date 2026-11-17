@@ -4,6 +4,13 @@ La versión es `APP_VERSION` en `src/modules/shared/infrastructure/repositories/
 (la muestran `version` y `help`, viaja al backend en cada envío y da nombre a los binarios de `make dist`). Lo más nuevo
 arriba.
 
+## 0.4.2 — 2026-11-17
+
+1. **Carpeta de instalación `gosiem-client`** (antes `siem-client`): `install.sh` instala en `/opt/gosiem-client` e
+   `install.ps1` en `C:\programs\gosiem-client`. El binario sigue siendo `siem-client` y el servicio / la tarea
+   programada no cambian de nombre. Un agente ya instalado no se mueve solo: si se relanza el instalador, queda una
+   instalación nueva en la carpeta nueva y la vieja hay que desinstalarla a mano.
+
 ## 0.4.1 — 2026-11-16
 
 1. **Seguridad — `install.ps1`**: la carpeta de instalación deja de heredar permisos de `C:\` (ahí "Usuarios

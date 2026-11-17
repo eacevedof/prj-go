@@ -8,12 +8,12 @@
 # Uso (PowerShell como administrador):
 #   .\install.ps1                                   # pregunta url y token
 #   .\install.ps1 -Url https://siem.dominio.com -Token <API_TOKEN>
-#   .\install.ps1 -Dir C:\programs\siem-client -NoService -Yes
+#   .\install.ps1 -Dir C:\programs\gosiem-client -NoService -Yes
 # O con doble clic en install.bat (lanza este script). Volver a lanzarlo actualiza el binario y conserva el token.
 param(
     [string]$Url = "",
     [string]$Token = "",
-    [string]$Dir = "C:\programs\siem-client",
+    [string]$Dir = "C:\programs\gosiem-client",
     [switch]$NoService,
     [switch]$Yes
 )
