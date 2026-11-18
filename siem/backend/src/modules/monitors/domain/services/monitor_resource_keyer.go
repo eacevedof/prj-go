@@ -19,7 +19,7 @@ const (
 var windowsPathPattern = regexp.MustCompile(`^[A-Za-z]:[\\/]`)
 
 // MonitorResourceKeyer la clave del recurso que vigila un monitor: dos monitores con la misma clave sobre el mismo
-// agente vigilan lo mismo (repetido). cpu, memoria y gpu: el tipo (uno por agente) · disco: la ruta · red: la
+// agente vigilan lo mismo (repetido). cpu, memoria, gpu y conexiones: el tipo (uno por agente) · disco: la ruta · red: la
 // interfaz · carpeta: ruta + glob · log: ruta + glob + regex. Su gemelo en el front es MonitorDuplicateFinder.js:
 // si cambia una regla aqui, cambia alli.
 type MonitorResourceKeyer struct{}

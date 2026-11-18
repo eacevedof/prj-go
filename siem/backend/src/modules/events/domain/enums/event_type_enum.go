@@ -1,7 +1,8 @@
 package enums
 
 // EventTypeEnum que es un evento: una linea de un fichero vigilado, el resultado de un comando programado o, de Docker,
-// un cambio de estado de un contenedor, una muestra de sus recursos, un evento del daemon o una linea de su log.
+// un cambio de estado de un contenedor, una muestra de sus recursos, un evento del daemon o una linea de su log; una
+// muestra de un monitor (host_metric) o una conexion de red que abre o cierra (net_connection, source = el proceso).
 // Mismos valores que el CHECK de events.event_type.
 var EventTypeEnum = struct {
     LOG_LINE       string
@@ -11,6 +12,7 @@ var EventTypeEnum = struct {
     DOCKER_EVENT   string
     DOCKER_LOG     string
     HOST_METRIC    string
+    NET_CONNECTION string
     VALUES         []string
 }{
     LOG_LINE:       "log_line",
@@ -20,7 +22,8 @@ var EventTypeEnum = struct {
     DOCKER_EVENT:   "docker_event",
     DOCKER_LOG:     "docker_log",
     HOST_METRIC:    "host_metric",
-    VALUES:         []string{"log_line", "command_result", "docker_state", "docker_stats", "docker_event", "docker_log", "host_metric"},
+    NET_CONNECTION: "net_connection",
+    VALUES:         []string{"log_line", "command_result", "docker_state", "docker_stats", "docker_event", "docker_log", "host_metric", "net_connection"},
 }
 
 // SourceTypeByEventType a que tipo de source va cada tipo de evento: por contenedor, el estado y los eventos del daemon
@@ -33,4 +36,5 @@ var SourceTypeByEventType = map[string]string{
     EventTypeEnum.DOCKER_STATS:   SourceTypeEnum.DOCKER_STATS,
     EventTypeEnum.DOCKER_LOG:     SourceTypeEnum.DOCKER_LOG,
     EventTypeEnum.HOST_METRIC:    SourceTypeEnum.METRIC,
+    EventTypeEnum.NET_CONNECTION: SourceTypeEnum.NETWORK,
 }

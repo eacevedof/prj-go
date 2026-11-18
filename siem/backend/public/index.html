@@ -227,18 +227,33 @@
                         <label><input id="checkbox-monitor-enabled" type="checkbox" checked> Activo</label>
                     </div>
 
-                    <div id="div-monitor-metric-fields" class="field-full form-grid">
+                    <!-- intervalo: metricas y connections; umbrales: solo metricas -->
+                    <div id="div-monitor-interval-fields" class="field-full form-grid">
                         <div class="field">
                             <label for="input-monitor-interval">Medir cada (s)</label>
                             <input id="input-monitor-interval" type="number" min="10" max="86400" step="1" value="60">
                         </div>
-                        <div class="field">
+                        <div id="div-monitor-field-warning" class="field">
                             <label for="input-monitor-warning">Umbral warning (<span id="span-monitor-threshold-unit">%</span>)</label>
                             <input id="input-monitor-warning" type="text" inputmode="decimal" autocomplete="off" placeholder="vacío = sin umbral">
                         </div>
-                        <div class="field">
+                        <div id="div-monitor-field-critical" class="field">
                             <label for="input-monitor-critical">Umbral critical</label>
                             <input id="input-monitor-critical" type="text" inputmode="decimal" autocomplete="off" placeholder="vacío = sin umbral">
+                        </div>
+                    </div>
+
+                    <div id="div-monitor-field-connections" class="field-full form-grid">
+                        <div class="field field-check">
+                            <label><input id="checkbox-monitor-loopback" type="checkbox"> Incluir loopback <span class="muted">(127.0.0.1, ::1)</span></label>
+                        </div>
+                        <div class="field">
+                            <label for="input-monitor-ignore-processes">Procesos a ignorar <span class="muted">(separados por comas)</span></label>
+                            <input id="input-monitor-ignore-processes" type="text" autocomplete="off" placeholder="sshd, chronyd">
+                        </div>
+                        <div class="field">
+                            <label for="input-monitor-ignore-ports">Puertos a ignorar <span class="muted">(separados por comas)</span></label>
+                            <input id="input-monitor-ignore-ports" type="text" inputmode="numeric" autocomplete="off" placeholder="53, 123">
                         </div>
                     </div>
 

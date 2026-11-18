@@ -11,7 +11,7 @@ const RESOURCE_KEY_SEPARATOR = "|";
 /**
  * El monitor del proyecto con el que chocaria uno nuevo o editado, para avisar en el modal antes de enviarlo:
  * 1) mismo nombre (sin distinguir mayusculas: unico por proyecto) o 2) mismo recurso en un agente que tambien lo
- * aplicaria. Recurso: cpu, memoria y gpu, el tipo (uno por agente) · disco, la ruta · red, la interfaz · carpeta,
+ * aplicaria. Recurso: cpu, memoria, gpu y conexiones, el tipo (uno por agente) · disco, la ruta · red, la interfaz · carpeta,
  * ruta + glob · log, ruta + glob + regex. Un monitor de "todos" (agent_uuid vacio) choca con cualquiera del proyecto;
  * uno de un agente, con los de ese agente y con los de todos. Gemelo del backend: MonitorResourceKeyer.go (409); si
  * cambia una regla alli, cambia aqui.

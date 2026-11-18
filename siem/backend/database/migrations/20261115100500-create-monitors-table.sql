@@ -10,7 +10,7 @@ CREATE TABLE monitors
     project_id INTEGER NOT NULL REFERENCES projects (id) ON DELETE CASCADE,
     agent_id INTEGER NULL REFERENCES agents (id) ON DELETE CASCADE,
     monitor_type VARCHAR(20) NOT NULL
-        CHECK (monitor_type IN ('cpu', 'memory', 'disk', 'gpu', 'network', 'folder', 'log_pattern')),
+        CHECK (monitor_type IN ('cpu', 'memory', 'disk', 'gpu', 'network', 'folder', 'log_pattern', 'connections')),
     monitor_name VARCHAR(100) NOT NULL,
     is_enabled INTEGER NOT NULL DEFAULT 1 CHECK (is_enabled IN (0, 1)),
     interval_seconds INTEGER NOT NULL DEFAULT 60,

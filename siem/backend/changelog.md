@@ -3,6 +3,22 @@
 La versión es `APP_VERSION` en `src/modules/shared/infrastructure/repositories/configuration/environment_reader_raw_repository.go`
 (la muestra el dashboard). Lo más nuevo arriba.
 
+## 0.11.0 — 2026-11-18
+
+1. **Monitor `connections`** (el siem-client pasa a ser el agente de red; lo enciende el backend, no el instalador):
+   config `is_loopback_included`, `ignore_processes` e `ignore_ports` (hasta 50 de cada, como lista JSON o texto con
+   comas; `MonitorFieldsValidator` los normaliza sin vacíos ni repetidos). `interval_seconds` es el muestreo, 30 s por
+   defecto. Sin umbrales. Uno por agente (clave de recurso = el tipo), también con ámbito "todos los agentes". Los
+   siem-client anteriores a la 0.5.0 lo ignoran con un aviso (no rompe su config).
+2. **Evento `net_connection`** → source `network` (una por proceso). Gravedad en `EventSeverityResolver`:
+   `is_unavailable` (sistema no soportado) warning; conexión entrante desde IP pública o puerto nuevo en escucha fuera de
+   loopback, info; el resto (salientes, cierres, loopback, red local), debug. Lleva `monitor_uuid`: sale en los filtros
+   de Eventos sin más.
+3. **Panel**: el modal de monitores separa el intervalo (métricas y conexiones) de los umbrales (solo métricas) y trae
+   los campos de conexiones; la tabla enseña su config y su intervalo.
+4. CHECK de `monitor_type`, `event_type` y `source_type` editados en sus migraciones originales (sin migración nueva:
+   no hay producción; la BD local se recreó).
+
 ## 0.10.0 — 2026-11-17
 
 1. **Eventos — paginador de enlaces arriba del listado** (y repetido abajo): `← anteriores · página N · siguientes →` son

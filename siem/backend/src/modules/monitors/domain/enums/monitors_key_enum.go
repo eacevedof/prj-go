@@ -26,6 +26,10 @@ var MonitorsKeyEnum = struct {
     IS_RECURSIVE string
     MATCH        string
     SEVERITY     string
+    // connections
+    IS_LOOPBACK_INCLUDED string
+    IGNORE_PROCESSES     string
+    IGNORE_PORTS         string
 
     // ultimo estado por agente (de sources)
     SOURCE_NAME   string
@@ -57,6 +61,10 @@ var MonitorsKeyEnum = struct {
     MATCH:        "match",
     SEVERITY:     "severity",
 
+    IS_LOOPBACK_INCLUDED: "is_loopback_included",
+    IGNORE_PROCESSES:     "ignore_processes",
+    IGNORE_PORTS:         "ignore_ports",
+
     SOURCE_NAME:   "source_name",
     LAST_EVENT_AT: "last_event_at",
     LAST_SEVERITY: "last_severity",
@@ -64,7 +72,9 @@ var MonitorsKeyEnum = struct {
 }
 
 // MonitorTypeEnum que se vigila. Mismos valores que el CHECK de monitors.monitor_type. Los METRIC_VALUES mandan
-// eventos host_metric con un valor numerico (admiten umbrales); folder y log_pattern mandan lineas de log.
+// eventos host_metric con un valor numerico (admiten umbrales); folder y log_pattern mandan lineas de log; connections
+// manda eventos net_connection cuando una conexion o un puerto en escucha abre o cierra (solo Linux). INTERVAL_VALUES:
+// los que usan interval_seconds (las metricas y el muestreo de conexiones); los de lineas van en cada pasada.
 var MonitorTypeEnum = struct {
     CPU         string
     MEMORY      string
@@ -73,10 +83,12 @@ var MonitorTypeEnum = struct {
     NETWORK     string
     FOLDER      string
     LOG_PATTERN string
+    CONNECTIONS string
 
-    VALUES         []string
-    METRIC_VALUES  []string
-    PERCENT_VALUES []string
+    VALUES          []string
+    METRIC_VALUES   []string
+    PERCENT_VALUES  []string
+    INTERVAL_VALUES []string
 }{
     CPU:         "cpu",
     MEMORY:      "memory",
@@ -85,10 +97,12 @@ var MonitorTypeEnum = struct {
     NETWORK:     "network",
     FOLDER:      "folder",
     LOG_PATTERN: "log_pattern",
+    CONNECTIONS: "connections",
 
-    VALUES:         []string{"cpu", "memory", "disk", "gpu", "network", "folder", "log_pattern"},
-    METRIC_VALUES:  []string{"cpu", "memory", "disk", "gpu", "network"},
-    PERCENT_VALUES: []string{"cpu", "memory", "disk", "gpu"},
+    VALUES:          []string{"cpu", "memory", "disk", "gpu", "network", "folder", "log_pattern", "connections"},
+    METRIC_VALUES:   []string{"cpu", "memory", "disk", "gpu", "network"},
+    PERCENT_VALUES:  []string{"cpu", "memory", "disk", "gpu"},
+    INTERVAL_VALUES: []string{"cpu", "memory", "disk", "gpu", "network", "connections"},
 }
 
 // MonitorsMessageEnum mensajes de error ({0}... los rellena config.Tr).
@@ -111,6 +125,8 @@ var MonitorsMessageEnum = struct {
     CONFIG_MATCH_IS_REQUIRED            string
     CONFIG_MATCH_IS_NOT_A_VALID_REGEX   string
     CONFIG_SEVERITY_IS_NOT_VALID        string
+    CONFIG_IGNORE_PROCESSES_IS_NOT_VALID string
+    CONFIG_IGNORE_PORTS_IS_NOT_VALID     string
 }{
     MONITOR_X_NOT_FOUND:                  "Monitor {0} not found",
     PROJECT_X_NOT_FOUND:                  "Project {0} not found",
@@ -119,7 +135,7 @@ var MonitorsMessageEnum = struct {
     MONITOR_X_ALREADY_WATCHES_IT:         "config: monitor {0} already watches the same {1} on {2}",
     ALL_AGENTS:                           "all agents",
     MONITOR_NAME_IS_NOT_VALID:            "monitor_name: required, 1-100 chars of letters, digits and . _ -",
-    MONITOR_TYPE_IS_NOT_VALID:            "monitor_type: must be one of cpu, memory, disk, gpu, network, folder, log_pattern",
+    MONITOR_TYPE_IS_NOT_VALID:            "monitor_type: must be one of cpu, memory, disk, gpu, network, folder, log_pattern, connections",
     INTERVAL_SECONDS_MUST_BE_10_TO_86400: "interval_seconds: must be between 10 and 86400",
     X_MUST_BE_BETWEEN_0_AND_100:          "{0}: must be between 0 and 100",
     X_MUST_BE_GREATER_THAN_0:             "{0}: must be greater than 0",
@@ -130,4 +146,6 @@ var MonitorsMessageEnum = struct {
     CONFIG_MATCH_IS_REQUIRED:             "config.match: is required (the regex a line must match)",
     CONFIG_MATCH_IS_NOT_A_VALID_REGEX:    "config.match: is not a valid regex",
     CONFIG_SEVERITY_IS_NOT_VALID:         "config.severity: must be empty or one of debug, info, warning, error, critical",
+    CONFIG_IGNORE_PROCESSES_IS_NOT_VALID: "config.ignore_processes: up to 50 process names of 1-64 chars, without spaces or commas",
+    CONFIG_IGNORE_PORTS_IS_NOT_VALID:     "config.ignore_ports: up to 50 ports between 1 and 65535",
 }

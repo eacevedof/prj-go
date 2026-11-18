@@ -1,6 +1,8 @@
 import {
-    METRIC_MONITOR_TYPES, MonitorDefaultEnum, MonitorTypeEnum,
+    INTERVAL_MONITOR_TYPES, METRIC_MONITOR_TYPES, MonitorDefaultEnum, MonitorListLimitEnum, MonitorTypeEnum,
 } from "/js/Modules/Monitors/Domain/Enums/MonitorTypeEnum.js";
+
+const PORT_PATTERN = /^\d+$/;
 
 /**
  * Entrada del caso de uso: los campos del formulario como primitivos (strings con trim, booleanos). De ellos sale el
@@ -33,8 +35,9 @@ export class CreateMonitorDto {
         this.#isEnabled = primitives.isEnabled !== false;
 
         const isMetric = METRIC_MONITOR_TYPES.includes(this.#monitorType);
+        const hasInterval = INTERVAL_MONITOR_TYPES.includes(this.#monitorType);
         const rawInterval = String(primitives.intervalSeconds ?? "").trim();
-        this.#intervalSeconds = rawInterval === "" || !isMetric ? MonitorDefaultEnum.INTERVAL_SECONDS : Number(rawInterval);
+        this.#intervalSeconds = rawInterval === "" || !hasInterval ? this.#getDefaultIntervalSeconds() : Number(rawInterval);
         this.#warningThreshold = isMetric ? this.#getThreshold(primitives.warningThreshold) : null;
         this.#criticalThreshold = isMetric ? this.#getThreshold(primitives.criticalThreshold) : null;
         this.#config = this.#getConfig(this.#monitorType, primitives);
@@ -53,6 +56,28 @@ export class CreateMonitorDto {
         return text === "" ? null : Number(text);
     }
 
+    #getDefaultIntervalSeconds() {
+        return this.#monitorType === MonitorTypeEnum.CONNECTIONS
+            ? MonitorDefaultEnum.CONNECTIONS_INTERVAL_SECONDS
+            : MonitorDefaultEnum.INTERVAL_SECONDS;
+    }
+
+    /**
+     * "sshd, nginx" → ["sshd", "nginx"]: recortados y sin vacios.
+     */
+    #getListItems(rawList) {
+        return String(rawList ?? "").split(MonitorListLimitEnum.SEPARATOR)
+            .map((item) => item.trim())
+            .filter((item) => item !== "");
+    }
+
+    /**
+     * Los que son un entero van como numero; lo demas, tal cual, para que el validador lo rechace.
+     */
+    #getPorts(rawPorts) {
+        return this.#getListItems(rawPorts).map((port) => (PORT_PATTERN.test(port) ? Number(port) : port));
+    }
+
     #getConfig(monitorType, primitives) {
         const path = String(primitives.path ?? "").trim();
         const pattern = String(primitives.pattern ?? "").trim() || MonitorDefaultEnum.FILE_PATTERN;
@@ -69,6 +94,12 @@ export class CreateMonitorDto {
                     path, pattern, is_recursive: isRecursive,
                     match: String(primitives.match ?? "").trim(),
                     severity: String(primitives.severity ?? "").trim(),
+                };
+            case MonitorTypeEnum.CONNECTIONS:
+                return {
+                    is_loopback_included: primitives.isLoopbackIncluded === true,
+                    ignore_processes: this.#getListItems(primitives.ignoreProcesses),
+                    ignore_ports: this.#getPorts(primitives.ignorePorts),
                 };
             default:
                 return {};

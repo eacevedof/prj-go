@@ -1,5 +1,6 @@
 import {
-    METRIC_MONITOR_TYPES, MONITOR_SEVERITIES, MONITOR_TYPES, MonitorTypeEnum, PERCENT_MONITOR_TYPES,
+    INTERVAL_MONITOR_TYPES, METRIC_MONITOR_TYPES, MONITOR_SEVERITIES, MONITOR_TYPES, MonitorListLimitEnum,
+    MonitorTypeEnum, PERCENT_MONITOR_TYPES,
 } from "/js/Modules/Monitors/Domain/Enums/MonitorTypeEnum.js";
 import { MonitorsMessageEnum } from "/js/Modules/Monitors/Domain/Enums/MonitorsMessageEnum.js";
 
@@ -7,6 +8,8 @@ const MONITOR_NAME_PATTERN = /^[A-Za-z0-9._-]{1,100}$/;
 const INTERVAL_MIN_SECONDS = 10;
 const INTERVAL_MAX_SECONDS = 86400;
 const PERCENT_MAX = 100;
+// nombre de un proceso: sin espacios ni comas (la coma separa la lista)
+const PROCESS_NAME_PATTERN = /^[^\s,]+$/;
 
 /**
  * Lo evidente de un monitor antes de llamar a la API (el resto, como el nombre duplicado, lo decide ella): nombre,
@@ -36,20 +39,25 @@ export class MonitorValidator {
             errors.push(MonitorsMessageEnum.MONITOR_TYPE_IS_NOT_VALID);
             return errors;
         }
+        if (INTERVAL_MONITOR_TYPES.includes(monitor.monitorType)) {
+            errors.push(...this.#getIntervalErrors(monitor.intervalSeconds));
+        }
         if (METRIC_MONITOR_TYPES.includes(monitor.monitorType)) {
-            errors.push(...this.#getMetricErrors(monitor));
+            errors.push(...this.#getThresholdsErrors(monitor));
         }
         errors.push(...this.#getConfigErrors(monitor.monitorType, monitor.config ?? {}));
         return errors;
     }
 
-    #getMetricErrors(monitor) {
-        const errors = [];
-        const interval = monitor.intervalSeconds;
+    #getIntervalErrors(interval) {
         if (!Number.isInteger(interval) || interval < INTERVAL_MIN_SECONDS || interval > INTERVAL_MAX_SECONDS) {
-            errors.push(MonitorsMessageEnum.INTERVAL_MUST_BE_10_TO_86400);
+            return [MonitorsMessageEnum.INTERVAL_MUST_BE_10_TO_86400];
         }
+        return [];
+    }
 
+    #getThresholdsErrors(monitor) {
+        const errors = [];
         const isWarningValid = this.#isThresholdValid(monitor.warningThreshold);
         const isCriticalValid = this.#isThresholdValid(monitor.criticalThreshold);
         if (!isWarningValid) errors.push(MonitorsMessageEnum.WARNING_THRESHOLD_IS_NOT_VALID);
@@ -70,7 +78,27 @@ export class MonitorValidator {
         return threshold === null || (typeof threshold === "number" && Number.isFinite(threshold) && threshold >= 0);
     }
 
+    #getConnectionsErrors(config) {
+        const errors = [];
+        const processNames = config.ignore_processes ?? [];
+        const isProcessNameInvalid = processNames.some((processName) => processName.length > MonitorListLimitEnum.PROCESS_NAME_MAX_LENGTH
+            || !PROCESS_NAME_PATTERN.test(processName));
+        if (processNames.length > MonitorListLimitEnum.MAX_ITEMS || isProcessNameInvalid) {
+            errors.push(MonitorsMessageEnum.CONFIG_IGNORE_PROCESSES_IS_NOT_VALID);
+        }
+        const ports = config.ignore_ports ?? [];
+        const isPortInvalid = ports.some((port) => !Number.isInteger(port) || port < MonitorListLimitEnum.PORT_MIN
+            || port > MonitorListLimitEnum.PORT_MAX);
+        if (ports.length > MonitorListLimitEnum.MAX_ITEMS || isPortInvalid) {
+            errors.push(MonitorsMessageEnum.CONFIG_IGNORE_PORTS_IS_NOT_VALID);
+        }
+        return errors;
+    }
+
     #getConfigErrors(monitorType, config) {
+        if (monitorType === MonitorTypeEnum.CONNECTIONS) {
+            return this.#getConnectionsErrors(config);
+        }
         const errors = [];
         const hasPath = [MonitorTypeEnum.DISK, MonitorTypeEnum.FOLDER, MonitorTypeEnum.LOG_PATTERN].includes(monitorType);
         if (hasPath && !String(config.path ?? "").trim()) {

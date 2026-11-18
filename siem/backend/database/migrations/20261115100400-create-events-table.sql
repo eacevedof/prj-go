@@ -9,7 +9,7 @@ CREATE TABLE events
     agent_id INTEGER NOT NULL REFERENCES agents (id) ON DELETE CASCADE,
     source_id INTEGER NOT NULL REFERENCES sources (id) ON DELETE CASCADE,
     event_type VARCHAR(20) NOT NULL CHECK (event_type IN ('log_line', 'command_result', 'docker_state', 'docker_stats',
-        'docker_event', 'docker_log', 'host_metric')),
+        'docker_event', 'docker_log', 'host_metric', 'net_connection')),
     severity VARCHAR(10) NOT NULL DEFAULT 'info'
         CHECK (severity IN ('debug', 'info', 'warning', 'error', 'critical')),
     message TEXT NOT NULL,

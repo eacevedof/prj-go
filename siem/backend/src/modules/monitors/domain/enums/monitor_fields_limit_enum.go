@@ -14,6 +14,14 @@ var MonitorFieldsLimitEnum = struct {
     DEFAULT_FILES_PATTERN string
     // nombre de fichero cualquiera con el que se prueba que config.pattern es un glob valido
     GLOB_PROBE_FILE_NAME string
+
+    // connections: muestreo por defecto (casi en tiempo real: a donde se envia informacion y que proceso lo hace) y
+    // listas de procesos y puertos a ignorar
+    CONNECTIONS_INTERVAL_SECONDS_DEFAULT int
+    IGNORE_LIST_MAX_ITEMS                int
+    PROCESS_NAME_MAX_LENGTH              int
+    PORT_MIN                             int
+    PORT_MAX                             int
 }{
     INTERVAL_SECONDS_DEFAULT: 60,
     INTERVAL_SECONDS_MIN:     10,
@@ -24,4 +32,10 @@ var MonitorFieldsLimitEnum = struct {
     DEFAULT_DISK_PATH:     "/",
     DEFAULT_FILES_PATTERN: "*",
     GLOB_PROBE_FILE_NAME:  "probe",
+
+    CONNECTIONS_INTERVAL_SECONDS_DEFAULT: 30,
+    IGNORE_LIST_MAX_ITEMS:                50,
+    PROCESS_NAME_MAX_LENGTH:              64,
+    PORT_MIN:                             1,
+    PORT_MAX:                             65535,
 }

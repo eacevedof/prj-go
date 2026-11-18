@@ -4,6 +4,7 @@ import (
     "path"
     "regexp"
     "slices"
+    "strconv"
     "strings"
 
     "siem-backend/src/core/config"
@@ -20,7 +21,12 @@ var (
     interfacePattern   = regexp.MustCompile(`^[A-Za-z0-9._:-]{0,50}$`)
     // /var/log (Linux, macOS) o C:\logs (Windows)
     absolutePathPattern = regexp.MustCompile(`^(/|[A-Za-z]:[\\/])`)
+    // nombre de un proceso (comm de /proc/<pid>/comm): sin espacios ni comas (la coma separa la lista en el panel)
+    processNamePattern = regexp.MustCompile(`^[^\s,]+$`)
 )
+
+// separador de las listas de connections cuando llegan como texto ("sshd, nginx")
+const listSeparator = ","
 
 // MonitorFieldsValidator reglas de un monitor: nombre, tipo, intervalo, umbrales (solo en los tipos con valor
 // numerico) y la config propia de cada tipo. Devuelve la pila de errores (vacia = todo bien).
@@ -69,6 +75,12 @@ func (v *MonitorFieldsValidator) GetNormalizedConfig(monitorType string, monitor
             normalizedConfig[enums.MonitorsKeyEnum.SEVERITY] = strings.ToLower(application.GetTrimmedString(monitorConfig, enums.MonitorsKeyEnum.SEVERITY))
         }
         return normalizedConfig
+    case enums.MonitorTypeEnum.CONNECTIONS:
+        return map[string]any{
+            enums.MonitorsKeyEnum.IS_LOOPBACK_INCLUDED: application.GetInt(monitorConfig, enums.MonitorsKeyEnum.IS_LOOPBACK_INCLUDED) == 1,
+            enums.MonitorsKeyEnum.IGNORE_PROCESSES:     v.getNormalizedProcessNames(monitorConfig[enums.MonitorsKeyEnum.IGNORE_PROCESSES]),
+            enums.MonitorsKeyEnum.IGNORE_PORTS:         v.getNormalizedPorts(monitorConfig[enums.MonitorsKeyEnum.IGNORE_PORTS]),
+        }
     }
     return map[string]any{}
 }
@@ -128,8 +140,91 @@ func (v *MonitorFieldsValidator) getConfigErrors(monitorType string, normalizedC
         if monitorType == enums.MonitorTypeEnum.LOG_PATTERN {
             errors = append(errors, v.getLogPatternErrors(normalizedConfig)...)
         }
+    case enums.MonitorTypeEnum.CONNECTIONS:
+        errors = append(errors, v.getConnectionsErrors(normalizedConfig)...)
     }
     return errors
+}
+
+// getConnectionsErrors las listas ya vienen normalizadas (sin vacios ni repetidos): aqui solo tamano y forma.
+func (v *MonitorFieldsValidator) getConnectionsErrors(normalizedConfig map[string]any) []string {
+    errors := []string{}
+    processNames, _ := normalizedConfig[enums.MonitorsKeyEnum.IGNORE_PROCESSES].([]string)
+    isProcessNameInvalid := slices.ContainsFunc(processNames, func(processName string) bool {
+        return len(processName) > enums.MonitorFieldsLimitEnum.PROCESS_NAME_MAX_LENGTH || !processNamePattern.MatchString(processName)
+    })
+    if len(processNames) > enums.MonitorFieldsLimitEnum.IGNORE_LIST_MAX_ITEMS || isProcessNameInvalid {
+        errors = append(errors, enums.MonitorsMessageEnum.CONFIG_IGNORE_PROCESSES_IS_NOT_VALID)
+    }
+    ports, _ := normalizedConfig[enums.MonitorsKeyEnum.IGNORE_PORTS].([]int)
+    isPortInvalid := slices.ContainsFunc(ports, func(port int) bool {
+        return port < enums.MonitorFieldsLimitEnum.PORT_MIN || port > enums.MonitorFieldsLimitEnum.PORT_MAX
+    })
+    if len(ports) > enums.MonitorFieldsLimitEnum.IGNORE_LIST_MAX_ITEMS || isPortInvalid {
+        errors = append(errors, enums.MonitorsMessageEnum.CONFIG_IGNORE_PORTS_IS_NOT_VALID)
+    }
+    return errors
+}
+
+// getNormalizedProcessNames de una lista JSON o de un texto separado por comas: recortados, sin vacios ni repetidos y
+// en el orden en que llegan (el nombre de un proceso distingue mayusculas).
+func (v *MonitorFieldsValidator) getNormalizedProcessNames(rawList any) []string {
+    processNames := []string{}
+    for _, rawItem := range v.getListItems(rawList) {
+        processName := strings.TrimSpace(application.ToString(rawItem))
+        if processName != "" && !slices.Contains(processNames, processName) {
+            processNames = append(processNames, processName)
+        }
+    }
+    return processNames
+}
+
+// getNormalizedPorts de una lista JSON o de un texto separado por comas: sin repetidos y ordenados. Lo que no es un
+// entero pasa a 0, que no es un puerto valido: asi el error lo ve getConnectionsErrors en vez de perderse.
+func (v *MonitorFieldsValidator) getNormalizedPorts(rawList any) []int {
+    ports := []int{}
+    for _, rawItem := range v.getListItems(rawList) {
+        portText := strings.TrimSpace(application.ToString(rawItem))
+        if portText == "" {
+            continue
+        }
+        port, err := strconv.Atoi(portText)
+        if err != nil {
+            port = 0
+        }
+        if !slices.Contains(ports, port) {
+            ports = append(ports, port)
+        }
+    }
+    slices.Sort(ports)
+    return ports
+}
+
+// getListItems []any (JSON), []string o un texto con comas; cualquier otra cosa, lista vacia.
+func (v *MonitorFieldsValidator) getListItems(rawList any) []any {
+    switch typedList := rawList.(type) {
+    case []any:
+        return typedList
+    case []string:
+        items := make([]any, 0, len(typedList))
+        for _, item := range typedList {
+            items = append(items, item)
+        }
+        return items
+    case []int:
+        items := make([]any, 0, len(typedList))
+        for _, item := range typedList {
+            items = append(items, item)
+        }
+        return items
+    case string:
+        items := []any{}
+        for _, item := range strings.Split(typedList, listSeparator) {
+            items = append(items, item)
+        }
+        return items
+    }
+    return []any{}
 }
 
 // getLogPatternErrors el regex lo compila el agente con el paquete regexp de Go: se valida con el mismo.

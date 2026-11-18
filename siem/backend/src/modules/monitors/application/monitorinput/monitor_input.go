@@ -8,7 +8,7 @@ import (
 )
 
 // MonitorInput los campos editables de un monitor, comunes al alta y a la edicion: los embeben CreateMonitorDto y
-// UpdateMonitorDto. Solo primitivos. is_enabled ausente = activo; interval_seconds ausente = 60.
+// UpdateMonitorDto. Solo primitivos. is_enabled ausente = activo; interval_seconds ausente = 60 (connections, 30).
 type MonitorInput struct {
     agentUuid         string
     monitorType       string
@@ -29,12 +29,17 @@ func MonitorInputFromPrimitives(primitives map[string]any) MonitorInput {
     if monitorConfig == nil {
         monitorConfig = map[string]any{}
     }
+    monitorType := application.GetTrimmedString(primitives, "monitorType")
+    defaultIntervalSeconds := enums.MonitorFieldsLimitEnum.INTERVAL_SECONDS_DEFAULT
+    if monitorType == enums.MonitorTypeEnum.CONNECTIONS {
+        defaultIntervalSeconds = enums.MonitorFieldsLimitEnum.CONNECTIONS_INTERVAL_SECONDS_DEFAULT
+    }
     return MonitorInput{
         agentUuid:         application.GetTrimmedString(primitives, "agentUuid"),
-        monitorType:       application.GetTrimmedString(primitives, "monitorType"),
+        monitorType:       monitorType,
         monitorName:       application.GetTrimmedString(primitives, "monitorName"),
         isEnabled:         isEnabled,
-        intervalSeconds:   application.GetIntOrDefault(primitives, "intervalSeconds", enums.MonitorFieldsLimitEnum.INTERVAL_SECONDS_DEFAULT),
+        intervalSeconds:   application.GetIntOrDefault(primitives, "intervalSeconds", defaultIntervalSeconds),
         monitorConfig:     monitorConfig,
         warningThreshold:  entities.GetFloatOrNil(primitives["warningThreshold"]),
         criticalThreshold: entities.GetFloatOrNil(primitives["criticalThreshold"]),

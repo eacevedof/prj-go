@@ -6,7 +6,7 @@ CREATE TABLE sources
 (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     agent_id INTEGER NOT NULL REFERENCES agents (id) ON DELETE CASCADE,
-    source_type VARCHAR(20) NOT NULL CHECK (source_type IN ('file', 'command', 'docker', 'docker_stats', 'docker_log', 'metric')),
+    source_type VARCHAR(20) NOT NULL CHECK (source_type IN ('file', 'command', 'docker', 'docker_stats', 'docker_log', 'metric', 'network')),
     source_name VARCHAR(255) NOT NULL,
     events_count INTEGER NOT NULL DEFAULT 0,
     last_event_at TEXT NULL,

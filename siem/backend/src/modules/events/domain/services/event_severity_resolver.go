@@ -1,6 +1,7 @@
 package services
 
 import (
+    "net/netip"
     "regexp"
     "slices"
     "strings"
@@ -18,10 +19,14 @@ var (
     debugPattern    = regexp.MustCompile(`(?i)\b(debug|trace)\b`)
 )
 
+// 100.64.0.0/10: CGNAT del operador, no es una IP publica aunque netip no la marque como privada
+var carrierGradeNatPrefix = netip.MustParsePrefix("100.64.0.0/10")
+
 // EventSeverityResolver gravedad de un evento cuando el cliente no la declara (la regla vive solo aqui):
 //   - un comando: su codigo de salida (distinto de 0 = error).
 //   - una linea de log (de fichero o de un contenedor): la palabra clave mas grave que contenga; sin ninguna, info.
 //   - Docker: los attributes del evento (OOM, codigo de salida, health, % de cpu y memoria, accion del daemon).
+//   - una conexion de red: lo que importa en seguridad (entrantes desde fuera, puertos nuevos en escucha) es info.
 type EventSeverityResolver struct{}
 
 func EventSeverityResolverGetInstance() *EventSeverityResolver {
@@ -49,8 +54,50 @@ func (r *EventSeverityResolver) GetSeverity(eventType string, message string, ex
         return r.getDockerEventSeverity(attributes)
     case enums.EventTypeEnum.HOST_METRIC:
         return r.getHostMetricSeverity(attributes)
+    case enums.EventTypeEnum.NET_CONNECTION:
+        return r.getNetConnectionSeverity(attributes)
     }
     return r.getSeverityByKeywords(message)
+}
+
+// getNetConnectionSeverity el agente no puede muestrear en su sistema, warning (sale en el panel). Una conexion
+// entrante desde una IP publica o un puerto nuevo en escucha fuera de loopback (posible puerta trasera), info. El resto
+// (salientes, cierres, loopback, red local), debug: un host normal abre cientos y no deben inflar la portada; siguen
+// en el visor para buscar a quien se envia informacion.
+func (r *EventSeverityResolver) getNetConnectionSeverity(attributes map[string]any) string {
+    if application.ToInt(attributes[enums.NetConnectionAttributeEnum.IS_UNAVAILABLE]) == 1 {
+        return enums.EventSeverityEnum.WARNING
+    }
+    action := application.GetTrimmedString(attributes, enums.NetConnectionAttributeEnum.ACTION)
+    switch action {
+    case enums.NetConnectionAttributeValueEnum.ACTION_OPENED:
+        isInbound := application.GetTrimmedString(attributes, enums.NetConnectionAttributeEnum.DIRECTION) == enums.NetConnectionAttributeValueEnum.DIRECTION_INBOUND
+        if isInbound && r.isPublicIp(application.GetTrimmedString(attributes, enums.NetConnectionAttributeEnum.REMOTE_IP)) {
+            return enums.EventSeverityEnum.INFO
+        }
+    case enums.NetConnectionAttributeValueEnum.ACTION_LISTEN_OPENED:
+        if !r.isLoopbackIp(application.GetTrimmedString(attributes, enums.NetConnectionAttributeEnum.LOCAL_IP)) {
+            return enums.EventSeverityEnum.INFO
+        }
+    }
+    return enums.EventSeverityEnum.DEBUG
+}
+
+// isPublicIp enrutable en internet: ni privada, ni loopback, ni link-local, ni CGNAT, ni multicast, ni 0.0.0.0. Una
+// IP que no se puede leer no cuenta como publica.
+func (r *EventSeverityResolver) isPublicIp(ip string) bool {
+    addr, err := netip.ParseAddr(ip)
+    if err != nil {
+        return false
+    }
+    addr = addr.Unmap()
+    return addr.IsGlobalUnicast() && !addr.IsPrivate() && !carrierGradeNatPrefix.Contains(addr)
+}
+
+// isLoopbackIp 127.0.0.0/8 o ::1. Escuchar en 0.0.0.0 o :: es escuchar en todas las interfaces: no es loopback.
+func (r *EventSeverityResolver) isLoopbackIp(ip string) bool {
+    addr, err := netip.ParseAddr(ip)
+    return err == nil && addr.Unmap().IsLoopback()
 }
 
 // getHostMetricSeverity una muestra de un monitor del panel (cpu, memoria, disco, gpu, red) contra los umbrales de ESE

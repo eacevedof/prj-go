@@ -1,6 +1,7 @@
 /**
  * Tipos de evento: una linea de un fichero vigilado, el resultado de un comando, de Docker (estado de un contenedor,
- * muestra de sus recursos, evento del daemon, linea de su log) o una metrica del host (monitor del panel).
+ * muestra de sus recursos, evento del daemon, linea de su log), una metrica del host (monitor del panel) o una conexion
+ * de red que abre o cierra (monitor connections; source_name = el proceso).
  */
 export const EventTypeEnum = Object.freeze({
     LOG_LINE: "log_line",
@@ -10,4 +11,5 @@ export const EventTypeEnum = Object.freeze({
     DOCKER_EVENT: "docker_event",
     DOCKER_LOG: "docker_log",
     HOST_METRIC: "host_metric",
+    NET_CONNECTION: "net_connection",
 });

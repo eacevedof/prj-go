@@ -7,8 +7,8 @@ import { MonitorDuplicateReasonEnum } from "/js/Modules/Monitors/Domain/Enums/Mo
 import { MonitorsEventEnum } from "/js/Modules/Monitors/Domain/Enums/MonitorsEventEnum.js";
 import { MonitorsTextEnum } from "/js/Modules/Monitors/Domain/Enums/MonitorsTextEnum.js";
 import {
-    METRIC_MONITOR_TYPES, MONITOR_SEVERITIES, MONITOR_TYPE_LABELS, MONITOR_TYPES, MonitorDefaultEnum, MonitorTypeEnum,
-    PERCENT_MONITOR_TYPES,
+    INTERVAL_MONITOR_TYPES, METRIC_MONITOR_TYPES, MONITOR_SEVERITIES, MONITOR_TYPE_LABELS, MONITOR_TYPES,
+    MonitorDefaultEnum, MonitorListLimitEnum, MonitorTypeEnum, PERCENT_MONITOR_TYPES,
 } from "/js/Modules/Monitors/Domain/Enums/MonitorTypeEnum.js";
 import { MonitorDuplicateFinder } from "/js/Modules/Monitors/Domain/Services/MonitorDuplicateFinder.js";
 
@@ -28,7 +28,10 @@ const CONFIG_FIELDS_BY_TYPE = Object.freeze({
     [MonitorTypeEnum.NETWORK]: ["interface"],
     [MonitorTypeEnum.FOLDER]: ["path", "pattern"],
     [MonitorTypeEnum.LOG_PATTERN]: ["path", "pattern", "match"],
+    [MonitorTypeEnum.CONNECTIONS]: ["connections"],
 });
+// como se ven las listas de connections en la tabla y en el formulario
+const LIST_JOINER = `${MonitorListLimitEnum.SEPARATOR} `;
 
 /**
  * "Monitores" del detalle de un proyecto: los recursos a vigilar (cpu, memoria, disco, gpu, red, carpetas, patrones
@@ -75,7 +78,11 @@ export class MonitorsView {
         this.#loadElements();
         this.#loadSelectOptions();
         this.#renderFormByType();
-        this.#elements.selectMonitorType.addEventListener("change", () => this.#renderFormByType());
+        this.#elements.selectMonitorType.addEventListener("change", () => {
+            // en el alta, cada tipo abre con su intervalo por defecto (connections, 30 s; el resto, 60 s)
+            this.#elements.inputMonitorInterval.value = String(this.#getDefaultIntervalSeconds(this.#elements.selectMonitorType.value));
+            this.#renderFormByType();
+        });
         this.#elements.formMonitor.addEventListener("input", () => this.#renderDuplicate());
         this.#elements.formMonitor.addEventListener("change", () => this.#renderDuplicate());
         this.#elements.formMonitor.addEventListener("submit", (event) => this.#onSubmit(event));
@@ -181,7 +188,7 @@ export class MonitorsView {
         this.#elements.formMonitor.reset();
         this.#elements.hiddenMonitorUuid.value = "";
         this.#elements.selectMonitorType.disabled = false;
-        this.#elements.inputMonitorInterval.value = String(MonitorDefaultEnum.INTERVAL_SECONDS);
+        this.#elements.inputMonitorInterval.value = String(this.#getDefaultIntervalSeconds(this.#elements.selectMonitorType.value));
         this.#elements.checkboxMonitorEnabled.checked = true;
         this.#elements.h2MonitorForm.textContent = MonitorsTextEnum.FORM_TITLE_CREATE;
         this.#elements.buttonMonitorSubmit.textContent = MonitorsTextEnum.SUBMIT_CREATE;
@@ -205,7 +212,9 @@ export class MonitorsView {
             selectMonitorType: document.getElementById("select-monitor-type"),
             inputMonitorName: document.getElementById("input-monitor-name"),
             checkboxMonitorEnabled: document.getElementById("checkbox-monitor-enabled"),
-            divMonitorMetricFields: document.getElementById("div-monitor-metric-fields"),
+            divMonitorIntervalFields: document.getElementById("div-monitor-interval-fields"),
+            divMonitorFieldWarning: document.getElementById("div-monitor-field-warning"),
+            divMonitorFieldCritical: document.getElementById("div-monitor-field-critical"),
             inputMonitorInterval: document.getElementById("input-monitor-interval"),
             inputMonitorWarning: document.getElementById("input-monitor-warning"),
             inputMonitorCritical: document.getElementById("input-monitor-critical"),
@@ -220,6 +229,10 @@ export class MonitorsView {
             divMonitorFieldMatch: document.getElementById("div-monitor-field-match"),
             inputMonitorMatch: document.getElementById("input-monitor-match"),
             selectMonitorSeverity: document.getElementById("select-monitor-severity"),
+            divMonitorFieldConnections: document.getElementById("div-monitor-field-connections"),
+            checkboxMonitorLoopback: document.getElementById("checkbox-monitor-loopback"),
+            inputMonitorIgnoreProcesses: document.getElementById("input-monitor-ignore-processes"),
+            inputMonitorIgnorePorts: document.getElementById("input-monitor-ignore-ports"),
             pMonitorDuplicate: document.getElementById("p-monitor-duplicate"),
             buttonMonitorSubmit: document.getElementById("button-monitor-submit"),
             buttonMonitorCancel: document.getElementById("button-monitor-cancel"),
@@ -249,12 +262,17 @@ export class MonitorsView {
     }
 
     /**
-     * Solo los campos que usa el tipo elegido: intervalo y umbrales en los de metricas, y la config propia de cada uno.
+     * Solo los campos que usa el tipo elegido: intervalo en metricas y connections, umbrales solo en metricas, y la
+     * config propia de cada uno.
      */
     #renderFormByType() {
         const monitorType = this.#elements.selectMonitorType.value;
         const configFields = CONFIG_FIELDS_BY_TYPE[monitorType] ?? [];
-        this.#elements.divMonitorMetricFields.classList.toggle(CSS_HIDDEN, !METRIC_MONITOR_TYPES.includes(monitorType));
+        const isMetric = METRIC_MONITOR_TYPES.includes(monitorType);
+        this.#elements.divMonitorIntervalFields.classList.toggle(CSS_HIDDEN, !INTERVAL_MONITOR_TYPES.includes(monitorType));
+        this.#elements.divMonitorFieldWarning.classList.toggle(CSS_HIDDEN, !isMetric);
+        this.#elements.divMonitorFieldCritical.classList.toggle(CSS_HIDDEN, !isMetric);
+        this.#elements.divMonitorFieldConnections.classList.toggle(CSS_HIDDEN, !configFields.includes("connections"));
         this.#elements.divMonitorFieldPath.classList.toggle(CSS_HIDDEN, !configFields.includes("path"));
         this.#elements.divMonitorFieldInterface.classList.toggle(CSS_HIDDEN, !configFields.includes("interface"));
         this.#elements.divMonitorFieldPattern.classList.toggle(CSS_HIDDEN, !configFields.includes("pattern"));
@@ -318,14 +336,14 @@ export class MonitorsView {
 
     #getRowHtml(monitor, position) {
         const h = this.#htmler;
-        const isMetric = METRIC_MONITOR_TYPES.includes(monitor.monitor_type);
+        const hasInterval = INTERVAL_MONITOR_TYPES.includes(monitor.monitor_type);
         return `<tr class="${monitor.is_enabled ? "" : "is-disabled"}">
             <td class="num">${position}</td>
             <td class="mono">${h.getEscaped(monitor.monitor_type)}</td>
             <td><strong>${h.getEscaped(monitor.monitor_name)}</strong><br><span class="muted mono">${h.getEscaped(this.#getConfigLabel(monitor))}</span></td>
             <td class="nowrap">${h.getCopyableValue(monitor.monitor_uuid)}</td>
             <td>${h.getEscaped(monitor.agent_uuid ? (monitor.agent_name || monitor.agent_uuid) : MonitorsTextEnum.ALL_AGENTS)}</td>
-            <td class="num nowrap">${isMetric ? `${h.getEscaped(monitor.interval_seconds)} s` : "cada pasada"}</td>
+            <td class="num nowrap">${hasInterval ? `${h.getEscaped(monitor.interval_seconds)} s` : "cada pasada"}</td>
             <td class="nowrap">${h.getEscaped(this.#getThresholdsLabel(monitor))}</td>
             <td>${h.getBadge(monitor.is_enabled ? "enabled" : "disabled")}</td>
             <td>${this.#getStatesHtml(monitor.states ?? [])}</td>
@@ -345,6 +363,12 @@ export class MonitorsView {
             case MonitorTypeEnum.LOG_PATTERN:
                 return `${config.path ?? ""}/${config.pattern || MonitorDefaultEnum.FILE_PATTERN}${config.is_recursive ? " (recursivo)" : ""}`
                     + ` ~ /${config.match ?? ""}/${config.severity ? ` → ${config.severity}` : ""}`;
+            case MonitorTypeEnum.CONNECTIONS:
+                return [
+                    config.is_loopback_included ? "con loopback" : "sin loopback",
+                    (config.ignore_processes ?? []).length ? `ignora ${config.ignore_processes.join(LIST_JOINER)}` : "",
+                    (config.ignore_ports ?? []).length ? `puertos ${config.ignore_ports.join(LIST_JOINER)}` : "",
+                ].filter(Boolean).join(" · ");
             default:
                 return "";
         }
@@ -360,6 +384,12 @@ export class MonitorsView {
             hasWarning ? `warning ≥ ${monitor.warning_threshold} ${unit}` : "",
             hasCritical ? `critical ≥ ${monitor.critical_threshold} ${unit}` : "",
         ].filter(Boolean).join(" · ");
+    }
+
+    #getDefaultIntervalSeconds(monitorType) {
+        return monitorType === MonitorTypeEnum.CONNECTIONS
+            ? MonitorDefaultEnum.CONNECTIONS_INTERVAL_SECONDS
+            : MonitorDefaultEnum.INTERVAL_SECONDS;
     }
 
     #getUnit(monitorType) {
@@ -440,6 +470,9 @@ export class MonitorsView {
             isRecursive: config.is_recursive === true,
             match: config.match ?? "",
             severity: config.severity ?? "",
+            isLoopbackIncluded: config.is_loopback_included === true,
+            ignoreProcesses: (config.ignore_processes ?? []).join(LIST_JOINER),
+            ignorePorts: (config.ignore_ports ?? []).join(LIST_JOINER),
         };
     }
 
@@ -462,6 +495,9 @@ export class MonitorsView {
         this.#elements.checkboxMonitorRecursive.checked = primitives.isRecursive;
         this.#elements.inputMonitorMatch.value = primitives.match;
         this.#elements.selectMonitorSeverity.value = primitives.severity;
+        this.#elements.checkboxMonitorLoopback.checked = primitives.isLoopbackIncluded;
+        this.#elements.inputMonitorIgnoreProcesses.value = primitives.ignoreProcesses;
+        this.#elements.inputMonitorIgnorePorts.value = primitives.ignorePorts;
         this.#elements.h2MonitorForm.textContent = this.#textFormatter.getFormatted(MonitorsTextEnum.FORM_TITLE_UPDATE, primitives.monitorName);
         this.#elements.buttonMonitorSubmit.textContent = MonitorsTextEnum.SUBMIT_UPDATE;
         this.#renderFormByType();
@@ -490,6 +526,9 @@ export class MonitorsView {
             isRecursive: this.#elements.checkboxMonitorRecursive.checked,
             match: this.#elements.inputMonitorMatch.value,
             severity: this.#elements.selectMonitorSeverity.value,
+            isLoopbackIncluded: this.#elements.checkboxMonitorLoopback.checked,
+            ignoreProcesses: this.#elements.inputMonitorIgnoreProcesses.value,
+            ignorePorts: this.#elements.inputMonitorIgnorePorts.value,
         };
     }
 
