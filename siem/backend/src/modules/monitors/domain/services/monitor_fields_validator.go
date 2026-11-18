@@ -25,9 +25,6 @@ var (
     processNamePattern = regexp.MustCompile(`^[^\s,]+$`)
 )
 
-// separador de las listas de connections cuando llegan como texto ("sshd, nginx")
-const listSeparator = ","
-
 // MonitorFieldsValidator reglas de un monitor: nombre, tipo, intervalo, umbrales (solo en los tipos con valor
 // numerico) y la config propia de cada tipo. Devuelve la pila de errores (vacia = todo bien).
 type MonitorFieldsValidator struct{}
@@ -219,7 +216,7 @@ func (v *MonitorFieldsValidator) getListItems(rawList any) []any {
         return items
     case string:
         items := []any{}
-        for _, item := range strings.Split(typedList, listSeparator) {
+        for _, item := range strings.Split(typedList, enums.MonitorFieldsLimitEnum.LIST_SEPARATOR) {
             items = append(items, item)
         }
         return items

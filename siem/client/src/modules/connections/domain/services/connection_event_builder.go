@@ -7,28 +7,22 @@ import (
     "strings"
     "time"
 
+    "siem-client/src/core/config"
+
+    "siem-client/src/modules/shared/application"
+
     agentconfigentities "siem-client/src/modules/agentconfig/domain/entities"
 
     collectorsenums "siem-client/src/modules/collectors/domain/enums"
 
-    "siem-client/src/modules/connections/domain/entities"
     "siem-client/src/modules/connections/domain/enums"
-    "siem-client/src/modules/shared/application"
-)
-
-const (
-    dateTimeFormat = "2006-01-02 15:04:05"
-    // un socket en escucha no tiene extremo remoto
-    anyRemoteEndpoint = "*"
+    "siem-client/src/modules/connections/domain/entities"
 )
 
 // ConnectionEventBuilder monta el evento net_connection con el contrato del backend. source_name = el proceso (asi las
 // facetas del visor dicen "que aplicacion"); attributes = los primitivos de la conexion + accion + monitor. La
 // gravedad no se manda: la decide el backend (entrantes desde IP publica y escuchas nuevas, info; el resto, debug).
-//
-//   opened tcp outbound firefox(4321) 192.168.1.5:52780 -> 142.250.1.1:443
-//   closed tcp outbound firefox(4321) 192.168.1.5:52780 -> 142.250.1.1:443 after 12 s
-//   listen_opened tcp sshd(812) 0.0.0.0:22
+// Formato del mensaje: ConnectionEventMessageEnum.
 type ConnectionEventBuilder struct{}
 
 func ConnectionEventBuilderGetInstance() *ConnectionEventBuilder {
@@ -40,7 +34,7 @@ func (b *ConnectionEventBuilder) GetChangeEvent(remoteMonitorEntity *agentconfig
     attributes := b.getBaseAttributes(remoteMonitorEntity)
     maps.Copy(attributes, connectionPrimitives)
     attributes[enums.NetConnectionAttributeEnum.ACTION] = connectionChangeEntity.GetAction()
-    if b.isClose(connectionChangeEntity.GetAction()) {
+    if connectionChangeEntity.IsClose() {
         attributes[enums.NetConnectionAttributeEnum.DURATION_SECONDS] = connectionChangeEntity.GetDurationSeconds()
     }
     if connectionChangeEntity.IsInitial() {
@@ -59,33 +53,43 @@ func (b *ConnectionEventBuilder) GetChangeEvent(remoteMonitorEntity *agentconfig
 func (b *ConnectionEventBuilder) GetUnavailableEvent(remoteMonitorEntity *agentconfigentities.RemoteMonitorEntity, reason string, occurredAt time.Time) map[string]any {
     attributes := b.getBaseAttributes(remoteMonitorEntity)
     attributes[enums.NetConnectionAttributeEnum.IS_UNAVAILABLE] = true
-    return b.getEvent(remoteMonitorEntity.GetMonitorName(), remoteMonitorEntity.GetMonitorType()+" not available: "+reason, attributes, occurredAt)
+    return b.getEvent(
+        remoteMonitorEntity.GetMonitorName(),
+        config.Tr(enums.ConnectionEventMessageEnum.X_NOT_AVAILABLE_X, remoteMonitorEntity.GetMonitorType(), reason),
+        attributes,
+        occurredAt,
+    )
 }
 
 func (b *ConnectionEventBuilder) getMessage(connectionChangeEntity *entities.ConnectionChangeEntity) string {
     connectionPrimitives := connectionChangeEntity.GetConnectionPrimitives()
     action := connectionChangeEntity.GetAction()
+    protocol := application.GetTrimmedString(connectionPrimitives, enums.ConnectionKeyEnum.PROTOCOL)
     localEndpoint := b.getEndpoint(connectionPrimitives, enums.ConnectionKeyEnum.LOCAL_IP, enums.ConnectionKeyEnum.LOCAL_PORT)
-    messageParts := []string{action, application.GetTrimmedString(connectionPrimitives, enums.ConnectionKeyEnum.PROTOCOL)}
-    if action == enums.ConnectionActionEnum.LISTEN_OPENED || action == enums.ConnectionActionEnum.LISTEN_CLOSED {
-        messageParts = append(messageParts, b.getProcessLabel(connectionPrimitives), localEndpoint)
+
+    processLabel := b.getProcessLabel(connectionPrimitives)
+
+    messageParts := []string{}
+    if connectionChangeEntity.IsListen() {
+        messageParts = append(messageParts, config.Tr(enums.ConnectionEventMessageEnum.LISTEN_X, action, protocol, processLabel, localEndpoint))
     } else {
-        messageParts = append(
-            messageParts,
+        messageParts = append(messageParts, config.Tr(
+            enums.ConnectionEventMessageEnum.CONNECTION_X,
+            action,
+            protocol,
             application.GetTrimmedString(connectionPrimitives, enums.ConnectionKeyEnum.DIRECTION),
-            b.getProcessLabel(connectionPrimitives),
+            processLabel,
             localEndpoint,
-            "->",
             b.getEndpoint(connectionPrimitives, enums.ConnectionKeyEnum.REMOTE_IP, enums.ConnectionKeyEnum.REMOTE_PORT),
-        )
+        ))
     }
-    if b.isClose(action) {
-        messageParts = append(messageParts, "after", strconv.Itoa(connectionChangeEntity.GetDurationSeconds()), "s")
+    if connectionChangeEntity.IsClose() {
+        messageParts = append(messageParts, config.Tr(enums.ConnectionEventMessageEnum.AFTER_X_SECONDS, connectionChangeEntity.GetDurationSeconds()))
     }
     if connectionChangeEntity.IsInitial() {
-        messageParts = append(messageParts, "(already open)")
+        messageParts = append(messageParts, enums.ConnectionEventMessageEnum.ALREADY_OPEN)
     }
-    return strings.Join(messageParts, " ")
+    return strings.Join(messageParts, enums.ConnectionEventMessageEnum.MESSAGE_PART_SEPARATOR)
 }
 
 // getProcessLabel "firefox(4321)" o "?" si no se sabe de quien es.
@@ -95,20 +99,16 @@ func (b *ConnectionEventBuilder) getProcessLabel(connectionPrimitives map[string
     if processName == "" || pid == 0 {
         return enums.UNKNOWN_PROCESS
     }
-    return processName + "(" + strconv.Itoa(pid) + ")"
+    return config.Tr(enums.ConnectionFormatEnum.PROCESS_LABEL, processName, pid)
 }
 
 // getEndpoint "192.168.1.5:52780" / "[::1]:631"; "*" sin IP (el remoto de una escucha).
 func (b *ConnectionEventBuilder) getEndpoint(connectionPrimitives map[string]any, ipKey string, portKey string) string {
     ip := application.GetTrimmedString(connectionPrimitives, ipKey)
     if ip == "" {
-        return anyRemoteEndpoint
+        return enums.ConnectionFormatEnum.ANY_ENDPOINT
     }
     return net.JoinHostPort(ip, strconv.Itoa(application.GetInt(connectionPrimitives, portKey)))
-}
-
-func (b *ConnectionEventBuilder) isClose(action string) bool {
-    return action == enums.ConnectionActionEnum.CLOSED || action == enums.ConnectionActionEnum.LISTEN_CLOSED
 }
 
 func (b *ConnectionEventBuilder) getBaseAttributes(remoteMonitorEntity *agentconfigentities.RemoteMonitorEntity) map[string]any {
@@ -123,7 +123,7 @@ func (b *ConnectionEventBuilder) getEvent(sourceName string, message string, att
         collectorsenums.CollectorsKeyEnum.EVENT_TYPE:  enums.NET_CONNECTION_EVENT_TYPE,
         collectorsenums.CollectorsKeyEnum.SOURCE_NAME: sourceName,
         collectorsenums.CollectorsKeyEnum.MESSAGE:     message,
-        collectorsenums.CollectorsKeyEnum.OCCURRED_AT: occurredAt.UTC().Format(dateTimeFormat),
+        collectorsenums.CollectorsKeyEnum.OCCURRED_AT: occurredAt.UTC().Format(enums.EVENT_DATE_TIME_FORMAT),
         collectorsenums.CollectorsKeyEnum.ATTRIBUTES:  attributes,
     }
 }

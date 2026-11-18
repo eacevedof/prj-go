@@ -4,6 +4,20 @@ La versión es `APP_VERSION` en `src/modules/shared/infrastructure/repositories/
 (la muestran `version` y `help`, viaja al backend en cada envío y da nombre a los binarios de `make dist`). Lo más nuevo
 arriba.
 
+## 0.5.1 — 2026-11-18
+
+1. **Repaso DDD del módulo `connections`** (sin cambio de comportamiento):
+   - Entidades por `XxxFromPrimitives` como el resto del cliente (`SocketEntity`, `ProcessEntity`,
+     `ConnectionChangeEntity`; `ConnectionEntityFromSocketAndProcess`), no `NewXxx`.
+   - Sin literales sueltos: rutas y columnas de `/proc` y `/etc/passwd` en `ProcNetEnum` (`ProcNetColumnEnum`,
+     `ProcPathEnum`, `PasswdColumnEnum`, `IpVersionEnum`); separador de claves, `*` y `firefox(4321)` en
+     `ConnectionFormatEnum`; mensajes del evento en `ConnectionEventMessageEnum`.
+   - `CollectConnectionChangesService` con el DTO y la foto como variables de instancia (`loadConnectionsState`,
+     `tryToLoadConnectionEntities`), sin struct privado; dependencias en el orden shared → módulo (repos → servicios).
+   - `UsersReaderPasswdRepository` ya no se traga el error de lectura (sin fichero sigue siendo un mapa vacío).
+   - Orden de imports por grupos (shared → agentconfig → collectors → hostmetrics → connections → docker → shipper →
+     agent) en lo tocado, incluidos `agent-run` y el registro de comandos.
+
 ## 0.5.0 — 2026-11-18
 
 1. **Agente de red** (módulo `connections`, copiado de trafficker y adaptado): si el panel tiene un monitor

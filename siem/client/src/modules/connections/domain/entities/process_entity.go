@@ -1,6 +1,10 @@
 package entities
 
-import "siem-client/src/modules/connections/domain/enums"
+import (
+    "siem-client/src/modules/shared/application"
+
+    "siem-client/src/modules/connections/domain/enums"
+)
 
 // ProcessEntity el proceso que tiene abierto un socket: pid, nombre corto (/proc/<pid>/comm) y ejecutable
 // (/proc/<pid>/exe; vacio si no se puede leer).
@@ -10,8 +14,13 @@ type ProcessEntity struct {
     exe  string
 }
 
-func NewProcessEntity(pid int, name string, exe string) *ProcessEntity {
-    return &ProcessEntity{pid: pid, name: name, exe: exe}
+// ProcessEntityFromPrimitives claves de ConnectionKeyEnum: pid, process (el nombre) y exe.
+func ProcessEntityFromPrimitives(primitives map[string]any) *ProcessEntity {
+    return &ProcessEntity{
+        pid:  application.GetInt(primitives, enums.ConnectionKeyEnum.PID),
+        name: application.GetTrimmedString(primitives, enums.ConnectionKeyEnum.PROCESS),
+        exe:  application.GetTrimmedString(primitives, enums.ConnectionKeyEnum.EXE),
+    }
 }
 
 // UnknownProcessEntity el socket existe pero no se sabe de quien es (sin permiso para leer los fd de su proceso).

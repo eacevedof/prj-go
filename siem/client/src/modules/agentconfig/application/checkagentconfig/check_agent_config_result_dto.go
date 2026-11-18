@@ -1,8 +1,9 @@
 package checkagentconfig
 
 import (
-    "siem-client/src/modules/agentconfig/domain/entities"
     "siem-client/src/modules/shared/application"
+
+    "siem-client/src/modules/agentconfig/domain/entities"
 )
 
 // CheckAgentConfigPrimitives lo que imprime config-check (el token nunca: solo si esta puesto). config = la local

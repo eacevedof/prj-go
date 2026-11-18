@@ -3,6 +3,9 @@ package entities
 import (
     "net/netip"
     "strconv"
+    "strings"
+
+    "siem-client/src/modules/shared/application"
 
     "siem-client/src/modules/connections/domain/enums"
 )
@@ -21,18 +24,21 @@ type SocketEntity struct {
     inode      uint64
 }
 
-func NewSocketEntity(protocol string, ipVersion int, localAddr netip.Addr, localPort int, remoteAddr netip.Addr,
-    remotePort int, state string, uid int, inode uint64) *SocketEntity {
+// SocketEntityFromPrimitives claves de ConnectionKeyEnum. Las IP en texto ("192.168.1.5", "::1"); una IPv4 mapeada
+// en IPv6 se guarda como IPv4. Una IP que no se puede leer queda vacia (sin direccion).
+func SocketEntityFromPrimitives(primitives map[string]any) *SocketEntity {
+    localAddr, _ := netip.ParseAddr(application.GetTrimmedString(primitives, enums.ConnectionKeyEnum.LOCAL_IP))
+    remoteAddr, _ := netip.ParseAddr(application.GetTrimmedString(primitives, enums.ConnectionKeyEnum.REMOTE_IP))
     return &SocketEntity{
-        protocol:   protocol,
-        ipVersion:  ipVersion,
+        protocol:   application.GetTrimmedString(primitives, enums.ConnectionKeyEnum.PROTOCOL),
+        ipVersion:  application.GetInt(primitives, enums.ConnectionKeyEnum.IP_VERSION),
         localAddr:  localAddr.Unmap(),
-        localPort:  localPort,
+        localPort:  application.GetInt(primitives, enums.ConnectionKeyEnum.LOCAL_PORT),
         remoteAddr: remoteAddr.Unmap(),
-        remotePort: remotePort,
-        state:      state,
-        uid:        uid,
-        inode:      inode,
+        remotePort: application.GetInt(primitives, enums.ConnectionKeyEnum.REMOTE_PORT),
+        state:      application.GetTrimmedString(primitives, enums.ConnectionKeyEnum.STATE),
+        uid:        application.GetInt(primitives, enums.ConnectionKeyEnum.UID),
+        inode:      uint64(application.GetInt(primitives, enums.ConnectionKeyEnum.INODE)),
     }
 }
 
@@ -104,7 +110,7 @@ func (e *SocketEntity) GetLocalEndpoint() string {
 // GetRemoteEndpoint como GetLocalEndpoint; "*" para un socket en escucha.
 func (e *SocketEntity) GetRemoteEndpoint() string {
     if e.IsListening() {
-        return "*"
+        return enums.ConnectionFormatEnum.ANY_ENDPOINT
     }
     return netip.AddrPortFrom(e.remoteAddr, uint16(e.remotePort)).String()
 }
@@ -112,5 +118,7 @@ func (e *SocketEntity) GetRemoteEndpoint() string {
 // GetKey identifica el socket entre dos fotos: protocolo + extremos + inodo (el inodo cambia si se cierra y se abre
 // otro con los mismos extremos).
 func (e *SocketEntity) GetKey() string {
-    return e.protocol + "|" + e.GetLocalEndpoint() + "|" + e.GetRemoteEndpoint() + "|" + strconv.FormatUint(e.inode, 10)
+    return strings.Join([]string{
+        e.protocol, e.GetLocalEndpoint(), e.GetRemoteEndpoint(), strconv.FormatUint(e.inode, enums.ProcNetColumnEnum.DECIMAL_BASE),
+    }, enums.ConnectionFormatEnum.KEY_SEPARATOR)
 }

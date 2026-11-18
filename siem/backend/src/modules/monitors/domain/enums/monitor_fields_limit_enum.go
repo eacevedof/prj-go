@@ -22,6 +22,8 @@ var MonitorFieldsLimitEnum = struct {
     PROCESS_NAME_MAX_LENGTH              int
     PORT_MIN                             int
     PORT_MAX                             int
+    // separador de esas listas cuando llegan como texto ("sshd, nginx")
+    LIST_SEPARATOR string
 }{
     INTERVAL_SECONDS_DEFAULT: 60,
     INTERVAL_SECONDS_MIN:     10,
@@ -38,4 +40,5 @@ var MonitorFieldsLimitEnum = struct {
     PROCESS_NAME_MAX_LENGTH:              64,
     PORT_MIN:                             1,
     PORT_MAX:                             65535,
+    LIST_SEPARATOR:                       ",",
 }

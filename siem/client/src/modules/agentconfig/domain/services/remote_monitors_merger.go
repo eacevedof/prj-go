@@ -5,8 +5,9 @@ import (
     "slices"
 
     "siem-client/src/core/config"
-    "siem-client/src/modules/agentconfig/domain/entities"
+
     "siem-client/src/modules/agentconfig/domain/enums"
+    "siem-client/src/modules/agentconfig/domain/entities"
 )
 
 // RemoteMonitorsMerger suma a la configuracion local (siem-client.json, si existe) los monitores que bajan del panel

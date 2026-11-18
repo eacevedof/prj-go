@@ -8,13 +8,10 @@ import (
     "path/filepath"
     "runtime"
 
-    "siem-client/src/modules/connections/domain/entities"
     "siem-client/src/modules/connections/domain/enums"
+    "siem-client/src/modules/connections/domain/entities"
     "siem-client/src/modules/connections/domain/services"
 )
-
-// PROC_PATH donde estan los sockets (net/) y los procesos (<pid>/fd) del host.
-const PROC_PATH = "/proc"
 
 // SocketsReaderProcRepository la foto de todos los sockets TCP y UDP (IPv4 e IPv6) del espacio de red del proceso,
 // leida de <proc>/net/{tcp,tcp6,udp,udp6}. Solo stdlib: no hace falta ss ni netstat. Solo Linux: en el resto el
@@ -57,7 +54,7 @@ func (r *SocketsReaderProcRepository) GetAllSocketEntities(procPath string) ([]*
 }
 
 func (r *SocketsReaderProcRepository) getFileSocketEntities(procPath string, procNetFile string) ([]*entities.SocketEntity, error) {
-    file, err := os.Open(filepath.Join(procPath, "net", procNetFile))
+    file, err := os.Open(filepath.Join(procPath, enums.ProcPathEnum.NET_DIR, procNetFile))
     if err != nil {
         return nil, err
     }

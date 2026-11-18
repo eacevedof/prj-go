@@ -111,7 +111,7 @@ func TestNetConnectionEventsFollowTheContract(t *testing.T) {
     eventBuilder := services.ConnectionEventBuilderGetInstance()
     connectionEntities := getConnectionEntities(t)
 
-    opened := eventBuilder.GetChangeEvent(getConnectionsMonitorEntity(), entities.NewConnectionChangeEntity("opened", connectionEntities[3].ToPrimitives(), 0, false), occurredAt)
+    opened := eventBuilder.GetChangeEvent(getConnectionsMonitorEntity(), entities.ConnectionChangeEntityFromPrimitives(map[string]any{"action": "opened", "connection": connectionEntities[3].ToPrimitives(), "duration_seconds": 0, "is_initial": false}), occurredAt)
     tests.AssertEquals(t, "net_connection", opened["event_type"])
     tests.AssertEquals(t, "firefox", opened["source_name"])
     tests.AssertEquals(t, "opened tcp outbound firefox(4321) 192.168.1.5:52524 -> 142.250.250.1:443", opened["message"])
@@ -123,19 +123,25 @@ func TestNetConnectionEventsFollowTheContract(t *testing.T) {
     tests.AssertEquals(t, "142.250.250.1", attributes["remote_ip"])
     tests.AssertNil(t, attributes["duration_seconds"])
 
-    listen := eventBuilder.GetChangeEvent(getConnectionsMonitorEntity(), entities.NewConnectionChangeEntity("listen_opened", connectionEntities[1].ToPrimitives(), 0, true), occurredAt)
+    listen := eventBuilder.GetChangeEvent(getConnectionsMonitorEntity(), entities.ConnectionChangeEntityFromPrimitives(map[string]any{"action": "listen_opened", "connection": connectionEntities[1].ToPrimitives(), "duration_seconds": 0, "is_initial": true}), occurredAt)
     tests.AssertEquals(t, "listen_opened tcp sshd(812) 0.0.0.0:22 (already open)", listen["message"])
     tests.AssertEquals(t, true, listen["attributes"].(map[string]any)["is_initial"])
 
     // un cierre sale de la foto guardada (numeros float64) y lleva su duracion
     closedPrimitives := getStateRoundTrip(t, map[string]any{"c": connectionEntities[3].ToPrimitives()})["c"].(map[string]any)
-    closed := eventBuilder.GetChangeEvent(getConnectionsMonitorEntity(), entities.NewConnectionChangeEntity("closed", closedPrimitives, 45, false), occurredAt)
+    closed := eventBuilder.GetChangeEvent(getConnectionsMonitorEntity(), entities.ConnectionChangeEntityFromPrimitives(map[string]any{"action": "closed", "connection": closedPrimitives, "duration_seconds": 45, "is_initial": false}), occurredAt)
     tests.AssertEquals(t, "closed tcp outbound firefox(4321) 192.168.1.5:52524 -> 142.250.250.1:443 after 45 s", closed["message"])
     tests.AssertEquals(t, 45, closed["attributes"].(map[string]any)["duration_seconds"])
 
-    unknown := eventBuilder.GetChangeEvent(getConnectionsMonitorEntity(), entities.NewConnectionChangeEntity("opened", map[string]any{
-        "protocol": "udp", "direction": "outbound", "local_ip": "::1", "local_port": 5353, "remote_ip": "ff02::fb", "remote_port": 5353, "pid": 0, "process": "?",
-    }, 0, false), occurredAt)
+    unknown := eventBuilder.GetChangeEvent(getConnectionsMonitorEntity(), entities.ConnectionChangeEntityFromPrimitives(map[string]any{
+        "action": "opened",
+        "connection": map[string]any{
+            "protocol": "udp", "direction": "outbound", "local_ip": "::1", "local_port": 5353, "remote_ip": "ff02::fb", "remote_port": 5353, "pid": 0, "process": "?",
+        },
+    }), occurredAt)
+
+    // la duracion nunca es negativa (reloj que va hacia atras)
+    tests.AssertEquals(t, 0, entities.ConnectionChangeEntityFromPrimitives(map[string]any{"action": "closed", "duration_seconds": -5}).GetDurationSeconds())
     tests.AssertEquals(t, "?", unknown["source_name"])
     tests.AssertEquals(t, "opened udp outbound ? [::1]:5353 -> [ff02::fb]:5353", unknown["message"])
 }

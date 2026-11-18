@@ -4,14 +4,21 @@
 package console
 
 import (
-    agentcommands "siem-client/src/modules/agent/infrastructure/commands"
-    agentconfigcommands "siem-client/src/modules/agentconfig/infrastructure/commands"
-    collectorscommands "siem-client/src/modules/collectors/infrastructure/commands"
-    connectionscommands "siem-client/src/modules/connections/infrastructure/commands"
-    dockercommands "siem-client/src/modules/docker/infrastructure/commands"
-    hostmetricscommands "siem-client/src/modules/hostmetrics/infrastructure/commands"
     "siem-client/src/console/application"
+
+    agentconfigcommands "siem-client/src/modules/agentconfig/infrastructure/commands"
+
+    collectorscommands "siem-client/src/modules/collectors/infrastructure/commands"
+
+    hostmetricscommands "siem-client/src/modules/hostmetrics/infrastructure/commands"
+
+    connectionscommands "siem-client/src/modules/connections/infrastructure/commands"
+
+    dockercommands "siem-client/src/modules/docker/infrastructure/commands"
+
     shippercommands "siem-client/src/modules/shipper/infrastructure/commands"
+
+    agentcommands "siem-client/src/modules/agent/infrastructure/commands"
 )
 
 // GetCommands alias => command, que hace (una linea) y los argumentos de un ejemplo. El orden es el del help.

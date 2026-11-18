@@ -9,19 +9,6 @@ var ProtocolEnum = struct {
     UDP: "udp",
 }
 
-// ProcNetFileEnum los ficheros de /proc/net que se leen y el protocolo / version de IP de cada uno.
-var ProcNetFileEnum = struct {
-    TCP  string
-    TCP6 string
-    UDP  string
-    UDP6 string
-}{
-    TCP:  "tcp",
-    TCP6: "tcp6",
-    UDP:  "udp",
-    UDP6: "udp6",
-}
-
 // DirectionEnum hacia donde va una conexion vista desde este host.
 //   - listen: socket en escucha (un servicio que acepta conexiones).
 //   - inbound: alguien de fuera se ha conectado a un puerto que este host escucha.
@@ -36,8 +23,9 @@ var DirectionEnum = struct {
     OUTBOUND: "outbound",
 }
 
-// ConnectionKeyEnum claves de los primitivos de una conexion (ConnectionEntity.ToPrimitives): los attributes del
-// net_connection y lo que se guarda por conexion en state/connections.json.
+// ConnectionKeyEnum claves de los primitivos de las entidades del modulo: los de una conexion (ConnectionEntity.
+// ToPrimitives: los attributes del net_connection y lo que se guarda por conexion en state/connections.json), los de
+// un socket y un proceso (SocketEntityFromPrimitives, ProcessEntityFromPrimitives) y los de un cambio.
 var ConnectionKeyEnum = struct {
     PROTOCOL    string
     IP_VERSION  string
@@ -51,6 +39,11 @@ var ConnectionKeyEnum = struct {
     PROCESS     string
     EXE         string
     USER        string
+    // socket
+    UID   string
+    INODE string
+    // cambio (ConnectionChangeEntityFromPrimitives): la conexion y, en NetConnectionAttributeEnum, accion y duracion
+    CONNECTION string
 }{
     PROTOCOL:    "protocol",
     IP_VERSION:  "ip_version",
@@ -64,13 +57,59 @@ var ConnectionKeyEnum = struct {
     PROCESS:     "process",
     EXE:         "exe",
     USER:        "user",
+    UID:         "uid",
+    INODE:       "inode",
+    CONNECTION:  "connection",
 }
 
 // UNKNOWN_PROCESS nombre de proceso cuando no se puede saber de quien es el socket (sin permiso para leer sus fd).
 const UNKNOWN_PROCESS = "?"
 
+// ConnectionFormatEnum como se escriben la clave de una conexion entre dos fotos y sus extremos.
+//   - KEY_SEPARATOR: protocolo|local|remoto|inodo, y |pid en la de la conexion.
+//   - ANY_ENDPOINT: el extremo remoto de un socket en escucha.
+//   - PROCESS_LABEL: "firefox(4321)".
+var ConnectionFormatEnum = struct {
+    KEY_SEPARATOR string
+    ANY_ENDPOINT  string
+    PROCESS_LABEL string
+}{
+    KEY_SEPARATOR: "|",
+    ANY_ENDPOINT:  "*",
+    PROCESS_LABEL: "{0}({1})",
+}
+
+// ConnectionEventMessageEnum el mensaje de un net_connection ({0}... los rellena config.Tr; las partes se unen con
+// MESSAGE_PART_SEPARATOR porque Tr recorta los espacios de los extremos):
+//
+//   opened tcp outbound firefox(4321) 192.168.1.5:52780 -> 142.250.1.1:443
+//   closed tcp outbound firefox(4321) 192.168.1.5:52780 -> 142.250.1.1:443 after 12 s
+//   listen_opened tcp sshd(812) 0.0.0.0:22 (already open)
+var ConnectionEventMessageEnum = struct {
+    // {0} accion · {1} protocolo · {2} direccion · {3} proceso · {4} local · {5} remoto
+    CONNECTION_X string
+    // {0} accion · {1} protocolo · {2} proceso · {3} local
+    LISTEN_X string
+    // {0} segundos
+    AFTER_X_SECONDS string
+    ALREADY_OPEN    string
+    // {0} tipo de monitor · {1} motivo
+    X_NOT_AVAILABLE_X      string
+    MESSAGE_PART_SEPARATOR string
+}{
+    CONNECTION_X:      "{0} {1} {2} {3} {4} -> {5}",
+    LISTEN_X:          "{0} {1} {2} {3}",
+    AFTER_X_SECONDS:   "after {0} s",
+    ALREADY_OPEN:      "(already open)",
+    X_NOT_AVAILABLE_X:      "{0} not available: {1}",
+    MESSAGE_PART_SEPARATOR: " ",
+}
+
 // NET_CONNECTION_EVENT_TYPE el evento de este modulo (EventTypeEnum.NET_CONNECTION del backend: mismo valor).
 const NET_CONNECTION_EVENT_TYPE = "net_connection"
+
+// EVENT_DATE_TIME_FORMAT occurred_at del evento: UTC "YYYY-MM-DD HH:MM:SS" (el formato que espera el backend).
+const EVENT_DATE_TIME_FORMAT = "2006-01-02 15:04:05"
 
 // ConnectionActionEnum que ha pasado entre dos pasadas: una conexion o un puerto en escucha que aparece o desaparece
 // (NetConnectionAttributeValueEnum del backend: mismos valores; la gravedad la decide el).

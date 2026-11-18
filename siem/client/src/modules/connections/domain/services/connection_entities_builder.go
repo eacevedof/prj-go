@@ -5,8 +5,8 @@ import (
     "slices"
     "strconv"
 
-    "siem-client/src/modules/connections/domain/entities"
     "siem-client/src/modules/connections/domain/enums"
+    "siem-client/src/modules/connections/domain/entities"
 )
 
 // ConnectionEntitiesBuilder junta la foto de sockets con sus procesos y usuarios y decide la direccion de cada uno:
@@ -19,6 +19,13 @@ type ConnectionEntitiesBuilder struct{}
 
 func ConnectionEntitiesBuilderGetInstance() *ConnectionEntitiesBuilder {
     return &ConnectionEntitiesBuilder{}
+}
+
+// directionOrder escuchas, entrantes y salientes
+var directionOrder = map[string]int{
+    enums.DirectionEnum.LISTEN:   0,
+    enums.DirectionEnum.INBOUND:  1,
+    enums.DirectionEnum.OUTBOUND: 2,
 }
 
 // GetConnectionEntities ordenadas: escuchas, entrantes y salientes; dentro, por proceso y por extremo remoto.
@@ -37,14 +44,14 @@ func (b *ConnectionEntitiesBuilder) GetConnectionEntities(
         if processEntity == nil {
             processEntity = entities.UnknownProcessEntity()
         }
-        connectionEntities = append(connectionEntities, entities.NewConnectionEntity(
+        connectionEntities = append(connectionEntities, entities.ConnectionEntityFromSocketAndProcess(
             socketEntity,
             processEntity,
             b.getUserName(userNameByUid, socketEntity.GetUid()),
             b.getDirection(socketEntity, listeningPorts),
         ))
     }
-    slices.SortStableFunc(connectionEntities, b.compare)
+    slices.SortStableFunc(connectionEntities, b.getComparison)
     return connectionEntities
 }
 
@@ -53,7 +60,7 @@ func (b *ConnectionEntitiesBuilder) getListeningPorts(socketEntities []*entities
     listeningPorts := map[string]bool{}
     for _, socketEntity := range socketEntities {
         if socketEntity.IsListening() {
-            listeningPorts[socketEntity.GetProtocol()+"|"+strconv.Itoa(socketEntity.GetLocalPort())] = true
+            listeningPorts[b.getProtocolPortKey(socketEntity)] = true
         }
     }
     return listeningPorts
@@ -63,10 +70,14 @@ func (b *ConnectionEntitiesBuilder) getDirection(socketEntity *entities.SocketEn
     if socketEntity.IsListening() {
         return enums.DirectionEnum.LISTEN
     }
-    if listeningPorts[socketEntity.GetProtocol()+"|"+strconv.Itoa(socketEntity.GetLocalPort())] {
+    if listeningPorts[b.getProtocolPortKey(socketEntity)] {
         return enums.DirectionEnum.INBOUND
     }
     return enums.DirectionEnum.OUTBOUND
+}
+
+func (b *ConnectionEntitiesBuilder) getProtocolPortKey(socketEntity *entities.SocketEntity) string {
+    return socketEntity.GetProtocol() + enums.ConnectionFormatEnum.KEY_SEPARATOR + strconv.Itoa(socketEntity.GetLocalPort())
 }
 
 // getUserName el nombre de /etc/passwd; si no esta, el uid tal cual.
@@ -77,13 +88,7 @@ func (b *ConnectionEntitiesBuilder) getUserName(userNameByUid map[int]string, ui
     return strconv.Itoa(uid)
 }
 
-var directionOrder = map[string]int{
-    enums.DirectionEnum.LISTEN:   0,
-    enums.DirectionEnum.INBOUND:  1,
-    enums.DirectionEnum.OUTBOUND: 2,
-}
-
-func (b *ConnectionEntitiesBuilder) compare(first *entities.ConnectionEntity, second *entities.ConnectionEntity) int {
+func (b *ConnectionEntitiesBuilder) getComparison(first *entities.ConnectionEntity, second *entities.ConnectionEntity) int {
     return cmp.Or(
         cmp.Compare(directionOrder[first.GetDirection()], directionOrder[second.GetDirection()]),
         cmp.Compare(first.GetProcessEntity().GetName(), second.GetProcessEntity().GetName()),

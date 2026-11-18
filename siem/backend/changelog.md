@@ -3,6 +3,11 @@
 La versión es `APP_VERSION` en `src/modules/shared/infrastructure/repositories/configuration/environment_reader_raw_repository.go`
 (la muestra el dashboard). Lo más nuevo arriba.
 
+## 0.11.1 — 2026-11-18
+
+1. Repaso DDD: el separador de las listas de `connections` (`,`) pasa de constante suelta del validador a
+   `MonitorFieldsLimitEnum.LIST_SEPARATOR`. Sin cambio de comportamiento.
+
 ## 0.11.0 — 2026-11-18
 
 1. **Monitor `connections`** (el siem-client pasa a ser el agente de red; lo enciende el backend, no el instalador):

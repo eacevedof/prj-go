@@ -4,8 +4,9 @@ import (
     "slices"
     "strings"
 
-    "siem-client/src/modules/agentconfig/domain/enums"
     "siem-client/src/modules/shared/application"
+
+    "siem-client/src/modules/agentconfig/domain/enums"
 )
 
 const DEFAULT_MONITOR_INTERVAL_SECONDS = 60

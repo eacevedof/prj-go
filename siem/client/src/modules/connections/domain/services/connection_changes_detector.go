@@ -4,9 +4,10 @@ import (
     "maps"
     "slices"
 
-    "siem-client/src/modules/connections/domain/entities"
-    "siem-client/src/modules/connections/domain/enums"
     "siem-client/src/modules/shared/application"
+
+    "siem-client/src/modules/connections/domain/enums"
+    "siem-client/src/modules/connections/domain/entities"
 )
 
 // ConnectionChangesDetector compara la foto de ahora con la anterior (state/connections.json) y saca SOLO los cambios,
@@ -33,7 +34,7 @@ func (d *ConnectionChangesDetector) GetChangesAndNextConnections(
     nowUnix int64,
 ) ([]*entities.ConnectionChangeEntity, map[string]any) {
     isInitial := previousConnections == nil
-    changes := []*entities.ConnectionChangeEntity{}
+    connectionChangeEntities := []*entities.ConnectionChangeEntity{}
     nextConnections := map[string]any{}
 
     existingKeys := map[string]bool{}
@@ -42,38 +43,36 @@ func (d *ConnectionChangesDetector) GetChangesAndNextConnections(
     }
 
     // cierres primero (orden estable por clave): asi un puerto que cierra y abre en la misma pasada se lee bien
-    for _, key := range slices.Sorted(maps.Keys(previousConnections)) {
-        if existingKeys[key] {
+    for _, connectionKey := range slices.Sorted(maps.Keys(previousConnections)) {
+        if existingKeys[connectionKey] {
             continue
         }
-        connectionPrimitives, _ := previousConnections[key].(map[string]any)
+        connectionPrimitives, _ := previousConnections[connectionKey].(map[string]any)
         openedAtUnix := int64(application.GetInt(connectionPrimitives, enums.ConnectionsStateEnum.OPENED_AT_UNIX))
-        changes = append(changes, entities.NewConnectionChangeEntity(
-            d.getCloseAction(connectionPrimitives),
-            d.getWithoutStateKeys(connectionPrimitives),
-            int(max(0, nowUnix-openedAtUnix)),
-            false,
-        ))
+        connectionChangeEntities = append(connectionChangeEntities, entities.ConnectionChangeEntityFromPrimitives(map[string]any{
+            enums.NetConnectionAttributeEnum.ACTION:           d.getCloseAction(connectionPrimitives),
+            enums.ConnectionKeyEnum.CONNECTION:                d.getWithoutStateKeys(connectionPrimitives),
+            enums.NetConnectionAttributeEnum.DURATION_SECONDS: nowUnix - openedAtUnix,
+        }))
     }
 
     for _, connectionEntity := range filteredConnectionEntities {
-        key := connectionEntity.GetKey()
-        if previousConnectionPrimitives, wasOpen := previousConnections[key].(map[string]any); wasOpen {
-            nextConnections[key] = previousConnectionPrimitives
+        connectionKey := connectionEntity.GetKey()
+        if previousConnectionPrimitives, wasOpen := previousConnections[connectionKey].(map[string]any); wasOpen {
+            nextConnections[connectionKey] = previousConnectionPrimitives
             continue
         }
         connectionPrimitives := connectionEntity.ToPrimitives()
-        changes = append(changes, entities.NewConnectionChangeEntity(
-            d.getOpenAction(connectionEntity.IsListening()),
-            connectionPrimitives,
-            0,
-            isInitial,
-        ))
+        connectionChangeEntities = append(connectionChangeEntities, entities.ConnectionChangeEntityFromPrimitives(map[string]any{
+            enums.NetConnectionAttributeEnum.ACTION:     d.getOpenAction(connectionEntity.IsListening()),
+            enums.ConnectionKeyEnum.CONNECTION:          connectionPrimitives,
+            enums.NetConnectionAttributeEnum.IS_INITIAL: isInitial,
+        }))
         nextConnectionPrimitives := maps.Clone(connectionPrimitives)
         nextConnectionPrimitives[enums.ConnectionsStateEnum.OPENED_AT_UNIX] = nowUnix
-        nextConnections[key] = nextConnectionPrimitives
+        nextConnections[connectionKey] = nextConnectionPrimitives
     }
-    return changes, nextConnections
+    return connectionChangeEntities, nextConnections
 }
 
 func (d *ConnectionChangesDetector) getOpenAction(isListening bool) string {

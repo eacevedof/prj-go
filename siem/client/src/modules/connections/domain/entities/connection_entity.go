@@ -2,6 +2,9 @@ package entities
 
 import (
     "strconv"
+    "strings"
+
+    "siem-client/src/core/config"
 
     "siem-client/src/modules/connections/domain/enums"
 )
@@ -14,12 +17,13 @@ type ConnectionEntity struct {
     direction     string
 }
 
-func NewConnectionEntity(socketEntity *SocketEntity, processEntity *ProcessEntity, userName string, direction string) *ConnectionEntity {
+// ConnectionEntityFromSocketAndProcess la une ConnectionEntitiesBuilder, que es quien decide la direccion.
+func ConnectionEntityFromSocketAndProcess(socketEntity *SocketEntity, processEntity *ProcessEntity, userName string, direction string) *ConnectionEntity {
     return &ConnectionEntity{
         socketEntity:  socketEntity,
         processEntity: processEntity,
-        userName:      userName,
-        direction:     direction,
+        userName:      strings.TrimSpace(userName),
+        direction:     strings.TrimSpace(direction),
     }
 }
 
@@ -42,7 +46,7 @@ func (e *ConnectionEntity) GetDirection() string {
 // GetKey identifica la conexion entre dos fotos: la del socket mas el pid (un socket heredado por otro proceso cuenta
 // como otra conexion).
 func (e *ConnectionEntity) GetKey() string {
-    return e.socketEntity.GetKey() + "|" + strconv.Itoa(e.processEntity.GetPid())
+    return e.socketEntity.GetKey() + enums.ConnectionFormatEnum.KEY_SEPARATOR + strconv.Itoa(e.processEntity.GetPid())
 }
 
 // GetProcessLabel "firefox(4321)" o "?" si no se sabe.
@@ -50,7 +54,7 @@ func (e *ConnectionEntity) GetProcessLabel() string {
     if e.processEntity.IsUnknown() {
         return e.processEntity.GetName()
     }
-    return e.processEntity.GetName() + "(" + strconv.Itoa(e.processEntity.GetPid()) + ")"
+    return config.Tr(enums.ConnectionFormatEnum.PROCESS_LABEL, e.processEntity.GetName(), e.processEntity.GetPid())
 }
 
 // IsListening un socket en escucha (sus eventos son listen_opened / listen_closed).

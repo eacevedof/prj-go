@@ -31,9 +31,9 @@ func getSocketEntities(t *testing.T, lines ...string) []*entities.SocketEntity {
 func TestDirectionsAndOrder(t *testing.T) {
     socketEntities := getSocketEntities(t, tcpEstablishedLine, sshInboundLine, sshListenLine)
     processEntityByInode := map[uint64]*entities.ProcessEntity{
-        100:   entities.NewProcessEntity(812, "sshd", "/usr/sbin/sshd"),
-        101:   entities.NewProcessEntity(9001, "sshd", "/usr/sbin/sshd"),
-        98765: entities.NewProcessEntity(4321, "firefox", "/usr/lib/firefox/firefox"),
+        100:   entities.ProcessEntityFromPrimitives(map[string]any{"pid": 812, "process": "sshd", "exe": "/usr/sbin/sshd"}),
+        101:   entities.ProcessEntityFromPrimitives(map[string]any{"pid": 9001, "process": "sshd", "exe": "/usr/sbin/sshd"}),
+        98765: entities.ProcessEntityFromPrimitives(map[string]any{"pid": 4321, "process": "firefox", "exe": "/usr/lib/firefox/firefox"}),
     }
     connectionEntities := services.ConnectionEntitiesBuilderGetInstance().GetConnectionEntities(
         socketEntities, processEntityByInode, map[int]string{0: "root", 1000: "easu"},
@@ -63,7 +63,7 @@ func TestTimeWaitIsDroppedAndUnknownProcessIsKept(t *testing.T) {
 func TestPrimitivesOfAConnection(t *testing.T) {
     connectionEntities := services.ConnectionEntitiesBuilderGetInstance().GetConnectionEntities(
         getSocketEntities(t, tcpEstablishedLine),
-        map[uint64]*entities.ProcessEntity{98765: entities.NewProcessEntity(4321, "firefox", "/usr/lib/firefox/firefox")},
+        map[uint64]*entities.ProcessEntity{98765: entities.ProcessEntityFromPrimitives(map[string]any{"pid": 4321, "process": "firefox", "exe": "/usr/lib/firefox/firefox"})},
         map[int]string{1000: "easu"},
     )
     tests.AssertEquals(t, map[string]any{

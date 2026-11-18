@@ -10,21 +10,27 @@ import (
     "syscall"
     "time"
 
+    sharedcommands "siem-client/src/modules/shared/infrastructure/commands"
+    "siem-client/src/modules/shared/infrastructure/repositories/configuration"
+    sharedexceptions "siem-client/src/modules/shared/infrastructure/exceptions"
+
     "siem-client/src/modules/agentconfig/application/checkagentconfig"
     "siem-client/src/modules/agentconfig/application/syncremoteconfig"
     agentconfigexceptions "siem-client/src/modules/agentconfig/domain/exceptions"
+
     "siem-client/src/modules/collectors/application/collectfilelines"
     "siem-client/src/modules/collectors/application/runduecommands"
+
+    "siem-client/src/modules/hostmetrics/application/collecthostmetrics"
+
     "siem-client/src/modules/connections/application/collectconnectionchanges"
+
     "siem-client/src/modules/docker/application/collectcontainerlogs"
     "siem-client/src/modules/docker/application/collectcontainerstates"
     "siem-client/src/modules/docker/application/collectcontainerstats"
     "siem-client/src/modules/docker/application/collectdaemonevents"
     dockerexceptions "siem-client/src/modules/docker/domain/exceptions"
-    "siem-client/src/modules/hostmetrics/application/collecthostmetrics"
-    sharedcommands "siem-client/src/modules/shared/infrastructure/commands"
-    sharedexceptions "siem-client/src/modules/shared/infrastructure/exceptions"
-    "siem-client/src/modules/shared/infrastructure/repositories/configuration"
+
     "siem-client/src/modules/shipper/application/sendspooledevents"
     shipperexceptions "siem-client/src/modules/shipper/domain/exceptions"
 )

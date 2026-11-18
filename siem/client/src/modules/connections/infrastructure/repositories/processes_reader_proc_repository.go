@@ -6,6 +6,7 @@ import (
     "strconv"
     "strings"
 
+    "siem-client/src/modules/connections/domain/enums"
     "siem-client/src/modules/connections/domain/entities"
 )
 
@@ -18,7 +19,8 @@ func ProcessesReaderProcRepositoryGetInstance() *ProcessesReaderProcRepository {
 }
 
 // GetProcessEntitiesByInode inodo -> proceso, y cuantos procesos no se han podido leer (sin permiso). Un socket
-// compartido por varios procesos (un fork, los workers de nginx) se queda con el de pid mas bajo.
+// compartido por varios procesos (un fork, los workers de nginx) se queda con el de pid mas bajo. Un proceso que
+// termina mientras se recorre, o un fd que se cierra, no es un error: el sistema cambia entre dos lecturas.
 func (r *ProcessesReaderProcRepository) GetProcessEntitiesByInode(procPath string) (map[uint64]*entities.ProcessEntity, int, error) {
     procEntries, err := os.ReadDir(procPath)
     if err != nil {
@@ -33,9 +35,8 @@ func (r *ProcessesReaderProcRepository) GetProcessEntitiesByInode(procPath strin
             continue
         }
         pidPath := filepath.Join(procPath, procEntry.Name())
-        fdEntries, err := os.ReadDir(filepath.Join(pidPath, "fd"))
+        fdEntries, err := os.ReadDir(filepath.Join(pidPath, enums.ProcPathEnum.FD_DIR))
         if err != nil {
-            // sin permiso, o el proceso ha terminado entre medias
             if os.IsPermission(err) {
                 unreadableProcesses++
             }
@@ -45,7 +46,7 @@ func (r *ProcessesReaderProcRepository) GetProcessEntitiesByInode(procPath strin
         var processEntity *entities.ProcessEntity
         isFdUnreadable := false
         for _, fdEntry := range fdEntries {
-            inode, isSocket, err := r.getSocketInode(filepath.Join(pidPath, "fd", fdEntry.Name()))
+            inode, isSocket, err := r.getSocketInode(filepath.Join(pidPath, enums.ProcPathEnum.FD_DIR, fdEntry.Name()))
             if os.IsPermission(err) {
                 // se puede listar fd/ pero no leer sus enlaces: falta CAP_SYS_PTRACE (p. ej. root en un contenedor)
                 isFdUnreadable = true
@@ -54,11 +55,15 @@ func (r *ProcessesReaderProcRepository) GetProcessEntitiesByInode(procPath strin
             if !isSocket {
                 continue
             }
-            if previous := processEntityByInode[inode]; previous != nil && previous.GetPid() < pid {
+            if previousProcessEntity := processEntityByInode[inode]; previousProcessEntity != nil && previousProcessEntity.GetPid() < pid {
                 continue
             }
             if processEntity == nil {
-                processEntity = entities.NewProcessEntity(pid, r.getName(pidPath), r.getExe(pidPath))
+                processEntity = entities.ProcessEntityFromPrimitives(map[string]any{
+                    enums.ConnectionKeyEnum.PID:     pid,
+                    enums.ConnectionKeyEnum.PROCESS: r.getName(pidPath),
+                    enums.ConnectionKeyEnum.EXE:     r.getExe(pidPath),
+                })
             }
             processEntityByInode[inode] = processEntity
         }
@@ -79,18 +84,20 @@ func (r *ProcessesReaderProcRepository) getSocketInode(fdPath string) (uint64, b
         }
         return 0, false, nil
     }
-    if !strings.HasPrefix(link, "socket:[") || !strings.HasSuffix(link, "]") {
+    if !strings.HasPrefix(link, enums.ProcPathEnum.SOCKET_LINK_PREFIX) || !strings.HasSuffix(link, enums.ProcPathEnum.SOCKET_LINK_SUFFIX) {
         return 0, false, nil
     }
-    inode, err := strconv.ParseUint(link[len("socket:["):len(link)-1], 10, 64)
+    rawInode := strings.TrimSuffix(strings.TrimPrefix(link, enums.ProcPathEnum.SOCKET_LINK_PREFIX), enums.ProcPathEnum.SOCKET_LINK_SUFFIX)
+    inode, err := strconv.ParseUint(rawInode, enums.ProcNetColumnEnum.DECIMAL_BASE, enums.ProcNetColumnEnum.INODE_BITS)
     if err != nil {
         return 0, false, nil
     }
     return inode, true, nil
 }
 
+// getName vacio si no se puede leer (el proceso ha terminado entre medias).
 func (r *ProcessesReaderProcRepository) getName(pidPath string) string {
-    rawName, err := os.ReadFile(filepath.Join(pidPath, "comm"))
+    rawName, err := os.ReadFile(filepath.Join(pidPath, enums.ProcPathEnum.COMM_FILE))
     if err != nil {
         return ""
     }
@@ -99,9 +106,9 @@ func (r *ProcessesReaderProcRepository) getName(pidPath string) string {
 
 // getExe vacio si no se puede leer (proceso de otro usuario, o del kernel).
 func (r *ProcessesReaderProcRepository) getExe(pidPath string) string {
-    exe, err := os.Readlink(filepath.Join(pidPath, "exe"))
+    exe, err := os.Readlink(filepath.Join(pidPath, enums.ProcPathEnum.EXE_LINK))
     if err != nil {
         return ""
     }
-    return strings.TrimSuffix(exe, " (deleted)")
+    return strings.TrimSuffix(exe, enums.ProcPathEnum.DELETED_EXE_SUFFIX)
 }

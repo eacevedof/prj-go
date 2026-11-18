@@ -13,10 +13,10 @@ func getConnectionEntities(t *testing.T) []*entities.ConnectionEntity {
     return services.ConnectionEntitiesBuilderGetInstance().GetConnectionEntities(
         getSocketEntities(t, tcpListenLine, sshListenLine, sshInboundLine, tcpEstablishedLine),
         map[uint64]*entities.ProcessEntity{
-            22512: entities.NewProcessEntity(500, "cupsd", "/usr/sbin/cupsd"),
-            100:   entities.NewProcessEntity(812, "sshd", "/usr/sbin/sshd"),
-            101:   entities.NewProcessEntity(9001, "sshd", "/usr/sbin/sshd"),
-            98765: entities.NewProcessEntity(4321, "firefox", "/usr/lib/firefox/firefox"),
+            22512: entities.ProcessEntityFromPrimitives(map[string]any{"pid": 500, "process": "cupsd", "exe": "/usr/sbin/cupsd"}),
+            100:   entities.ProcessEntityFromPrimitives(map[string]any{"pid": 812, "process": "sshd", "exe": "/usr/sbin/sshd"}),
+            101:   entities.ProcessEntityFromPrimitives(map[string]any{"pid": 9001, "process": "sshd", "exe": "/usr/sbin/sshd"}),
+            98765: entities.ProcessEntityFromPrimitives(map[string]any{"pid": 4321, "process": "firefox", "exe": "/usr/lib/firefox/firefox"}),
         },
         map[int]string{0: "root", 1000: "easu"},
     )
