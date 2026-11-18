@@ -2,6 +2,7 @@ package entities
 
 import (
     "slices"
+    "strings"
 
     "siem-client/src/modules/agentconfig/domain/enums"
     "siem-client/src/modules/shared/application"
@@ -82,4 +83,31 @@ func (e *RemoteMonitorEntity) GetConfigString(key string) string {
 func (e *RemoteMonitorEntity) GetConfigBool(key string) bool {
     isTrue, _ := e.config[key].(bool)
     return isTrue
+}
+
+// IsConnections connections: lo muestrea el modulo connections (uno por agente).
+func (e *RemoteMonitorEntity) IsConnections() bool {
+    return e.monitorType == enums.MonitorTypeEnum.CONNECTIONS
+}
+
+// GetConfigStrings una lista de texto de la config (ignore_processes); sin vacios. Lo que no es una lista, vacio.
+func (e *RemoteMonitorEntity) GetConfigStrings(key string) []string {
+    rawItems, _ := e.config[key].([]any)
+    items := []string{}
+    for _, rawItem := range rawItems {
+        if item := strings.TrimSpace(application.ToString(rawItem)); item != "" {
+            items = append(items, item)
+        }
+    }
+    return items
+}
+
+// GetConfigInts una lista de numeros de la config (ignore_ports; en el JSON llegan como float64).
+func (e *RemoteMonitorEntity) GetConfigInts(key string) []int {
+    rawItems, _ := e.config[key].([]any)
+    items := []int{}
+    for _, rawItem := range rawItems {
+        items = append(items, application.ToInt(rawItem))
+    }
+    return items
 }

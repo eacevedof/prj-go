@@ -46,6 +46,8 @@ type AgentConfigEntity struct {
     // watcherEntities. Los avisos son monitores remotos que no se han podido aplicar.
     metricMonitorEntities []*RemoteMonitorEntity
     remoteConfigWarnings  []string
+    // el monitor connections del panel (uno por agente); nil = no se muestrean las conexiones de red
+    connectionsMonitorEntity *RemoteMonitorEntity
 }
 
 // AddRemoteMonitors suma a la config local lo que salio de la config remota (RemoteMonitorsMerger ya resolvio los
@@ -59,6 +61,16 @@ func (e *AgentConfigEntity) AddRemoteMonitors(watcherEntities []*WatcherEntity, 
 // GetMetricMonitorEntities los monitores cpu, memory, disk, gpu y network (modulo hostmetrics).
 func (e *AgentConfigEntity) GetMetricMonitorEntities() []*RemoteMonitorEntity {
     return e.metricMonitorEntities
+}
+
+// SetConnectionsMonitorEntity lo pone RemoteMonitorsMerger (el primero que llega; uno de mas queda como aviso).
+func (e *AgentConfigEntity) SetConnectionsMonitorEntity(connectionsMonitorEntity *RemoteMonitorEntity) {
+    e.connectionsMonitorEntity = connectionsMonitorEntity
+}
+
+// GetConnectionsMonitorEntityOrNil nil si el panel no tiene un monitor connections para este agente.
+func (e *AgentConfigEntity) GetConnectionsMonitorEntityOrNil() *RemoteMonitorEntity {
+    return e.connectionsMonitorEntity
 }
 
 func (e *AgentConfigEntity) GetRemoteConfigWarnings() []string {

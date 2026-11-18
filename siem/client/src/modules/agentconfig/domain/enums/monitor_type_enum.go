@@ -1,7 +1,8 @@
 package enums
 
 // MonitorTypeEnum tipos de monitor (recurso a vigilar) que crea el panel del backend y baja el agente con
-// GET /api/v1/agent-config. Las metricas las toma el modulo hostmetrics; folder y log_pattern se vigilan como watchers.
+// GET /api/v1/agent-config. Las metricas las toma el modulo hostmetrics; folder y log_pattern se vigilan como watchers;
+// connections (uno por agente) lo muestrea el modulo connections.
 var MonitorTypeEnum = struct {
     CPU         string
     MEMORY      string
@@ -10,6 +11,7 @@ var MonitorTypeEnum = struct {
     NETWORK     string
     FOLDER      string
     LOG_PATTERN string
+    CONNECTIONS string
 
     METRIC_VALUES []string
     LINES_VALUES  []string
@@ -21,6 +23,7 @@ var MonitorTypeEnum = struct {
     NETWORK:     "network",
     FOLDER:      "folder",
     LOG_PATTERN: "log_pattern",
+    CONNECTIONS: "connections",
 
     METRIC_VALUES: []string{"cpu", "memory", "disk", "gpu", "network"},
     LINES_VALUES:  []string{"folder", "log_pattern"},
@@ -47,6 +50,10 @@ var RemoteConfigKeyEnum = struct {
     MATCH        string
     SEVERITY     string
     INTERFACE    string
+    // connections
+    IS_LOOPBACK_INCLUDED string
+    IGNORE_PROCESSES     string
+    IGNORE_PORTS         string
 
     STATE_FILE string
 }{
@@ -67,6 +74,10 @@ var RemoteConfigKeyEnum = struct {
     MATCH:        "match",
     SEVERITY:     "severity",
     INTERFACE:    "interface",
+
+    IS_LOOPBACK_INCLUDED: "is_loopback_included",
+    IGNORE_PROCESSES:     "ignore_processes",
+    IGNORE_PORTS:         "ignore_ports",
 
     STATE_FILE: "remote-config.json",
 }

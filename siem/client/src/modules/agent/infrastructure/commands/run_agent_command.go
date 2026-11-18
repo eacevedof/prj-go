@@ -15,6 +15,7 @@ import (
     agentconfigexceptions "siem-client/src/modules/agentconfig/domain/exceptions"
     "siem-client/src/modules/collectors/application/collectfilelines"
     "siem-client/src/modules/collectors/application/runduecommands"
+    "siem-client/src/modules/connections/application/collectconnectionchanges"
     "siem-client/src/modules/docker/application/collectcontainerlogs"
     "siem-client/src/modules/docker/application/collectcontainerstates"
     "siem-client/src/modules/docker/application/collectcontainerstats"
@@ -38,7 +39,8 @@ const (
 // RunAgentCommand ./console agent-run   el agente: un bucle que hasta Ctrl+C (o SIGTERM del servicio) hace
 //   - al arrancar y cada 60 s: baja del backend su config remota (los monitores que se crean en el panel).
 //   - cada collect_interval_seconds: lineas nuevas de las carpetas vigiladas + comandos a los que les toca + metricas
-//     del host a las que les toca (cpu, memoria, disco, gpu, red) + Docker
+//     del host a las que les toca (cpu, memoria, disco, gpu, red) + conexiones de red que abren o cierran (si el
+//     panel tiene un monitor connections para este agente; solo Linux) + Docker
 //     (estados, eventos del daemon, recursos si tocan, logs) -> spool.
 //   - cada send_interval_seconds: spool -> backend (o el latido si no hay nada).
 //
@@ -73,10 +75,11 @@ func (c *RunAgentCommand) Run() {
 
     environment := configuration.GetInstance()
     c.printLine(c.GetBlue(fmt.Sprintf(
-        "%s v%s -> %s · %d watchers, %d commands, %d metrics, docker %s, remote config %s · collect every %d s, send every %d s",
+        "%s v%s -> %s · %d watchers, %d commands, %d metrics, connections %s, docker %s, remote config %s · collect every %d s, send every %d s",
         environment.GetAppName(), environment.GetAppVersion(), checkAgentConfigResultDto.GetEndpointUrl(),
         checkAgentConfigResultDto.GetWatchersCount(), checkAgentConfigResultDto.GetCommandsCount(),
-        checkAgentConfigResultDto.GetMetricMonitorsCount(), c.getOnOff(checkAgentConfigResultDto.IsDockerEnabled()),
+        checkAgentConfigResultDto.GetMetricMonitorsCount(), c.getOnOff(checkAgentConfigResultDto.IsConnectionsEnabled()),
+        c.getOnOff(checkAgentConfigResultDto.IsDockerEnabled()),
         c.getOnOff(checkAgentConfigResultDto.IsRemoteConfigEnabled()),
         checkAgentConfigResultDto.GetCollectIntervalSeconds(), checkAgentConfigResultDto.GetSendIntervalSeconds(),
     )))
@@ -102,6 +105,7 @@ func (c *RunAgentCommand) Run() {
             c.collectFileLines()
             c.runDueCommands()
             c.collectHostMetrics()
+            c.collectConnectionChanges()
             c.collectDocker()
             nextCollectAt = now.Add(collectInterval)
         }
@@ -167,6 +171,37 @@ func (c *RunAgentCommand) collectHostMetrics() {
     if collectHostMetricsResultDto.GetSampledMonitors() > 0 || collectHostMetricsResultDto.GetUnavailableMonitors() > 0 {
         c.printLine(fmt.Sprintf("%s: %d sampled, %d not available", step,
             collectHostMetricsResultDto.GetSampledMonitors(), collectHostMetricsResultDto.GetUnavailableMonitors()))
+    }
+}
+
+// collectConnectionChanges el monitor connections del panel: sin el no hace nada (y olvida la foto). Los procesos que
+// no se han podido leer (sin root) se avisan cuando cambia su numero, no en cada pasada.
+func (c *RunAgentCommand) collectConnectionChanges() {
+    const step = "connections-collect"
+    const stepUnreadable = "connections-processes"
+    collectConnectionChangesResultDto, err := collectconnectionchanges.CollectConnectionChangesServiceGetInstance().Invoke(
+        collectconnectionchanges.CollectConnectionChangesDtoFromPrimitives(map[string]any{}),
+    )
+    if err != nil {
+        c.printStepError(step, err)
+        return
+    }
+    c.lastErrorByStep[step] = ""
+    if collectConnectionChangesResultDto.IsUnavailable() {
+        c.printLine(c.GetYellow(step + ": not available on this system (warned to the backend once)"))
+    }
+    if !collectConnectionChangesResultDto.IsSampled() {
+        return
+    }
+    unreadableWarning := ""
+    if unreadableProcesses := collectConnectionChangesResultDto.GetUnreadableProcesses(); unreadableProcesses > 0 {
+        unreadableWarning = fmt.Sprintf("%d processes could not be read: their sockets show process ? (run as root)", unreadableProcesses)
+    }
+    c.printStepWarningIfChanged(stepUnreadable, unreadableWarning)
+    if collectConnectionChangesResultDto.GetOpened() > 0 || collectConnectionChangesResultDto.GetClosed() > 0 {
+        c.printLine(fmt.Sprintf("%s: %d opened, %d closed · %d watched", step,
+            collectConnectionChangesResultDto.GetOpened(), collectConnectionChangesResultDto.GetClosed(),
+            collectConnectionChangesResultDto.GetConnections()))
     }
 }
 

@@ -2,6 +2,8 @@ package state
 
 import (
     "encoding/json"
+    "errors"
+    "io/fs"
     "os"
     "path/filepath"
 )
@@ -26,4 +28,13 @@ func (r *StateWriterJsonRepository) SaveState(statePath string, stateFileName st
         return err
     }
     return os.Rename(pathStateFile+".tmp", pathStateFile)
+}
+
+// DeleteState borra el fichero de estado (lo que vigilaba ya no esta en la config). Que no exista no es un error.
+func (r *StateWriterJsonRepository) DeleteState(statePath string, stateFileName string) error {
+    err := os.Remove(filepath.Join(statePath, stateFileName))
+    if errors.Is(err, fs.ErrNotExist) {
+        return nil
+    }
+    return err
 }

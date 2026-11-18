@@ -14,6 +14,7 @@ import (
 // el agente: se ignora y queda como aviso. Si su nombre choca con un watcher local, gana el local (y se avisa).
 //   - folder / log_pattern -> un watcher mas (start_at end: no se reenvia el historico).
 //   - cpu / memory / disk / gpu / network -> metricas para el modulo hostmetrics.
+//   - connections -> el monitor del modulo connections (uno por agente: el segundo se ignora con aviso).
 type RemoteMonitorsMerger struct{}
 
 func RemoteMonitorsMergerGetInstance() *RemoteMonitorsMerger {
@@ -29,6 +30,7 @@ func (m *RemoteMonitorsMerger) Merge(agentConfigEntity *entities.AgentConfigEnti
 
     watcherEntities := []*entities.WatcherEntity{}
     metricMonitorEntities := []*entities.RemoteMonitorEntity{}
+    var connectionsMonitorEntity *entities.RemoteMonitorEntity
     warnings := []string{}
     for _, remoteMonitorEntity := range remoteMonitorEntities {
         monitorName := remoteMonitorEntity.GetMonitorName()
@@ -44,6 +46,12 @@ func (m *RemoteMonitorsMerger) Merge(agentConfigEntity *entities.AgentConfigEnti
         switch {
         case remoteMonitorEntity.IsMetric():
             metricMonitorEntities = append(metricMonitorEntities, remoteMonitorEntity)
+        case remoteMonitorEntity.IsConnections():
+            if connectionsMonitorEntity != nil {
+                warnings = append(warnings, config.Tr(enums.AgentConfigMessageEnum.MONITOR_X_ONLY_ONE_CONNECTIONS, monitorName, connectionsMonitorEntity.GetMonitorName()))
+                continue
+            }
+            connectionsMonitorEntity = remoteMonitorEntity
         case remoteMonitorEntity.IsLines():
             watcherEntity, problem := m.getWatcherEntityOrProblem(remoteMonitorEntity)
             if problem != "" {
@@ -58,6 +66,7 @@ func (m *RemoteMonitorsMerger) Merge(agentConfigEntity *entities.AgentConfigEnti
         usedNames = append(usedNames, monitorName)
     }
     agentConfigEntity.AddRemoteMonitors(watcherEntities, metricMonitorEntities, warnings)
+    agentConfigEntity.SetConnectionsMonitorEntity(connectionsMonitorEntity)
 }
 
 // getWatcherEntityOrProblem match y severity solo cuentan en log_pattern (un folder manda todas las lineas).

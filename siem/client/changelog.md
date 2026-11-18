@@ -4,6 +4,22 @@ La versión es `APP_VERSION` en `src/modules/shared/infrastructure/repositories/
 (la muestran `version` y `help`, viaja al backend en cada envío y da nombre a los binarios de `make dist`). Lo más nuevo
 arriba.
 
+## 0.5.0 — 2026-11-18
+
+1. **Agente de red** (módulo `connections`, copiado de trafficker y adaptado): si el panel tiene un monitor
+   `connections` para este agente (backend 0.11.0), cada `interval_seconds` toma la foto de los sockets
+   (`/proc/net/{tcp,tcp6,udp,udp6}` + `/proc/<pid>/fd`, solo stdlib), aplica su config (loopback, procesos y puertos
+   ignorados) y manda **solo los cambios** como `net_connection`: `opened` / `closed` (con `duration_seconds`) y
+   `listen_opened` / `listen_closed`. La primera pasada manda lo que ya estaba abierto con `is_initial`. Foto anterior en
+   `state/connections.json`; si el monitor desaparece del panel, deja de muestrear y borra ese fichero. Una conexión que
+   se deja de vigilar por cambiar la config no cuenta como cierre.
+2. **Solo Linux** (build tags): en Windows y macOS compila pero no muestrea y avisa una vez al backend con un evento
+   `is_unavailable` (warning en el panel). Sin root, los sockets de otros usuarios salen con proceso `?` y `agent-run`
+   lo avisa.
+3. `connections-collect [--force=1]` (una pasada suelta; para listar conexiones en consola está trafficker),
+   `config-check` enseña `connections_monitor` y el arranque de `agent-run` dice `connections on/off`. Un segundo monitor
+   `connections` para el mismo agente se ignora con aviso.
+
 ## 0.4.2 — 2026-11-17
 
 1. **Carpeta de instalación `gosiem-client`** (antes `siem-client`): `install.sh` instala en `/opt/gosiem-client` e

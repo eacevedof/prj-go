@@ -7,7 +7,8 @@ import (
 
 // CheckAgentConfigPrimitives lo que imprime config-check (el token nunca: solo si esta puesto). config = la local
 // (siem-client.json con defaults) mas los watchers que salen de monitores folder / log_pattern del panel;
-// metric_monitors = los monitores cpu, memory, disk, gpu y network; remote_config_warnings = monitores ignorados.
+// metric_monitors = los monitores cpu, memory, disk, gpu y network; connections_monitor = el monitor connections (null
+// si no hay); remote_config_warnings = monitores ignorados.
 type CheckAgentConfigPrimitives struct {
     ConfigPath            string                         `json:"config_path"`
     EndpointUrl           string                         `json:"endpoint_url"`
@@ -15,6 +16,7 @@ type CheckAgentConfigPrimitives struct {
     IsRemoteConfigEnabled bool                           `json:"is_remote_config_enabled"`
     Config                entities.AgentConfigPrimitives `json:"config"`
     MetricMonitors        []map[string]any               `json:"metric_monitors"`
+    ConnectionsMonitor    map[string]any                 `json:"connections_monitor"`
     RemoteConfigWarnings  []string                       `json:"remote_config_warnings"`
 }
 
@@ -25,6 +27,7 @@ type CheckAgentConfigResultDto struct {
     isRemoteConfigEnabled bool
     agentConfig           entities.AgentConfigPrimitives
     metricMonitors        []map[string]any
+    connectionsMonitor    map[string]any
     remoteConfigWarnings  []string
 }
 
@@ -34,6 +37,7 @@ func CheckAgentConfigResultDtoFromPrimitives(primitives map[string]any) *CheckAg
     if metricMonitors == nil {
         metricMonitors = []map[string]any{}
     }
+    connectionsMonitor, _ := primitives["connectionsMonitor"].(map[string]any)
     remoteConfigWarnings, _ := primitives["remoteConfigWarnings"].([]string)
     if remoteConfigWarnings == nil {
         remoteConfigWarnings = []string{}
@@ -45,8 +49,14 @@ func CheckAgentConfigResultDtoFromPrimitives(primitives map[string]any) *CheckAg
         isRemoteConfigEnabled: application.GetInt(primitives, "isRemoteConfigEnabled") == 1,
         agentConfig:           agentConfig,
         metricMonitors:        metricMonitors,
+        connectionsMonitor:    connectionsMonitor,
         remoteConfigWarnings:  remoteConfigWarnings,
     }
+}
+
+// IsConnectionsEnabled hay un monitor connections en la config remota.
+func (d *CheckAgentConfigResultDto) IsConnectionsEnabled() bool {
+    return d.connectionsMonitor != nil
 }
 
 func (d *CheckAgentConfigResultDto) GetCollectIntervalSeconds() int {
@@ -93,6 +103,7 @@ func (d *CheckAgentConfigResultDto) ToArray() CheckAgentConfigPrimitives {
         IsRemoteConfigEnabled: d.isRemoteConfigEnabled,
         Config:                d.agentConfig,
         MetricMonitors:        d.metricMonitors,
+        ConnectionsMonitor:    d.connectionsMonitor,
         RemoteConfigWarnings:  d.remoteConfigWarnings,
     }
 }

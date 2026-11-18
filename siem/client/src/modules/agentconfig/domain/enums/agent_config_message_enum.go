@@ -23,6 +23,7 @@ var AgentConfigMessageEnum = struct {
     // config remota (GET /api/v1/agent-config)
     MONITOR_X_IS_NOT_VALID_X          string
     MONITOR_X_NAME_IS_ALREADY_USED    string
+    MONITOR_X_ONLY_ONE_CONNECTIONS    string
     REMOTE_CONFIG_REJECTED_API_TOKEN  string
     REMOTE_CONFIG_UNAVAILABLE_X       string
     REMOTE_CONFIG_UNEXPECTED_STATUS_X string
@@ -48,6 +49,7 @@ var AgentConfigMessageEnum = struct {
 
     MONITOR_X_IS_NOT_VALID_X:          "remote monitor {0} ignored: {1}",
     MONITOR_X_NAME_IS_ALREADY_USED:    "remote monitor {0} ignored: its name is already used by a local watcher or another monitor",
+    MONITOR_X_ONLY_ONE_CONNECTIONS:    "remote monitor {0} ignored: this agent already has a connections monitor ({1})",
     REMOTE_CONFIG_REJECTED_API_TOKEN:  "Remote config: backend rejected the api token (401): check APP_SIEM_API_TOKEN",
     REMOTE_CONFIG_UNAVAILABLE_X:       "Remote config unavailable (using the last one saved): {0}",
     REMOTE_CONFIG_UNEXPECTED_STATUS_X: "Remote config: backend answered {0} (using the last one saved)",

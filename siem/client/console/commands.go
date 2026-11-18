@@ -7,6 +7,7 @@ import (
     agentcommands "siem-client/src/modules/agent/infrastructure/commands"
     agentconfigcommands "siem-client/src/modules/agentconfig/infrastructure/commands"
     collectorscommands "siem-client/src/modules/collectors/infrastructure/commands"
+    connectionscommands "siem-client/src/modules/connections/infrastructure/commands"
     dockercommands "siem-client/src/modules/docker/infrastructure/commands"
     hostmetricscommands "siem-client/src/modules/hostmetrics/infrastructure/commands"
     "siem-client/src/console/application"
@@ -56,7 +57,7 @@ func GetCommands() []application.CommandConfig {
             Service: func(input []string) application.InterfaceConsole {
                 return agentcommands.RunAgentCommandGetInstance(input)
             },
-            Info:    "bucle del agente: sincroniza la config, recoge (ficheros, comandos, metricas, docker) y envia hasta Ctrl+C",
+            Info:    "bucle del agente: sincroniza la config, recoge (ficheros, comandos, metricas, conexiones, docker) y envia hasta Ctrl+C",
             Example: "",
         },
 
@@ -83,6 +84,14 @@ func GetCommands() []application.CommandConfig {
                 return hostmetricscommands.CollectHostMetricsCommandGetInstance(input)
             },
             Info:    "muestrea las metricas del host a las que les toca (--force=1: todas) y deja el resultado en el spool",
+            Example: "--force=1",
+        },
+        {
+            Alias: "connections-collect",
+            Service: func(input []string) application.InterfaceConsole {
+                return connectionscommands.CollectConnectionChangesCommandGetInstance(input)
+            },
+            Info:    "una pasada del monitor connections (--force=1: ya): conexiones que abren o cierran al spool (solo Linux)",
             Example: "--force=1",
         },
         {

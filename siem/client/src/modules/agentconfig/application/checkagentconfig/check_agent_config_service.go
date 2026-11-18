@@ -27,6 +27,11 @@ func (s *CheckAgentConfigService) Invoke(checkAgentConfigDto *CheckAgentConfigDt
     for _, metricMonitorEntity := range agentConfigEntity.GetMetricMonitorEntities() {
         metricMonitors = append(metricMonitors, metricMonitorEntity.ToPrimitives())
     }
+    // nil en el JSON de config-check = sin monitor connections
+    var connectionsMonitor map[string]any
+    if connectionsMonitorEntity := agentConfigEntity.GetConnectionsMonitorEntityOrNil(); connectionsMonitorEntity != nil {
+        connectionsMonitor = connectionsMonitorEntity.ToPrimitives()
+    }
     isRemoteConfigEnabled := 0
     if s.IsRemoteConfigEnabled() {
         isRemoteConfigEnabled = 1
@@ -42,6 +47,7 @@ func (s *CheckAgentConfigService) Invoke(checkAgentConfigDto *CheckAgentConfigDt
         "agentConfig": agentConfigEntity.ToPrimitives(),
         "isRemoteConfigEnabled": isRemoteConfigEnabled,
         "metricMonitors":        metricMonitors,
+        "connectionsMonitor":    connectionsMonitor,
         "remoteConfigWarnings":  agentConfigEntity.GetRemoteConfigWarnings(),
     }), nil
 }

@@ -177,7 +177,7 @@ un contenedor miden el contenedor / la VM de Docker, no el host: para un servido
 | 1 | `config-check` | valida configuración (fichero local + monitores ya descargados) + endpoint + token |
 | 2 | `config-sync` | descarga del backend los monitores de este agente |
 | 3 | `agent-run` | el bucle del agente |
-| 4 | `files-collect` · `commands-run --force=1` · `metrics-collect --force=1` · `docker-collect --force_stats=1` · `events-send` | los pasos del bucle, sueltos |
+| 4 | `files-collect` · `commands-run --force=1` · `metrics-collect --force=1` · `connections-collect --force=1` · `docker-collect --force_stats=1` · `events-send` | los pasos del bucle, sueltos |
 | 5 | `make test` · `make vet` · `make dist` · `make version` | lo habitual |
 
 ## 3 - versiones
