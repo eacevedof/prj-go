@@ -1,0 +1,37 @@
+# docker/docker-compose.yml -- stack local: la API en Go (alpine) y Mailpit (servidor SMTP de pruebas que no entrega
+# nada: los correos se ven en su web). Sin contenedor de BD (SQLite). Lanzar desde notifier/backend/ con el makefile.
+# Puertos solo en 127.0.0.1. Variables opcionales en docker/.env (ver .env.example).
+name: notifier-backend
+
+services:
+  notifier-backend-app:
+    container_name: cont-notifier-backend-app
+    build:
+      context: app
+    environment:
+      TZ: ${TIME_ZONE:-UTC}
+    ports:
+      - 127.0.0.1:${HTTP_PORT:-9500}:8080
+    volumes:
+      - ../:/app
+      # cache de modulos y de compilacion: el build de cada arranque no vuelve a descargar ni a compilar todo
+      - notifier-backend-gomod:/go/pkg/mod
+      - notifier-backend-gocache:/root/.cache/go-build
+    networks:
+      - notifier-net
+
+  notifier-mailpit:
+    container_name: cont-notifier-mailpit
+    image: axllent/mailpit:v1.27
+    ports:
+      - 127.0.0.1:${MAILPIT_WEB_PORT:-9525}:8025
+    networks:
+      - notifier-net
+
+volumes:
+  notifier-backend-gomod:
+  notifier-backend-gocache:
+
+networks:
+  notifier-net:
+    name: notifier-net
